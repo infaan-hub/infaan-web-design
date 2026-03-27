@@ -33,3 +33,38 @@ npm run dev
 ```
 
 The frontend expects the Django API at `http://127.0.0.1:8000/api`.
+
+## Environment files
+
+Backend environment files:
+
+- `Backend/.env`
+- `Backend/.env.example`
+
+Frontend environment files:
+
+- `Frontend/.env`
+- `Frontend/.env.example`
+
+## Render deployment
+
+Deployment files added:
+
+- `render.yaml`
+- `Backend/build.sh`
+- `Backend/Procfile`
+
+Render backend env vars used by Django:
+
+- `DJANGO_SECRET_KEY`
+- `DJANGO_DEBUG`
+- `ALLOWED_HOSTS`
+- `CORS_ALLOW_ALL_ORIGINS`
+- `CORS_ALLOWED_ORIGINS`
+- `CSRF_TRUSTED_ORIGINS`
+- `DATABASE_URL`
+- `SEED_INFAAN_DATA`
+
+Render frontend env vars used by Vite:
+
+- `VITE_API_BASE_URL`

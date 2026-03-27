@@ -1,0 +1,46 @@
+databases:
+  - name: infaan-db
+    databaseName: infaan_db
+    user: infaan_db_user
+
+services:
+  - type: web
+    name: infaan-backend
+    runtime: python
+    rootDir: Backend
+    buildCommand: ./build.sh
+    startCommand: gunicorn infaan_backend.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.11
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: ALLOWED_HOSTS
+        value: "infaan-backend.onrender.com,127.0.0.1,localhost"
+      - key: CORS_ALLOW_ALL_ORIGINS
+        value: "false"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://infaan-frontend.onrender.com,http://localhost:5173"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://infaan-backend.onrender.com,https://infaan-frontend.onrender.com"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: infaan-db
+          property: connectionString
+      - key: SEED_INFAAN_DATA
+        value: "true"
+
+  - type: static
+    name: infaan-frontend
+    rootDir: Frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://infaan-backend.onrender.com/api
