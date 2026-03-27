@@ -68,3 +68,15 @@ Render backend env vars used by Django:
 Render frontend env vars used by Vite:
 
 - `VITE_API_BASE_URL`
+
+If Render is configured from the repo root instead of `Backend`, use:
+
+```bash
+./build.sh
+```
+
+and:
+
+```bash
+./start.sh
+```
