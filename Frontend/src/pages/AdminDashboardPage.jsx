@@ -20,7 +20,7 @@ function AdminDashboardPage({ app }) {
       <section className="section-card">
         <div className="section-headline">
           <p className="micro-label">admin dashboard</p>
-          <h2>/admin-dashboard</h2>
+          <h2>Admin Dashboard</h2>
         </div>
         <div className="admin-grid">
           <form className="form-card" onSubmit={(event) => { event.preventDefault(); submitAdminUser(); }}>

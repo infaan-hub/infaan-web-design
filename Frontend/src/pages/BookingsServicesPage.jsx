@@ -6,7 +6,7 @@ function BookingsServicesPage({ app }) {
       <section className="section-card">
         <div className="section-headline">
           <p className="micro-label">bookings services</p>
-          <h2>/bookings-services</h2>
+          <h2>Bookings Services</h2>
         </div>
         <div className="subscription-stack">
           {subscriptions.map((booking) => (

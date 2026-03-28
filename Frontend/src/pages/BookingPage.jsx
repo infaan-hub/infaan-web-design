@@ -8,7 +8,7 @@ function BookingPage({ app }) {
       <section className="section-card single-column-card">
         <div className="section-headline">
           <p className="micro-label">booking</p>
-          <h2>/booking</h2>
+          <h2>Booking</h2>
         </div>
 
         {bookingSent && lastBooking ? (

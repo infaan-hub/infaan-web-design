@@ -1,20 +1,9 @@
-const menuLinks = [
+const sidebarLinks = [
   { href: "/home", label: "Home", sign: "HM" },
-  { href: "/package", label: "Package", sign: "PK" },
-  { href: "/package-time", label: "Package Time", sign: "PT" },
-  { href: "/billing", label: "Billing", sign: "BL" },
-  { href: "/booking", label: "Booking", sign: "BK" },
-  { href: "/dashboard", label: "Dashboard", sign: "DB" },
-];
-
-const accessLinks = [
-  { href: "/login", label: "Login", sign: "LG" },
-  { href: "/register", label: "Register", sign: "RG" },
-  { href: "/admin/login", label: "Admin Login", sign: "AL" },
   { href: "/admin/register", label: "Admin Register", sign: "AR" },
-  { href: "/admin-dashboard", label: "Admin Dashboard", sign: "AD" },
-  { href: "/admin/users", label: "Admin Users", sign: "AU" },
-  { href: "/bookings-services", label: "Bookings Services", sign: "BS" },
+  { href: "/admin/login", label: "Admin Login", sign: "AL" },
+  { href: "/register", label: "Register", sign: "RG" },
+  { href: "/login", label: "Login", sign: "LG" },
 ];
 
 function AppLayout({ app, children }) {
@@ -23,30 +12,6 @@ function AppLayout({ app, children }) {
   function handleNavigation(nextPath) {
     navigate(nextPath);
     setSidebarOpen(false);
-  }
-
-  function NavGroup({ title, items }) {
-    return (
-      <div className="nav-group">
-        <p className="sidebar-group-title">{title}</p>
-        <div className="sidebar-group-card">
-          {items.map((item) => (
-            <button
-              key={item.href}
-              type="button"
-              className={`nav-link ${path === item.href ? "nav-link-active" : ""}`}
-              onClick={() => handleNavigation(item.href)}
-            >
-              <span className="nav-sign">{item.sign}</span>
-              <span className="nav-label-wrap">
-                <strong>{item.label}</strong>
-                <small>{item.href}</small>
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -75,8 +40,21 @@ function AppLayout({ app, children }) {
         </div>
 
         <nav className="sidebar-nav">
-          <NavGroup title="Menu" items={menuLinks} />
-          <NavGroup title="Access" items={accessLinks} />
+          <div className="sidebar-group-card">
+            {sidebarLinks.map((item) => (
+              <button
+                key={item.href}
+                type="button"
+                className={`nav-link ${path === item.href ? "nav-link-active" : ""}`}
+                onClick={() => handleNavigation(item.href)}
+              >
+                <span className="nav-sign">{item.sign}</span>
+                <span className="nav-label-wrap">
+                  <strong>{item.label}</strong>
+                </span>
+              </button>
+            ))}
+          </div>
         </nav>
 
         <div className="sidebar-footer">
@@ -87,18 +65,7 @@ function AppLayout({ app, children }) {
               aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
             >
-              {theme === "light" ? "Moon" : "Sun"}
-            </button>
-            <button
-              type="button"
-              className="sidebar-icon-button"
-              aria-label={currentUser ? "Go to account" : "Open login"}
-              onClick={() => handleNavigation(currentUser ? "/dashboard" : "/login")}
-            >
-              {currentUser ? "User" : "Sign"}
-            </button>
-            <button type="button" className="sidebar-icon-button" aria-label="Logout" onClick={logout}>
-              Out
+              Theme
             </button>
           </div>
         </div>
@@ -114,7 +81,7 @@ function AppLayout({ app, children }) {
             </button>
             <div>
               <p className="micro-label">infaan web & design</p>
-              <h1>{window.location.pathname.replaceAll("/", " ").trim() || "home"}</h1>
+              <h1>Infaan Web & Design</h1>
             </div>
           </div>
 

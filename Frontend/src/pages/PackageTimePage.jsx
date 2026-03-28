@@ -6,7 +6,7 @@ function PackageTimePage({ app }) {
       <section className="section-card">
         <div className="section-headline">
           <p className="micro-label">package time</p>
-          <h2>/package-time</h2>
+          <h2>Package Time</h2>
         </div>
         {!selectedPackage ? (
           <div className="form-card">

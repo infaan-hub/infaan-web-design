@@ -6,7 +6,7 @@ function AdminLoginPage({ app }) {
       <section className="section-card single-column-card">
         <div className="section-headline">
           <p className="micro-label">admin login</p>
-          <h2>/admin/login</h2>
+          <h2>Admin Login</h2>
         </div>
         <form className="form-card" onSubmit={(event) => { event.preventDefault(); submitAuth(loginForm, "/auth/login/", "admin"); }}>
           <input value={loginForm.username} onChange={(event) => updateField(setLoginForm, "username", event.target.value)} placeholder="Admin username" />

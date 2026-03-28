@@ -6,7 +6,7 @@ function AdminUsersPage({ app }) {
       <section className="section-card">
         <div className="section-headline">
           <p className="micro-label">admin users</p>
-          <h2>/admin/users</h2>
+          <h2>Manage Users</h2>
         </div>
         <div className="subscription-stack">
           {users.map((user) => (

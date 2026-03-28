@@ -6,7 +6,7 @@ function AdminRegisterPage({ app }) {
       <section className="section-card single-column-card">
         <div className="section-headline">
           <p className="micro-label">admin register</p>
-          <h2>/admin/register</h2>
+          <h2>Admin Register</h2>
         </div>
         <form className="form-card" onSubmit={(event) => { event.preventDefault(); submitAuth(adminRegisterForm, "/auth/admin/register/", "admin"); }}>
           <input value={adminRegisterForm.username} onChange={(event) => updateField(setAdminRegisterForm, "username", event.target.value)} placeholder="Admin username" />

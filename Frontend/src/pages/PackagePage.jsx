@@ -6,7 +6,7 @@ function PackagePage({ app }) {
       <section className="section-card">
         <div className="section-headline">
           <p className="micro-label">package</p>
-          <h2>/package</h2>
+          <h2>Package</h2>
         </div>
         {selectedPackage ? (
           <div className="package-card tone-premium">

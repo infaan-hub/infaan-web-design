@@ -6,7 +6,7 @@ function DashboardPage({ app }) {
       <section className="section-card">
         <div className="section-headline">
           <p className="micro-label">dashboard</p>
-          <h2>/dashboard</h2>
+          <h2>Customer Dashboard</h2>
         </div>
         <div className="profile-card dashboard-summary">
           <span className="profile-sign">iwd</span>

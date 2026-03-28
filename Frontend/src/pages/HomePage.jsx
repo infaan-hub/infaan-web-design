@@ -15,13 +15,6 @@ function HomePage({ app }) {
 
   return (
     <main className="main-content">
-      <section className="hero-banner">
-        <div className="hero-copy">
-          <p className="micro-label">home</p>
-          <h2>Explore web design, digital ads, and brand identity packages.</h2>
-        </div>
-      </section>
-
       <section className="section-block">
         <div className="section-headline">
           <p className="micro-label">service images</p>
