@@ -113,6 +113,10 @@ function BillingPage({ app }) {
 
             <div className="billing-form-fields">
               <div className="payment-method-grid">
+                <button type="button" className={`payment-method-tile ${paymentForm.method === "azampay" ? "payment-method-active" : ""}`} onClick={() => updateField(setPaymentForm, "method", "azampay")}>
+                  <span className="payment-radio" />
+                  <strong>AzamPay</strong>
+                </button>
                 <button type="button" className={`payment-method-tile ${paymentForm.method === "card" ? "payment-method-active" : ""}`} onClick={() => updateField(setPaymentForm, "method", "card")}>
                   <span className="payment-radio" />
                   <strong>Mastercard</strong>
@@ -131,7 +135,12 @@ function BillingPage({ app }) {
                 </button>
               </div>
 
-              {paymentForm.method === "card" ? (
+              {paymentForm.method === "azampay" ? (
+                <label className="payment-field">
+                  <span>AzamPay phone number</span>
+                  <input value={paymentForm.phone_number} onChange={(event) => updateField(setPaymentForm, "phone_number", event.target.value)} placeholder="2557XXXXXXXX" />
+                </label>
+              ) : paymentForm.method === "card" ? (
                 <>
                   <div className="payment-field-grid payment-field-grid-wide">
                     <label className="payment-field">

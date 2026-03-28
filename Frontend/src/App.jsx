@@ -64,7 +64,7 @@ const emptyPackage = {
   is_active: true,
 };
 const emptyPayment = {
-  method: "card",
+  method: "azampay",
   card_name: "",
   card_number: "",
   expiry_date: "",
@@ -479,8 +479,8 @@ function App() {
       return false;
     }
 
-    if (paymentForm.method === "mixx" && !paymentForm.phone_number) {
-      setError("Enter the Mixx by Yas phone number to continue.");
+    if (paymentForm.method === "azampay" && !paymentForm.phone_number) {
+      setError("Enter the phone number that AzamPay will bill.");
       return false;
     }
 
@@ -709,24 +709,27 @@ function App() {
     setError("");
     setFeedback("");
     try {
+      const activePaymentMethod = pendingPayment?.method || paymentForm.method;
+      const isAzamPayPayment = activePaymentMethod === "azampay";
+      const paymentContact =
+        activePaymentMethod === "azampay"
+          ? pendingPayment?.phone_number || paymentForm.phone_number
+          : activePaymentMethod === "mixx"
+            ? pendingPayment?.phone_number || paymentForm.phone_number
+            : pendingPayment?.card_name || paymentForm.card_name || "Gateway checkout";
       const createdBooking = await apiRequest("/subscriptions/", {
         method: "POST",
         body: JSON.stringify({
           ...subscriptionForm,
           package_price: Number(selectedPriceId),
-          payment_status: "paid",
-          payment_method: pendingPayment?.method || paymentForm.method,
-          payment_contact:
-            (pendingPayment?.method || paymentForm.method) === "mixx"
-              ? pendingPayment?.phone_number || paymentForm.phone_number
-              : pendingPayment?.card_name || paymentForm.card_name || "Gateway checkout",
+          payment_status: isAzamPayPayment ? "pending" : "paid",
+          payment_method: activePaymentMethod,
+          payment_contact: paymentContact,
           payment_amount: selectedPrice?.amount || 0,
           payment_currency: selectedPrice?.currency || "USD",
-          notes: `${subscriptionForm.notes}\nPayment method: ${pendingPayment?.method || paymentForm.method}\nPayment contact: ${
-            (pendingPayment?.method || paymentForm.method) === "mixx"
-              ? pendingPayment?.phone_number || paymentForm.phone_number
-              : pendingPayment?.card_name || paymentForm.card_name || "Gateway checkout"
-          }\nBilling period: ${selectedPrice?.billing_period || ""}\nAmount: ${
+          notes: `${subscriptionForm.notes}\nPayment method: ${activePaymentMethod}\nPayment contact: ${paymentContact}\nBilling period: ${
+            selectedPrice?.billing_period || ""
+          }\nAmount: ${
             selectedPrice?.currency || "USD"
           } ${selectedPrice?.amount || ""}`.trim(),
         }),
@@ -735,7 +738,11 @@ function App() {
       setLastBooking(createdBooking);
       setSelectedBookingId(String(createdBooking.id));
       setPendingPayment(null);
-      setFeedback("Booking sent successfully.");
+      setFeedback(
+        isAzamPayPayment
+          ? "Booking created. Use the callback URL from the booking screen in your AzamPay payment request."
+          : "Booking sent successfully."
+      );
       await loadProfileAndSubscriptions();
       navigate("/booking");
     } catch (requestError) {

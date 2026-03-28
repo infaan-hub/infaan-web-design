@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.urls import reverse
 from rest_framework import serializers
 
 from .models import PackagePrice, PortfolioItem, Service, ServicePackage, Subscription
@@ -65,6 +67,7 @@ class PortfolioItemSerializer(serializers.ModelSerializer):
 class SubscriptionSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField(read_only=True)
     package_details = serializers.SerializerMethodField(read_only=True)
+    azampay_callback_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Subscription
@@ -75,9 +78,14 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             "status",
             "payment_status",
             "payment_method",
+            "external_id",
             "payment_contact",
             "payment_amount",
             "payment_currency",
+            "payment_reference",
+            "payment_callback_payload",
+            "paid_at",
+            "azampay_callback_url",
             "business_name",
             "contact_email",
             "contact_phone",
@@ -88,7 +96,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             "user_details",
             "package_details",
         )
-        read_only_fields = ("user", "created_at", "updated_at")
+        read_only_fields = ("user", "external_id", "created_at", "updated_at", "payment_callback_payload", "paid_at")
 
     def get_user_details(self, obj):
         return {
@@ -112,6 +120,14 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             "currency": price.currency,
         }
 
+    def get_azampay_callback_url(self, obj):
+        callback_path = reverse("azampay-callback")
+        request = self.context.get("request")
+        if request:
+            return request.build_absolute_uri(callback_path)
+        backend_base_url = getattr(settings, "BACKEND_BASE_URL", "").rstrip("/")
+        return f"{backend_base_url}{callback_path}" if backend_base_url else callback_path
+
     def validate_package_price(self, value):
         if not value.package.is_active or not value.package.service.is_active:
             raise serializers.ValidationError("This package is not currently available.")
@@ -119,4 +135,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         request = self.context["request"]
+        if validated_data.get("payment_method") == "azampay":
+            validated_data["payment_status"] = Subscription.PaymentStatus.PENDING
+            validated_data["status"] = Subscription.Status.PENDING
         return Subscription.objects.create(user=request.user, **validated_data)

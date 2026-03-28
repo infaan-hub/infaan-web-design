@@ -31,6 +31,18 @@ services:
           property: connectionString
       - key: SEED_INFAAN_DATA
         value: "true"
+      - key: BACKEND_BASE_URL
+        value: https://infaan-web-design.onrender.com
+      - key: AZAMPAY_CLIENT_ID
+        sync: false
+      - key: AZAMPAY_CLIENT_SECRET
+        sync: false
+      - key: AZAMPAY_API_KEY
+        sync: false
+      - key: AZAMPAY_APP_NAME
+        sync: false
+      - key: AZAMPAY_ENVIRONMENT
+        value: sandbox
 
   - type: static
     name: infaan-frontend

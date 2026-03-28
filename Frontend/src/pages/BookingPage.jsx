@@ -16,6 +16,9 @@ function BookingPage({ app }) {
   const autoSubmitRef = useRef(false);
   const issuedAt = lastBooking?.created_at ? new Date(lastBooking.created_at) : new Date();
   const ticketId = lastBooking ? `INF${String(lastBooking.id).padStart(6, "0")}${issuedAt.getDate()}` : "Pending";
+  const isAzamPayBooking =
+    (lastBooking?.payment_method || pendingPayment?.method || "").toLowerCase() === "azampay";
+  const bookingCallbackUrl = lastBooking?.azampay_callback_url || "";
 
   useEffect(() => {
     if (!selectedPackage || !selectedPrice) {
@@ -41,8 +44,12 @@ function BookingPage({ app }) {
             <div className="success-ticket">
               <div className="ticket-top">
                 <div className="ticket-icon">IWD</div>
-                <h3>Thank you!</h3>
-                <p>Your booking has been issued successfully and sent to admin.</p>
+                <h3>{isAzamPayBooking ? "Booking created" : "Thank you!"}</h3>
+                <p>
+                  {isAzamPayBooking
+                    ? "Your booking is pending payment. Use the callback URL below in the AzamPay request so payment updates can reach this system."
+                    : "Your booking has been issued successfully and sent to admin."}
+                </p>
               </div>
 
               <div className="ticket-dash" />
@@ -75,6 +82,17 @@ function BookingPage({ app }) {
                 </div>
               </div>
 
+              {isAzamPayBooking && bookingCallbackUrl ? (
+                <>
+                  <div className="ticket-dash light" />
+                  <div className="subscription-card booking-admin-card">
+                    <span className="micro-label">AzamPay callback URL</span>
+                    <strong>HTTP POST</strong>
+                    <p>{bookingCallbackUrl}</p>
+                  </div>
+                </>
+              ) : null}
+
               <div className="ticket-dash light" />
 
               <div className="ticket-barcode" aria-hidden="true">
@@ -100,7 +118,7 @@ function BookingPage({ app }) {
               </div>
               <div className="subscription-card">
                 <span className="micro-label">payment</span>
-                <strong>{pendingPayment.method === "mixx" ? "Mixx by Yas" : pendingPayment.method}</strong>
+                <strong>{pendingPayment.method === "azampay" ? "AzamPay" : pendingPayment.method === "mixx" ? "Mixx by Yas" : pendingPayment.method}</strong>
                 <p>{formatPrice(selectedPrice?.amount || 0, selectedPrice?.currency || "USD")}</p>
               </div>
             </div>
