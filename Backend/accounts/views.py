@@ -24,6 +24,17 @@ class RegisterView(APIView):
         return Response({"token": token.key, "user": UserSerializer(user).data}, status=status.HTTP_201_CREATED)
 
 
+class AdminRegisterView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = AdminUserSerializer(data={**request.data, "role": CustomUser.Role.ADMIN})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({"token": token.key, "user": UserSerializer(user).data}, status=status.HTTP_201_CREATED)
+
+
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
