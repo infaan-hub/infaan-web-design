@@ -18,6 +18,17 @@ function AdminDashboardPage({ app }) {
     navigate,
   } = app;
 
+  const billingPeriods = ["weekly", "monthly", "yearly", "per_task"];
+
+  function updatePackagePrice(index, field, value) {
+    setPackageForm((previous) => ({
+      ...previous,
+      prices: previous.prices.map((price, priceIndex) =>
+        priceIndex === index ? { ...price, [field]: value } : price
+      ),
+    }));
+  }
+
   return (
     <main className="main-content">
       <section className="section-card">
@@ -55,6 +66,30 @@ function AdminDashboardPage({ app }) {
             <textarea value={packageForm.description} onChange={(event) => updateField(setPackageForm, "description", event.target.value)} placeholder="Description" />
             <textarea value={packageForm.features} onChange={(event) => updateField(setPackageForm, "features", event.target.value)} placeholder="One feature per line" />
             <input value={packageForm.payment_notes} onChange={(event) => updateField(setPackageForm, "payment_notes", event.target.value)} placeholder="Payment notes" />
+            <div className="admin-price-editor">
+              <p className="micro-label">package prices</p>
+              {billingPeriods.map((period, index) => (
+                <div key={period} className="admin-price-row">
+                  <strong>{period.replace("_", " ")}</strong>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={packageForm.prices[index]?.usd_amount || ""}
+                    onChange={(event) => updatePackagePrice(index, "usd_amount", event.target.value)}
+                    placeholder="USD amount"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={packageForm.prices[index]?.tzs_amount || ""}
+                    onChange={(event) => updatePackagePrice(index, "tzs_amount", event.target.value)}
+                    placeholder="TZS amount"
+                  />
+                </div>
+              ))}
+            </div>
             <button type="submit" className="solid-button" disabled={loading}>{editingPackageId ? "Update package" : "Create package"}</button>
             {editingPackageId && (
               <button type="button" className="outline-button" onClick={() => { setPackageForm(app.emptyPackage); setEditingPackageId(null); }}>
@@ -70,8 +105,27 @@ function AdminDashboardPage({ app }) {
               <div key={pkg.id} className={`package-card tone-${pkg.tier}`}>
                 <h4>{pkg.title}</h4>
                 <p>{pkg.description}</p>
+                <div className="admin-package-prices">
+                  {pkg.prices.map((price) => (
+                    <span key={`${price.billing_period}-${price.currency}`} className="price-chip">
+                      {price.billing_period} {price.currency} {formatPrice(price.amount, price.currency).replace(`${price.currency} `, "")}
+                    </span>
+                  ))}
+                </div>
                 <div className="price-list">
                   <button type="button" className="outline-button" onClick={() => {
+                    const priceMap = {
+                      weekly: { billing_period: "weekly", usd_amount: "", tzs_amount: "" },
+                      monthly: { billing_period: "monthly", usd_amount: "", tzs_amount: "" },
+                      yearly: { billing_period: "yearly", usd_amount: "", tzs_amount: "" },
+                      per_task: { billing_period: "per_task", usd_amount: "", tzs_amount: "" },
+                    };
+                    pkg.prices.forEach((price) => {
+                      const amountKey = price.currency === "TZS" ? "tzs_amount" : "usd_amount";
+                      if (priceMap[price.billing_period]) {
+                        priceMap[price.billing_period][amountKey] = String(price.amount);
+                      }
+                    });
                     setPackageForm({
                       service: String(pkg.service),
                       tier: pkg.tier,
@@ -79,6 +133,7 @@ function AdminDashboardPage({ app }) {
                       description: pkg.description,
                       features: pkg.features.join("\n"),
                       payment_notes: pkg.payment_notes,
+                      prices: Object.values(priceMap),
                       is_active: pkg.is_active,
                     });
                     setEditingPackageId(pkg.id);

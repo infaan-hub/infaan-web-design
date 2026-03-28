@@ -68,7 +68,7 @@ class PackagePrice(TimeStampedModel):
 
     class Meta:
         ordering = ["package__service__name", "package__tier", "billing_period"]
-        unique_together = ("package", "billing_period")
+        unique_together = ("package", "billing_period", "currency")
 
 
 class Subscription(TimeStampedModel):

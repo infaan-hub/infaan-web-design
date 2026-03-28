@@ -1606,6 +1606,29 @@ body[data-theme="dark"] .price-strip-card {
   color: white;
 }
 
+.admin-price-editor {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-price-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-price-row strong {
+  text-transform: capitalize;
+}
+
+.admin-package-prices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+
 input,
 select,
 textarea {
@@ -1734,7 +1757,8 @@ textarea {
   }
 
   .payment-field-grid,
-  .payment-method-grid {
+  .payment-method-grid,
+  .admin-price-row {
     grid-template-columns: 1fr;
   }
 

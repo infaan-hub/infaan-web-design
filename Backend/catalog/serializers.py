@@ -17,11 +17,40 @@ class PackagePriceSerializer(serializers.ModelSerializer):
 
 class ServicePackageSerializer(serializers.ModelSerializer):
     service_name = serializers.CharField(source="service.name", read_only=True)
-    prices = PackagePriceSerializer(many=True, read_only=True)
+    prices = PackagePriceSerializer(many=True, required=False)
 
     class Meta:
         model = ServicePackage
         fields = "__all__"
+
+    def validate_prices(self, value):
+        seen = set()
+        for price in value:
+            key = (price.get("billing_period"), (price.get("currency") or "USD").upper())
+            if key in seen:
+                raise serializers.ValidationError("Each billing period and currency combination must be unique.")
+            seen.add(key)
+        return value
+
+    def create(self, validated_data):
+        prices_data = validated_data.pop("prices", [])
+        package = ServicePackage.objects.create(**validated_data)
+        for price_data in prices_data:
+            PackagePrice.objects.create(package=package, **price_data)
+        return package
+
+    def update(self, instance, validated_data):
+        prices_data = validated_data.pop("prices", None)
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance.save()
+
+        if prices_data is not None:
+            instance.prices.all().delete()
+            for price_data in prices_data:
+                PackagePrice.objects.create(package=instance, **price_data)
+
+        return instance
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):

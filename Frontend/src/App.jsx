@@ -52,6 +52,12 @@ const emptyPackage = {
   description: "",
   features: "",
   payment_notes: "",
+  prices: [
+    { billing_period: "weekly", usd_amount: "", tzs_amount: "" },
+    { billing_period: "monthly", usd_amount: "", tzs_amount: "" },
+    { billing_period: "yearly", usd_amount: "", tzs_amount: "" },
+    { billing_period: "per_task", usd_amount: "", tzs_amount: "" },
+  ],
   is_active: true,
 };
 const emptyPayment = {
@@ -538,10 +544,31 @@ function App() {
     setLoading(true);
     setError("");
     setFeedback("");
+    const pricesPayload = (packageForm.prices || []).flatMap((price) => {
+      const rows = [];
+      if (price.usd_amount !== "" && price.usd_amount !== null && price.usd_amount !== undefined) {
+        rows.push({
+          billing_period: price.billing_period,
+          amount: price.usd_amount,
+          currency: "USD",
+          is_default: true,
+        });
+      }
+      if (price.tzs_amount !== "" && price.tzs_amount !== null && price.tzs_amount !== undefined) {
+        rows.push({
+          billing_period: price.billing_period,
+          amount: price.tzs_amount,
+          currency: "TZS",
+          is_default: false,
+        });
+      }
+      return rows;
+    });
     const body = {
       ...packageForm,
       service: Number(packageForm.service),
       features: packageForm.features.split("\n").filter(Boolean),
+      prices: pricesPayload,
     };
     try {
       if (editingPackageId) {
