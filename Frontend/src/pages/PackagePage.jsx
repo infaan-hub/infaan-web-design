@@ -9,10 +9,7 @@ const serviceImages = {
 
 function PackagePage({ app }) {
   const { selectedPackage, selectedService, groupedPackages, navigate, continueToPackageTime } = app;
-  const serviceOrder = ["website", "digital_ads", "logo_poster"];
-  const visibleServices = serviceOrder
-    .map((category) => groupedPackages.find((service) => service.category === category && service.packages?.length))
-    .filter(Boolean);
+  const visibleServices = groupedPackages.filter((service) => service.packages?.length);
 
   return (
     <main className="main-content">
