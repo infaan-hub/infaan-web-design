@@ -1,3 +1,6 @@
+const authVisualImage =
+  "https://images.unsplash.com/photo-1496171367470-9ed9a91ea931?auto=format&fit=crop&w=1200&q=80";
+
 function LoginPage({ app }) {
   const { loginForm, setLoginForm, updateField, submitAuth, beginGoogleLogin, loading, navigate } = app;
 
@@ -25,12 +28,6 @@ function LoginPage({ app }) {
               <button type="button" className="social-icon-button google-button" onClick={beginGoogleLogin} aria-label="Login with Google">
                 <span className="google-g">G</span>
               </button>
-              <button type="button" className="social-icon-button" aria-label="Facebook">
-                f
-              </button>
-              <button type="button" className="social-icon-button" aria-label="Apple">
-                
-              </button>
             </div>
 
             <p className="auth-switch-copy">
@@ -41,7 +38,7 @@ function LoginPage({ app }) {
 
         <div className="auth-visual-side">
           <div className="auth-visual-blob">
-            <div className="auth-figure">🧑‍💻</div>
+            <div className="auth-visual-image" style={{ backgroundImage: `url(${authVisualImage})` }} />
           </div>
         </div>
       </section>

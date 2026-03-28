@@ -61,11 +61,16 @@ function AppLayout({ app, children }) {
           <div className="sidebar-utility-row">
             <button
               type="button"
-              className="sidebar-icon-button"
+              className={`theme-switch ${theme === "dark" ? "theme-switch-dark" : ""}`}
               aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+              aria-pressed={theme === "dark"}
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
             >
-              Theme
+              <span className="theme-switch-track">
+                <span className="theme-switch-label">Light</span>
+                <span className="theme-switch-label">Dark</span>
+                <span className="theme-switch-thumb" />
+              </span>
             </button>
           </div>
         </div>

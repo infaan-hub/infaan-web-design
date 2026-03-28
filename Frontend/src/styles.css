@@ -300,6 +300,69 @@ body[data-theme="dark"] .sidebar {
   font-size: 0.92rem;
 }
 
+.theme-switch {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.theme-switch-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  width: 100%;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+
+.theme-switch-label {
+  position: relative;
+  z-index: 1;
+  padding: 9px 12px;
+  color: #6c707a;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.theme-switch-thumb {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: calc(50% - 6px);
+  height: calc(100% - 12px);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff 0%, #eef1f5 100%);
+  border: 1px solid rgba(216, 219, 226, 0.9);
+  box-shadow: 0 8px 18px rgba(172, 176, 186, 0.16);
+  transition: transform 0.25s ease;
+}
+
+.theme-switch-dark .theme-switch-thumb {
+  transform: translateX(100%);
+}
+
+body[data-theme="dark"] .theme-switch-track {
+  background: linear-gradient(180deg, #30343c 0%, #23262d 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="dark"] .theme-switch-label {
+  color: #d7dde8;
+}
+
+body[data-theme="dark"] .theme-switch-thumb {
+  background: linear-gradient(180deg, #474c56 0%, #343941 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+}
+
 .page {
   padding: 20px 22px 32px;
 }
@@ -1017,10 +1080,16 @@ body[data-theme="dark"] textarea {
   place-items: center;
   border-radius: 46% 54% 46% 54% / 40% 44% 56% 60%;
   background: linear-gradient(180deg, rgba(255, 226, 207, 0.95), rgba(255, 241, 230, 0.8));
+  overflow: hidden;
 }
 
-.auth-figure {
-  font-size: clamp(5rem, 10vw, 7rem);
+.auth-visual-image {
+  width: calc(100% - 48px);
+  height: calc(100% - 48px);
+  border-radius: 36% 64% 38% 62% / 42% 40% 60% 58%;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 18px 40px rgba(71, 46, 24, 0.16);
 }
 
 .ticket-wrap {

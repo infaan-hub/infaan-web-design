@@ -1,3 +1,6 @@
+const registerVisualImage =
+  "https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80";
+
 function RegisterPage({ app }) {
   const { registerForm, setRegisterForm, updateField, submitAuth, beginGoogleLogin, loading, navigate } = app;
 
@@ -37,12 +40,6 @@ function RegisterPage({ app }) {
               <button type="button" className="social-icon-button google-button" onClick={beginGoogleLogin} aria-label="Register with Google">
                 <span className="google-g">G</span>
               </button>
-              <button type="button" className="social-icon-button" aria-label="Facebook">
-                f
-              </button>
-              <button type="button" className="social-icon-button" aria-label="Apple">
-                
-              </button>
             </div>
 
             <p className="auth-switch-copy">
@@ -53,7 +50,7 @@ function RegisterPage({ app }) {
 
         <div className="auth-visual-side">
           <div className="auth-visual-blob">
-            <div className="auth-figure">🎧</div>
+            <div className="auth-visual-image" style={{ backgroundImage: `url(${registerVisualImage})` }} />
           </div>
         </div>
       </section>
