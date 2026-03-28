@@ -8,10 +8,11 @@ const serviceImages = {
 };
 
 function HomePage({ app }) {
-  const { groupedPackages, setSelectedPackageId, requireLogin } = app;
-  const visibleServices = groupedPackages.filter((service) =>
-    ["website", "digital_ads", "logo_poster"].includes(service.category)
-  );
+  const { groupedPackages, setSelectedPackageId, requireLogin, formatPrice } = app;
+  const serviceOrder = ["website", "digital_ads", "logo_poster"];
+  const visibleServices = serviceOrder
+    .map((category) => groupedPackages.find((service) => service.category === category))
+    .filter(Boolean);
 
   return (
     <main className="main-content">
@@ -67,7 +68,12 @@ function HomePage({ app }) {
                           </>
                         ) : (
                           <>
-                            <strong>${pkg.prices.find((price) => price.billing_period === "monthly")?.amount || pkg.prices[0]?.amount}</strong>
+                            <strong>
+                              {formatPrice(
+                                pkg.prices.find((price) => price.billing_period === "monthly")?.amount || pkg.prices[0]?.amount,
+                                pkg.prices.find((price) => price.billing_period === "monthly")?.currency || pkg.prices[0]?.currency || "USD"
+                              )}
+                            </strong>
                             <span>/month</span>
                           </>
                         )}

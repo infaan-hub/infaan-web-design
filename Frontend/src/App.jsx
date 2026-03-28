@@ -63,6 +63,23 @@ const emptyPayment = {
   phone_number: "",
 };
 
+function formatPrice(amount, currency = "USD") {
+  if (amount === null || amount === undefined || amount === "") {
+    return `${currency} 0`;
+  }
+
+  const numericAmount = Number(amount);
+  if (Number.isNaN(numericAmount)) {
+    return `${currency} ${amount}`;
+  }
+
+  const needsDecimals = !Number.isInteger(numericAmount);
+  return `${currency} ${numericAmount.toLocaleString(undefined, {
+    minimumFractionDigits: needsDecimals ? 2 : 0,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 function App() {
   const [path, setPath] = useState(window.location.pathname);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -596,6 +613,7 @@ function App() {
     emptyAdminUser,
     emptyPackage,
     emptyPayment,
+    formatPrice,
   };
 
   const routes = {

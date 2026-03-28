@@ -1,5 +1,5 @@
 function BookingPage({ app }) {
-  const { selectedPackage, selectedPrice, submitBooking, bookingSent, loading, lastBooking, currentUser } = app;
+  const { selectedPackage, selectedPrice, submitBooking, bookingSent, loading, lastBooking, currentUser, formatPrice } = app;
   const issuedAt = lastBooking?.created_at ? new Date(lastBooking.created_at) : new Date();
   const ticketId = lastBooking ? `INF${String(lastBooking.id).padStart(6, "0")}${issuedAt.getDate()}` : "Pending";
 
@@ -29,9 +29,7 @@ function BookingPage({ app }) {
                 </div>
                 <div>
                   <span>Amount</span>
-                  <strong>
-                    {lastBooking.package_details?.currency} {lastBooking.package_details?.amount}
-                  </strong>
+                  <strong>{formatPrice(lastBooking.package_details?.amount, lastBooking.package_details?.currency)}</strong>
                 </div>
                 <div>
                   <span>Date & time</span>
@@ -64,7 +62,7 @@ function BookingPage({ app }) {
         ) : (
           <div className="form-card">
             <h3>{selectedPackage?.title || "Selected package"}</h3>
-            <p>{selectedPrice?.billing_period || "billing"} - {selectedPrice?.currency || ""} {selectedPrice?.amount || ""}</p>
+            <p>{selectedPrice?.billing_period || "billing"} - {formatPrice(selectedPrice?.amount || "", selectedPrice?.currency || "USD")}</p>
             <button type="button" className="solid-button" onClick={submitBooking} disabled={loading || bookingSent}>
               {bookingSent ? "Booking sent" : "Send booking"}
             </button>

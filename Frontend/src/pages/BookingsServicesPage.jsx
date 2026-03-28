@@ -1,5 +1,5 @@
 function BookingsServicesPage({ app }) {
-  const { subscriptions } = app;
+  const { subscriptions, formatPrice } = app;
 
   return (
     <main className="main-content">
@@ -16,7 +16,7 @@ function BookingsServicesPage({ app }) {
               <p>{booking.contact_phone}</p>
               <p>{booking.business_name}</p>
               <p>{booking.package_details?.title}</p>
-              <p>{booking.package_details?.billing_period} - {booking.package_details?.currency} {booking.package_details?.amount}</p>
+              <p>{booking.package_details?.billing_period} - {formatPrice(booking.package_details?.amount, booking.package_details?.currency)}</p>
               <span className={`status-pill status-${booking.status}`}>{booking.status}</span>
             </div>
           ))}

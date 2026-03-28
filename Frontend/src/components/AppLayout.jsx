@@ -99,10 +99,7 @@ function AppLayout({ app, children }) {
               <span />
               <span />
             </button>
-            <div>
-              <p className="micro-label">infaan web & design</p>
-              <h1>Infaan Web & Design</h1>
-            </div>
+            <h1>Infaan Web & Design</h1>
           </div>
         </header>
 

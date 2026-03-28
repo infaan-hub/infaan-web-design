@@ -435,6 +435,75 @@ body[data-theme="dark"] textarea {
   color: var(--ink);
 }
 
+body[data-theme="dark"] .sidebar-group-title,
+body[data-theme="dark"] .nav-link,
+body[data-theme="dark"] .nav-label-wrap small,
+body[data-theme="dark"] .pricing-heading span,
+body[data-theme="dark"] .pricing-plan-top p,
+body[data-theme="dark"] .pricing-feature-list,
+body[data-theme="dark"] .payment-step small,
+body[data-theme="dark"] .payment-helper-box,
+body[data-theme="dark"] .payment-total-row span,
+body[data-theme="dark"] .auth-link-button,
+body[data-theme="dark"] .auth-inline-link,
+body[data-theme="dark"] .auth-switch-copy,
+body[data-theme="dark"] .social-icon-button {
+  color: #d7dde8;
+}
+
+body[data-theme="dark"] .nav-link-active {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f1f3f7;
+}
+
+body[data-theme="dark"] .pricing-plan-card {
+  background: linear-gradient(180deg, rgba(34, 37, 44, 0.96), rgba(27, 29, 35, 0.94));
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="dark"] .pricing-plan-top,
+body[data-theme="dark"] .billing-form-card,
+body[data-theme="dark"] .billing-summary-card,
+body[data-theme="dark"] .payment-helper-box,
+body[data-theme="dark"] .payment-total-box,
+body[data-theme="dark"] .payment-total-final,
+body[data-theme="dark"] .auth-shell {
+  background: rgba(25, 28, 34, 0.94);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="dark"] .pricing-mini-pill {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f1f3f7;
+}
+
+body[data-theme="dark"] .payment-step span {
+  background: rgba(35, 38, 45, 0.96);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #d7dde8;
+}
+
+body[data-theme="dark"] .payment-total-row {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="dark"] .notice-success {
+  background: rgba(29, 67, 52, 0.9);
+}
+
+body[data-theme="dark"] .notice-error {
+  background: rgba(91, 40, 38, 0.92);
+}
+
+body[data-theme="dark"] .ticket-dash {
+  border-top-color: rgba(255, 255, 255, 0.22);
+}
+
+body[data-theme="dark"] .ticket-barcode span {
+  background: #f1f3f7;
+}
+
 .thin-header h1,
 .hero-copy h2,
 .section-headline h2,

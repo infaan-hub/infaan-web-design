@@ -1,5 +1,5 @@
 function DashboardPage({ app }) {
-  const { currentUser, subscriptions, navigate } = app;
+  const { currentUser, subscriptions, navigate, formatPrice } = app;
 
   return (
     <main className="main-content">
@@ -19,7 +19,7 @@ function DashboardPage({ app }) {
             <div key={item.id} className="subscription-card">
               <strong>{item.package_details?.title}</strong>
               <p>{item.business_name}</p>
-              <p>{item.package_details?.billing_period} - {item.package_details?.currency} {item.package_details?.amount}</p>
+              <p>{item.package_details?.billing_period} - {formatPrice(item.package_details?.amount, item.package_details?.currency)}</p>
               <span className={`status-pill status-${item.status}`}>{item.status}</span>
             </div>
           ))}

@@ -1,8 +1,9 @@
 function BillingPage({ app }) {
-  const { paymentForm, setPaymentForm, updateField, subscriptionForm, setSubscriptionForm, navigate, selectedPackage, selectedPrice } = app;
+  const { paymentForm, setPaymentForm, updateField, subscriptionForm, setSubscriptionForm, navigate, selectedPackage, selectedPrice, formatPrice } = app;
   const subtotal = Number(selectedPrice?.amount || 0);
   const serviceFee = selectedPrice?.billing_period === "per_task" ? 5 : 0;
   const total = subtotal + serviceFee;
+  const activeCurrency = selectedPrice?.currency || "USD";
 
   return (
     <main className="main-content">
@@ -26,7 +27,7 @@ function BillingPage({ app }) {
                   </>
                 ) : (
                   <>
-                    <strong>${selectedPrice?.amount || "0"}</strong>
+                    <strong>{formatPrice(selectedPrice?.amount || "0", activeCurrency)}</strong>
                     <span>/{selectedPrice?.billing_period || "plan"}</span>
                   </>
                 )}
@@ -140,15 +141,15 @@ function BillingPage({ app }) {
               <div className="payment-total-box">
                 <div className="payment-total-row">
                   <span>Subtotal</span>
-                  <strong>${subtotal.toFixed(2)}</strong>
+                  <strong>{formatPrice(subtotal, activeCurrency)}</strong>
                 </div>
                 <div className="payment-total-row">
                   <span>Service fee</span>
-                  <strong>${serviceFee.toFixed(2)}</strong>
+                  <strong>{formatPrice(serviceFee, activeCurrency)}</strong>
                 </div>
                 <div className="payment-total-row payment-total-final">
                   <span>Total amount</span>
-                  <strong>${total.toFixed(2)}</strong>
+                  <strong>{formatPrice(total, activeCurrency)}</strong>
                 </div>
               </div>
 
