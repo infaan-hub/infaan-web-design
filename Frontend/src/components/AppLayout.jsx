@@ -58,6 +58,21 @@ function AppLayout({ app, children }) {
         </nav>
 
         <div className="sidebar-footer">
+          <div className="sidebar-account-block">
+            {currentUser ? (
+              <>
+                <span className="role-chip">{currentUser.role}</span>
+                <button type="button" className="header-button sidebar-auth-button" onClick={logout}>
+                  Logout
+                </button>
+              </>
+            ) : (
+              <button type="button" className="header-button sidebar-auth-button" onClick={() => handleNavigation("/login")}>
+                Sign in
+              </button>
+            )}
+          </div>
+
           <div className="sidebar-utility-row">
             <button
               type="button"
@@ -88,21 +103,6 @@ function AppLayout({ app, children }) {
               <p className="micro-label">infaan web & design</p>
               <h1>Infaan Web & Design</h1>
             </div>
-          </div>
-
-          <div className="header-right">
-            {currentUser ? (
-              <>
-                <span className="role-chip">{currentUser.role}</span>
-                <button type="button" className="header-button" onClick={logout}>
-                  Logout
-                </button>
-              </>
-            ) : (
-              <button type="button" className="header-button" onClick={() => handleNavigation("/login")}>
-                Sign in
-              </button>
-            )}
           </div>
         </header>
 

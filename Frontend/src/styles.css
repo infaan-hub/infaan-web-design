@@ -271,6 +271,7 @@ body[data-theme="dark"] .sidebar {
 
 .sidebar-footer {
   display: grid;
+  gap: 12px;
   margin-top: 18px;
   padding: 12px;
   border-radius: 22px;
@@ -278,11 +279,20 @@ body[data-theme="dark"] .sidebar {
   border: 1px solid rgba(255, 255, 255, 0.55);
 }
 
+.sidebar-account-block {
+  display: grid;
+  gap: 10px;
+}
+
 .sidebar-utility-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.sidebar-auth-button {
+  width: 100%;
 }
 
 .sidebar-icon-button {
@@ -450,10 +460,6 @@ body[data-theme="dark"] textarea {
   height: 2px;
   border-radius: 999px;
   background: var(--brand);
-}
-
-.header-right {
-  margin-left: auto;
 }
 
 .header-button,
