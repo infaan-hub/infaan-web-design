@@ -1,3 +1,12 @@
+const serviceImages = {
+  website:
+    "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80",
+  digital_ads:
+    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
+  logo_poster:
+    "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
+};
+
 function PackagePage({ app }) {
   const { selectedPackage, selectedService, groupedPackages, navigate, continueToPackageTime } = app;
 
@@ -11,6 +20,10 @@ function PackagePage({ app }) {
         {selectedPackage ? (
           <div className="package-stack">
             <div className={`package-card tone-${selectedPackage.tier}`}>
+              <div
+                className="package-card-image"
+                style={{ backgroundImage: `url(${serviceImages[selectedService?.category] || serviceImages.website})` }}
+              />
               <div className="package-topline">
                 <span className="tier-pill">{selectedPackage.tier}</span>
                 <h4>{selectedPackage.title}</h4>
@@ -50,6 +63,10 @@ function PackagePage({ app }) {
             {groupedPackages.flatMap((service) =>
               service.packages.map((pkg) => (
                 <div key={pkg.id} className={`package-card tone-${pkg.tier}`}>
+                  <div
+                    className="package-card-image"
+                    style={{ backgroundImage: `url(${serviceImages[service.category] || serviceImages.website})` }}
+                  />
                   <h4>{pkg.title}</h4>
                   <p>{pkg.description}</p>
                   <div className="hero-actions">
