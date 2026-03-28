@@ -6,7 +6,9 @@ import AdminRegisterPage from "./pages/AdminRegisterPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import BillingPage from "./pages/BillingPage";
 import BookingPage from "./pages/BookingPage";
+import BookedServicePage from "./pages/BookedServicePage";
 import BookingsServicesPage from "./pages/BookingsServicesPage";
+import BookingHistoryPage from "./pages/BookingHistoryPage";
 import DashboardPage from "./pages/DashboardPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
@@ -17,7 +19,7 @@ import RegisterPage from "./pages/RegisterPage";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://infaan-web-design.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 const CUSTOMER_PROTECTED_PATHS = ["/dashboard", "/package", "/package-time", "/billing", "/booking"];
-const ADMIN_PROTECTED_PATHS = ["/admin-dashboard", "/admin/users", "/bookings-services"];
+const ADMIN_PROTECTED_PATHS = ["/admin-dashboard", "/admin/users", "/bookings-services", "/booked-service", "/booking-history"];
 
 const emptySubscription = {
   business_name: "",
@@ -98,6 +100,7 @@ function App() {
   const [packages, setPackages] = useState([]);
   const [prices, setPrices] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
+  const [selectedBookingId, setSelectedBookingId] = useState(localStorage.getItem("infaan_selected_booking") || "");
   const [users, setUsers] = useState([]);
   const [selectedPackageId, setSelectedPackageId] = useState(localStorage.getItem("infaan_selected_package") || "");
   const [selectedPriceId, setSelectedPriceId] = useState(localStorage.getItem("infaan_selected_price") || "");
@@ -132,6 +135,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem("infaan_selected_price", selectedPriceId || "");
   }, [selectedPriceId]);
+
+  useEffect(() => {
+    localStorage.setItem("infaan_selected_booking", selectedBookingId || "");
+  }, [selectedBookingId]);
 
   useEffect(() => {
     if (pendingPayment) {
@@ -359,6 +366,7 @@ function App() {
   const selectedPackage = packages.find((pkg) => String(pkg.id) === String(selectedPackageId));
   const selectedPrice = prices.find((price) => String(price.id) === String(selectedPriceId));
   const selectedService = services.find((service) => service.id === selectedPackage?.service) || null;
+  const selectedBooking = subscriptions.find((booking) => String(booking.id) === String(selectedBookingId)) || null;
 
   function requireLogin(nextPath) {
     if (!currentUser) {
@@ -622,6 +630,14 @@ function App() {
         body: JSON.stringify({
           ...subscriptionForm,
           package_price: Number(selectedPriceId),
+          payment_status: "paid",
+          payment_method: pendingPayment?.method || paymentForm.method,
+          payment_contact:
+            (pendingPayment?.method || paymentForm.method) === "mixx"
+              ? pendingPayment?.phone_number || paymentForm.phone_number
+              : pendingPayment?.card_name || paymentForm.card_name || "Gateway checkout",
+          payment_amount: selectedPrice?.amount || 0,
+          payment_currency: selectedPrice?.currency || "USD",
           notes: `${subscriptionForm.notes}\nPayment method: ${pendingPayment?.method || paymentForm.method}\nPayment contact: ${
             (pendingPayment?.method || paymentForm.method) === "mixx"
               ? pendingPayment?.phone_number || paymentForm.phone_number
@@ -633,6 +649,7 @@ function App() {
       });
       setBookingSent(true);
       setLastBooking(createdBooking);
+      setSelectedBookingId(String(createdBooking.id));
       setPendingPayment(null);
       setFeedback("Booking sent successfully.");
       await loadProfileAndSubscriptions();
@@ -677,8 +694,59 @@ function App() {
     setPendingPayment(null);
     setBookingSent(false);
     setLastBooking(null);
+    setSelectedBookingId("");
     setFeedback("Signed out successfully.");
     navigate("/home");
+  }
+
+  function openBooking(bookingId) {
+    setSelectedBookingId(String(bookingId));
+    navigate("/booked-service");
+  }
+
+  async function updateBooking(bookingId, updates, successMessage) {
+    setLoading(true);
+    setError("");
+    setFeedback("");
+    try {
+      const updatedBooking = await apiRequest(`/subscriptions/${bookingId}/`, {
+        method: "PATCH",
+        body: JSON.stringify(updates),
+      });
+      setSubscriptions((previous) =>
+        previous.map((booking) => (String(booking.id) === String(bookingId) ? updatedBooking : booking))
+      );
+      if (String(selectedBookingId) === String(bookingId)) {
+        setSelectedBookingId(String(updatedBooking.id));
+      }
+      setFeedback(successMessage);
+      return updatedBooking;
+    } catch (requestError) {
+      setError(requestError.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function markBookingDone() {
+    if (!selectedBookingId) return;
+    updateBooking(selectedBookingId, { status: "completed" }, "Booking marked as done and moved to history.").then(
+      (updatedBooking) => {
+        if (updatedBooking) {
+          navigate("/booking-history");
+        }
+      }
+    );
+  }
+
+  function setBookingPaymentStatus(paymentStatus) {
+    if (!selectedBookingId) return;
+    updateBooking(
+      selectedBookingId,
+      { payment_status: paymentStatus },
+      paymentStatus === "paid" ? "Payment marked as paid." : "Payment marked as pending."
+    );
   }
 
   const app = {
@@ -700,6 +768,9 @@ function App() {
     selectedPackage,
     selectedPrice,
     selectedService,
+    selectedBooking,
+    selectedBookingId,
+    setSelectedBookingId,
     selectedPackageId,
     setSelectedPackageId,
     selectedPriceId,
@@ -738,6 +809,9 @@ function App() {
     savePackage,
     deletePackage,
     submitBooking,
+    openBooking,
+    markBookingDone,
+    setBookingPaymentStatus,
     requireLogin,
     beginGoogleLogin,
     logout,
@@ -761,6 +835,8 @@ function App() {
     "/package-time": <PackageTimePage app={app} />,
     "/billing": <BillingPage app={app} />,
     "/booking": <BookingPage app={app} />,
+    "/booked-service": <BookedServicePage app={app} />,
+    "/booking-history": <BookingHistoryPage app={app} />,
     "/admin/login": <AdminLoginPage app={app} />,
     "/admin/register": <AdminRegisterPage app={app} />,
     "/admin-dashboard": <AdminDashboardPage app={app} />,

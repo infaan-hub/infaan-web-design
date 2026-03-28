@@ -18,6 +18,8 @@ function buildSidebarGroups(app) {
     { href: "/admin-dashboard", label: "Admin Dashboard", sign: "AD", hint: "manage" },
     { href: "/admin/users", label: "Users", sign: "US", hint: "accounts" },
     { href: "/bookings-services", label: "Bookings", sign: "BS", hint: "orders" },
+    { href: "/booked-service", label: "Booked Service", sign: "SV", hint: "detail" },
+    { href: "/booking-history", label: "History", sign: "BH", hint: "done" },
   ];
 
   const guestAccess = [

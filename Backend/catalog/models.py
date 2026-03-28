@@ -78,9 +78,18 @@ class Subscription(TimeStampedModel):
         COMPLETED = "completed", "Completed"
         CANCELLED = "cancelled", "Cancelled"
 
+    class PaymentStatus(models.TextChoices):
+        PENDING = "pending", "Pending"
+        PAID = "paid", "Paid"
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="subscriptions")
     package_price = models.ForeignKey(PackagePrice, on_delete=models.PROTECT, related_name="subscriptions")
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
+    payment_method = models.CharField(max_length=30, blank=True)
+    payment_contact = models.CharField(max_length=120, blank=True)
+    payment_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    payment_currency = models.CharField(max_length=10, default="USD")
     business_name = models.CharField(max_length=120)
     contact_email = models.EmailField()
     contact_phone = models.CharField(max_length=30)

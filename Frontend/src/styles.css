@@ -809,6 +809,46 @@ body[data-theme="dark"] .price-strip-card {
   text-transform: capitalize;
 }
 
+.booking-admin-card {
+  display: grid;
+  gap: 12px;
+}
+
+.booking-admin-topline {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.booking-status-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.status-payment-pending {
+  background: #fbe8af;
+}
+
+.status-payment-paid {
+  background: #d9f1df;
+}
+
+.booking-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.booking-link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
 .hero-banner {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
