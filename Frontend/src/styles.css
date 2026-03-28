@@ -1792,6 +1792,38 @@ textarea {
     padding: 18px;
   }
 
+  .visual-card,
+  .package-card,
+  .pricing-plan-card,
+  .form-card,
+  .profile-card,
+  .subscription-card,
+  .service-catalog-block,
+  .package-service-card,
+  .success-ticket,
+  .billing-summary-card,
+  .billing-form-card {
+    width: min(100%, 320px);
+    margin-inline: auto;
+  }
+
+  .package-detail-shell,
+  .service-package-track,
+  .package-grid,
+  .admin-grid,
+  .subscription-stack,
+  .package-stack,
+  .main-content,
+  .package-catalog,
+  .service-visual-grid,
+  .booking-review-grid,
+  .dashboard-task-grid,
+  .selected-credentials,
+  .package-price-strip,
+  .booking-info-grid {
+    justify-items: center;
+  }
+
   .hero-copy h2 {
     font-size: 2.4rem;
   }
