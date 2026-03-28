@@ -5,7 +5,7 @@ function LoginPage({ app }) {
     <main className="auth-page">
       <section className="auth-shell">
         <div className="auth-form-side">
-          <form className="auth-form" onSubmit={(event) => { event.preventDefault(); submitAuth(loginForm, "/auth/login/"); }}>
+          <form className="auth-form" onSubmit={(event) => { event.preventDefault(); submitAuth(loginForm, "/auth/login/", "customer"); }}>
             <h2>Welcome Back!!</h2>
             <label className="auth-input-wrap">
               <span>Email or Username</span>

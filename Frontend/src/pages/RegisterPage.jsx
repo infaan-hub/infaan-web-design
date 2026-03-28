@@ -5,7 +5,7 @@ function RegisterPage({ app }) {
     <main className="auth-page">
       <section className="auth-shell">
         <div className="auth-form-side">
-          <form className="auth-form" onSubmit={(event) => { event.preventDefault(); submitAuth(registerForm, "/auth/register/"); }}>
+          <form className="auth-form" onSubmit={(event) => { event.preventDefault(); submitAuth(registerForm, "/auth/register/", "customer"); }}>
             <h2>Create Account</h2>
             <label className="auth-input-wrap">
               <span>Username</span>

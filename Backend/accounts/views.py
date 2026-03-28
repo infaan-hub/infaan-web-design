@@ -1,11 +1,23 @@
 from rest_framework import permissions, status, viewsets
-from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import CustomUser
 from .serializers import AdminUserSerializer, LoginSerializer, RegisterSerializer, UserSerializer
+
+
+def build_auth_response(user, status_code=status.HTTP_200_OK):
+    refresh = RefreshToken.for_user(user)
+    return Response(
+        {
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "user": UserSerializer(user).data,
+        },
+        status=status_code,
+    )
 
 
 class IsAdminUserRole(permissions.BasePermission):
@@ -20,8 +32,7 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        token, _ = Token.objects.get_or_create(user=user)
-        return Response({"token": token.key, "user": UserSerializer(user).data}, status=status.HTTP_201_CREATED)
+        return build_auth_response(user, status.HTTP_201_CREATED)
 
 
 class AdminRegisterView(APIView):
@@ -31,8 +42,7 @@ class AdminRegisterView(APIView):
         serializer = AdminUserSerializer(data={**request.data, "role": CustomUser.Role.ADMIN})
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        token, _ = Token.objects.get_or_create(user=user)
-        return Response({"token": token.key, "user": UserSerializer(user).data}, status=status.HTTP_201_CREATED)
+        return build_auth_response(user, status.HTTP_201_CREATED)
 
 
 class LoginView(APIView):
@@ -42,8 +52,7 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
-        token, _ = Token.objects.get_or_create(user=user)
-        return Response({"token": token.key, "user": UserSerializer(user).data})
+        return build_auth_response(user)
 
 
 @api_view(["GET"])

@@ -14,8 +14,10 @@ import PackagePage from "./pages/PackagePage";
 import PackageTimePage from "./pages/PackageTimePage";
 import RegisterPage from "./pages/RegisterPage";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://infaan-web-design.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+const CUSTOMER_PROTECTED_PATHS = ["/dashboard", "/package", "/package-time", "/billing", "/booking"];
+const ADMIN_PROTECTED_PATHS = ["/admin-dashboard", "/admin/users", "/bookings-services"];
 
 const emptySubscription = {
   business_name: "",
@@ -66,6 +68,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem("infaan_theme") || "light");
   const [token, setToken] = useState(localStorage.getItem("infaan_token") || "");
+  const [refreshToken, setRefreshToken] = useState(localStorage.getItem("infaan_refresh_token") || "");
   const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem("infaan_user") || "null"));
   const [services, setServices] = useState([]);
   const [packages, setPackages] = useState([]);
@@ -88,8 +91,6 @@ function App() {
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const authHeaders = token ? { Authorization: `Token ${token}` } : {};
 
   useEffect(() => {
     if (window.location.pathname === "/") {
@@ -129,15 +130,34 @@ function App() {
     localStorage.setItem("infaan_theme", theme);
   }, [theme]);
 
-  async function apiRequest(pathname, options = {}) {
-    const response = await fetch(`${API_BASE}${pathname}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-        ...(options.headers || {}),
-      },
-      ...options,
-    });
+  useEffect(() => {
+    if (refreshToken) {
+      localStorage.setItem("infaan_refresh_token", refreshToken);
+    } else {
+      localStorage.removeItem("infaan_refresh_token");
+    }
+  }, [refreshToken]);
+
+  function navigate(nextPath, replace = false) {
+    const method = replace ? "replaceState" : "pushState";
+    window.history[method]({}, "", nextPath);
+    setPath(nextPath);
+    setSidebarOpen(false);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  function clearAuthState() {
+    setToken("");
+    setRefreshToken("");
+    localStorage.removeItem("infaan_token");
+    localStorage.removeItem("infaan_refresh_token");
+    localStorage.removeItem("infaan_user");
+    setCurrentUser(null);
+    setSubscriptions([]);
+    setUsers([]);
+  }
+
+  async function parseApiResponse(response) {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const message =
@@ -148,6 +168,59 @@ function App() {
       throw new Error(message);
     }
     return data;
+  }
+
+  async function refreshAccessToken(activeRefreshToken = refreshToken) {
+    if (!activeRefreshToken) {
+      throw new Error("Your session has expired. Please login again.");
+    }
+
+    const response = await fetch(`${API_BASE}/auth/refresh/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refresh: activeRefreshToken }),
+    });
+    const data = await parseApiResponse(response);
+    setToken(data.access);
+    localStorage.setItem("infaan_token", data.access);
+    return data.access;
+  }
+
+  async function apiRequest(pathname, options = {}, allowRetry = true) {
+    const headers = {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    };
+
+    const response = await fetch(`${API_BASE}${pathname}`, {
+      ...options,
+      headers,
+    });
+
+    if (response.status === 401 && allowRetry && refreshToken) {
+      try {
+        const nextAccessToken = await refreshAccessToken(refreshToken);
+        return apiRequest(
+          pathname,
+          {
+            ...options,
+            headers: {
+              ...(options.headers || {}),
+              Authorization: `Bearer ${nextAccessToken}`,
+            },
+          },
+          false
+        );
+      } catch (requestError) {
+        clearAuthState();
+        throw requestError;
+      }
+    }
+
+    return parseApiResponse(response);
   }
 
   async function loadCatalog() {
@@ -161,21 +234,15 @@ function App() {
     setPrices(priceData.results || priceData);
   }
 
-  async function loadProfileAndSubscriptions(activeToken = token) {
-    if (!activeToken) return;
-    const [profileResponse, subscriptionResponse] = await Promise.all([
-      fetch(`${API_BASE}/auth/me/`, { headers: { Authorization: `Token ${activeToken}` } }),
-      fetch(`${API_BASE}/subscriptions/`, { headers: { Authorization: `Token ${activeToken}` } }),
-    ]);
-    const profileData = await profileResponse.json().catch(() => ({}));
-    const subscriptionData = await subscriptionResponse.json().catch(() => []);
-    if (profileResponse.ok && profileData.id) {
+  async function loadProfileAndSubscriptions() {
+    if (!token) return;
+
+    const [profileData, subscriptionData] = await Promise.all([apiRequest("/auth/me/"), apiRequest("/subscriptions/")]);
+    if (profileData?.id) {
       setCurrentUser(profileData);
       localStorage.setItem("infaan_user", JSON.stringify(profileData));
     }
-    if (subscriptionResponse.ok) {
-      setSubscriptions(subscriptionData.results || subscriptionData || []);
-    }
+    setSubscriptions(subscriptionData.results || subscriptionData || []);
   }
 
   async function loadUsers() {
@@ -190,18 +257,59 @@ function App() {
   useEffect(() => {
     if (token) {
       localStorage.setItem("infaan_token", token);
-      loadProfileAndSubscriptions(token).catch(() => setError("Unable to load account data."));
+      loadProfileAndSubscriptions().catch((requestError) => {
+        clearAuthState();
+        setError(requestError.message || "Unable to load account data.");
+      });
     } else {
       localStorage.removeItem("infaan_token");
       localStorage.removeItem("infaan_user");
       setCurrentUser(null);
       setSubscriptions([]);
+      setUsers([]);
     }
   }, [token]);
 
   useEffect(() => {
-    if (currentUser?.role === "admin" && ["/admin-dashboard", "/admin/users"].includes(path)) {
+    if (currentUser?.role === "admin" && ["/admin-dashboard", "/admin/users", "/bookings-services"].includes(path)) {
       loadUsers().catch((requestError) => setError(requestError.message));
+    }
+  }, [path, currentUser]);
+
+  useEffect(() => {
+    if (ADMIN_PROTECTED_PATHS.includes(path)) {
+      if (!currentUser) {
+        setFeedback("Please login to access admin functions.");
+        navigate("/admin/login", true);
+        return;
+      }
+      if (currentUser.role !== "admin") {
+        setError("Admin access only.");
+        navigate("/dashboard", true);
+      }
+      return;
+    }
+
+    if (CUSTOMER_PROTECTED_PATHS.includes(path)) {
+      if (!currentUser) {
+        setFeedback("Please login to access your account.");
+        navigate("/login", true);
+        return;
+      }
+      if (currentUser.role !== "customer") {
+        setFeedback("Please use the admin area for admin functions.");
+        navigate("/admin-dashboard", true);
+      }
+      return;
+    }
+
+    if (currentUser?.role === "customer" && ["/login", "/register"].includes(path)) {
+      navigate("/dashboard", true);
+      return;
+    }
+
+    if (currentUser?.role === "admin" && ["/admin/login", "/admin/register"].includes(path)) {
+      navigate("/admin-dashboard", true);
     }
   }, [path, currentUser]);
 
@@ -217,14 +325,6 @@ function App() {
   const selectedPackage = packages.find((pkg) => String(pkg.id) === String(selectedPackageId));
   const selectedPrice = prices.find((price) => String(price.id) === String(selectedPriceId));
 
-  function navigate(nextPath, replace = false) {
-    const method = replace ? "replaceState" : "pushState";
-    window.history[method]({}, "", nextPath);
-    setPath(nextPath);
-    setSidebarOpen(false);
-    window.scrollTo({ top: 0, behavior: "auto" });
-  }
-
   function requireLogin(nextPath) {
     if (!currentUser) {
       setFeedback("Please login first to continue with a subscription.");
@@ -239,17 +339,29 @@ function App() {
     setter((previous) => ({ ...previous, [field]: value }));
   }
 
-  async function submitAuth(form, routePath) {
+  async function submitAuth(form, routePath, expectedRole) {
     setLoading(true);
     setError("");
     setFeedback("");
+
     try {
-      const data = await apiRequest(routePath, { method: "POST", body: JSON.stringify(form) });
-      setToken(data.token);
+      const data = await apiRequest(routePath, { method: "POST", body: JSON.stringify(form) }, false);
+      if (expectedRole && data.user?.role !== expectedRole) {
+        throw new Error(
+          expectedRole === "admin"
+            ? "This page is only for admin accounts."
+            : "This page is only for customer accounts."
+        );
+      }
+
+      setToken(data.access);
+      setRefreshToken(data.refresh);
       setCurrentUser(data.user);
+      localStorage.setItem("infaan_user", JSON.stringify(data.user));
       setFeedback("Authentication successful.");
       navigate(data.user.role === "admin" ? "/admin-dashboard" : "/dashboard");
     } catch (requestError) {
+      clearAuthState();
       setError(requestError.message);
     } finally {
       setLoading(false);
@@ -359,7 +471,7 @@ function App() {
   }
 
   function logout() {
-    setToken("");
+    clearAuthState();
     setSelectedPackageId("");
     setSelectedPriceId("");
     setPendingPayment(null);
@@ -378,6 +490,7 @@ function App() {
     setSidebarOpen,
     currentUser,
     token,
+    refreshToken,
     services,
     groupedPackages,
     packages,

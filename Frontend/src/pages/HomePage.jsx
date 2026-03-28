@@ -18,11 +18,7 @@ function HomePage({ app }) {
       <section className="hero-banner">
         <div className="hero-copy">
           <p className="micro-label">home</p>
-          <h2>Thin header. Hidden sidebar. Strong visuals. One clean subscription flow.</h2>
-          <p>
-            Start by browsing web services, digital ads, and logo and poster design. Package
-            subscription is protected, so users must login before continuing.
-          </p>
+          <h2>Explore web design, digital ads, and brand identity packages.</h2>
         </div>
       </section>
 

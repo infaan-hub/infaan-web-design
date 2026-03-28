@@ -1,6 +1,5 @@
 from django.contrib.auth import authenticate
 from rest_framework import serializers
-from rest_framework.authtoken.models import Token
 
 from .models import CustomUser
 
@@ -42,7 +41,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = CustomUser(**validated_data, role=CustomUser.Role.CUSTOMER)
         user.set_password(password)
         user.save()
-        Token.objects.get_or_create(user=user)
         return user
 
 
@@ -68,7 +66,6 @@ class AdminUserSerializer(serializers.ModelSerializer):
         user = CustomUser(**validated_data)
         user.set_password(password)
         user.save()
-        Token.objects.get_or_create(user=user)
         return user
 
     def update(self, instance, validated_data):

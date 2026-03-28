@@ -8,7 +8,7 @@ function AdminRegisterPage({ app }) {
           <p className="micro-label">admin register</p>
           <h2>/admin/register</h2>
         </div>
-        <form className="form-card" onSubmit={(event) => { event.preventDefault(); submitAuth(adminRegisterForm, "/auth/admin/register/"); }}>
+        <form className="form-card" onSubmit={(event) => { event.preventDefault(); submitAuth(adminRegisterForm, "/auth/admin/register/", "admin"); }}>
           <input value={adminRegisterForm.username} onChange={(event) => updateField(setAdminRegisterForm, "username", event.target.value)} placeholder="Admin username" />
           <input value={adminRegisterForm.first_name} onChange={(event) => updateField(setAdminRegisterForm, "first_name", event.target.value)} placeholder="First name" />
           <input value={adminRegisterForm.last_name} onChange={(event) => updateField(setAdminRegisterForm, "last_name", event.target.value)} placeholder="Last name" />
