@@ -64,6 +64,7 @@ const emptyPayment = {
 function App() {
   const [path, setPath] = useState(window.location.pathname);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [theme, setTheme] = useState(localStorage.getItem("infaan_theme") || "light");
   const [token, setToken] = useState(localStorage.getItem("infaan_token") || "");
   const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem("infaan_user") || "null"));
   const [services, setServices] = useState([]);
@@ -122,6 +123,11 @@ function App() {
       localStorage.removeItem("infaan_last_booking");
     }
   }, [lastBooking]);
+
+  useEffect(() => {
+    document.body.dataset.theme = theme;
+    localStorage.setItem("infaan_theme", theme);
+  }, [theme]);
 
   async function apiRequest(pathname, options = {}) {
     const response = await fetch(`${API_BASE}${pathname}`, {
@@ -365,6 +371,8 @@ function App() {
   const app = {
     path,
     navigate,
+    theme,
+    setTheme,
     sidebarOpen,
     setSidebarOpen,
     currentUser,

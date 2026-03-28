@@ -1,25 +1,58 @@
-const navLinks = [
-  ["/home", "Home"],
-  ["/package", "Package"],
-  ["/package-time", "Package Time"],
-  ["/billing", "Billing"],
-  ["/booking", "Booking"],
-  ["/dashboard", "Dashboard"],
-  ["/login", "Login"],
-  ["/register", "Register"],
-  ["/admin/login", "Admin Login"],
-  ["/admin/register", "Admin Register"],
-  ["/admin-dashboard", "Admin Dashboard"],
-  ["/admin/users", "Admin Users"],
-  ["/bookings-services", "Bookings Services"],
+const menuLinks = [
+  { href: "/home", label: "Home", sign: "HM" },
+  { href: "/package", label: "Package", sign: "PK" },
+  { href: "/package-time", label: "Package Time", sign: "PT" },
+  { href: "/billing", label: "Billing", sign: "BL" },
+  { href: "/booking", label: "Booking", sign: "BK" },
+  { href: "/dashboard", label: "Dashboard", sign: "DB" },
+];
+
+const accessLinks = [
+  { href: "/login", label: "Login", sign: "LG" },
+  { href: "/register", label: "Register", sign: "RG" },
+  { href: "/admin/login", label: "Admin Login", sign: "AL" },
+  { href: "/admin/register", label: "Admin Register", sign: "AR" },
+  { href: "/admin-dashboard", label: "Admin Dashboard", sign: "AD" },
+  { href: "/admin/users", label: "Admin Users", sign: "AU" },
+  { href: "/bookings-services", label: "Bookings Services", sign: "BS" },
 ];
 
 function AppLayout({ app, children }) {
-  const { currentUser, sidebarOpen, setSidebarOpen, navigate, logout, feedback, error } = app;
+  const { currentUser, sidebarOpen, setSidebarOpen, navigate, logout, feedback, error, path, theme, setTheme } = app;
+
+  function NavGroup({ title, items }) {
+    return (
+      <div className="nav-group">
+        <p className="sidebar-group-title">{title}</p>
+        <div className="sidebar-group-card">
+          {items.map((item) => (
+            <button
+              key={item.href}
+              type="button"
+              className={`nav-link ${path === item.href ? "nav-link-active" : ""}`}
+              onClick={() => navigate(item.href)}
+            >
+              <span className="nav-sign">{item.sign}</span>
+              <span className="nav-label-wrap">
+                <strong>{item.label}</strong>
+                <small>{item.href}</small>
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`shell ${sidebarOpen ? "shell-sidebar-open" : "shell-sidebar-closed"}`}>
       <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
+        <div className="sidebar-window-dots">
+          <span />
+          <span />
+          <span />
+        </div>
+
         <div className="sidebar-brand">
           <span className="sidebar-mark">i</span>
           <div>
@@ -29,16 +62,32 @@ function AppLayout({ app, children }) {
         </div>
 
         <nav className="sidebar-nav">
-          {navLinks.map(([href, label]) => (
-            <button key={href} type="button" className="nav-link" onClick={() => navigate(href)}>
-              <span className="nav-dot" />
-              {label}
-            </button>
-          ))}
+          <NavGroup title="Menu" items={menuLinks} />
+          <NavGroup title="Access" items={accessLinks} />
         </nav>
 
         <div className="sidebar-footer">
-          <p>Web services, digital ads, logo and poster packages, bookings and dashboards.</p>
+          <div className="sidebar-utility-row">
+            <button
+              type="button"
+              className="sidebar-icon-button"
+              aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            >
+              {theme === "light" ? "☾" : "☀"}
+            </button>
+            <button
+              type="button"
+              className="sidebar-icon-button"
+              aria-label={currentUser ? "Go to account" : "Open login"}
+              onClick={() => navigate(currentUser ? "/dashboard" : "/login")}
+            >
+              {currentUser ? "◉" : "⌁"}
+            </button>
+            <button type="button" className="sidebar-icon-button" aria-label="Logout" onClick={logout}>
+              ⎋
+            </button>
+          </div>
         </div>
       </aside>
 
