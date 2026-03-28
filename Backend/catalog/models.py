@@ -71,6 +71,20 @@ class PackagePrice(TimeStampedModel):
         unique_together = ("package", "billing_period", "currency")
 
 
+class PortfolioItem(TimeStampedModel):
+    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name="portfolio_items")
+    package = models.ForeignKey(ServicePackage, on_delete=models.CASCADE, related_name="portfolio_items")
+    name = models.CharField(max_length=150)
+    image_data = models.TextField()
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["service__name", "name"]
+
+    def __str__(self):
+        return f"{self.service.name} - {self.name}"
+
+
 class Subscription(TimeStampedModel):
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"

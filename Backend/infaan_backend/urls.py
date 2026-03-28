@@ -4,13 +4,14 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.views import AdminRegisterView, GoogleLoginView, LoginView, RegisterView, UserViewSet, profile
-from catalog.views import PackagePriceViewSet, ServicePackageViewSet, ServiceViewSet, SubscriptionViewSet
+from catalog.views import PortfolioItemViewSet, PackagePriceViewSet, ServicePackageViewSet, ServiceViewSet, SubscriptionViewSet
 
 router = DefaultRouter()
 router.register("users", UserViewSet, basename="user")
 router.register("services", ServiceViewSet, basename="service")
 router.register("packages", ServicePackageViewSet, basename="package")
 router.register("prices", PackagePriceViewSet, basename="price")
+router.register("portfolio-items", PortfolioItemViewSet, basename="portfolio-item")
 router.register("subscriptions", SubscriptionViewSet, basename="subscription")
 
 urlpatterns = [

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import PackagePrice, Service, ServicePackage, Subscription
+from .models import PackagePrice, PortfolioItem, Service, ServicePackage, Subscription
 
 
 class ServiceSerializer(serializers.ModelSerializer):
@@ -51,6 +51,15 @@ class ServicePackageSerializer(serializers.ModelSerializer):
                 PackagePrice.objects.create(package=instance, **price_data)
 
         return instance
+
+
+class PortfolioItemSerializer(serializers.ModelSerializer):
+    service_name = serializers.CharField(source="service.name", read_only=True)
+    package_title = serializers.CharField(source="package.title", read_only=True)
+
+    class Meta:
+        model = PortfolioItem
+        fields = "__all__"
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):

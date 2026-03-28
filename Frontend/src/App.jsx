@@ -14,6 +14,7 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import PackagePage from "./pages/PackagePage";
 import PackageTimePage from "./pages/PackageTimePage";
+import PortfolioPage from "./pages/PortfolioPage";
 import RegisterPage from "./pages/RegisterPage";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://infaan-web-design.onrender.com/api";
@@ -70,6 +71,13 @@ const emptyPayment = {
   cvv: "",
   phone_number: "",
 };
+const emptyPortfolio = {
+  name: "",
+  service: "",
+  package: "",
+  image_data: "",
+  is_active: true,
+};
 
 function formatPrice(amount, currency = "USD") {
   if (amount === null || amount === undefined || amount === "") {
@@ -99,8 +107,12 @@ function App() {
   const [services, setServices] = useState([]);
   const [packages, setPackages] = useState([]);
   const [prices, setPrices] = useState([]);
+  const [portfolioItems, setPortfolioItems] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [selectedBookingId, setSelectedBookingId] = useState(localStorage.getItem("infaan_selected_booking") || "");
+  const [selectedPortfolioServiceId, setSelectedPortfolioServiceId] = useState(
+    localStorage.getItem("infaan_selected_portfolio_service") || ""
+  );
   const [users, setUsers] = useState([]);
   const [selectedPackageId, setSelectedPackageId] = useState(localStorage.getItem("infaan_selected_package") || "");
   const [selectedPriceId, setSelectedPriceId] = useState(localStorage.getItem("infaan_selected_price") || "");
@@ -114,6 +126,8 @@ function App() {
   const [adminUserForm, setAdminUserForm] = useState(emptyAdminUser);
   const [packageForm, setPackageForm] = useState(emptyPackage);
   const [editingPackageId, setEditingPackageId] = useState(null);
+  const [portfolioForm, setPortfolioForm] = useState(emptyPortfolio);
+  const [editingPortfolioId, setEditingPortfolioId] = useState(null);
   const [paymentForm, setPaymentForm] = useState(emptyPayment);
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
@@ -139,6 +153,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem("infaan_selected_booking", selectedBookingId || "");
   }, [selectedBookingId]);
+
+  useEffect(() => {
+    localStorage.setItem("infaan_selected_portfolio_service", selectedPortfolioServiceId || "");
+  }, [selectedPortfolioServiceId]);
 
   useEffect(() => {
     if (pendingPayment) {
@@ -263,14 +281,16 @@ function App() {
   }
 
   async function loadCatalog() {
-    const [serviceData, packageData, priceData] = await Promise.all([
+    const [serviceData, packageData, priceData, portfolioData] = await Promise.all([
       apiRequest("/services/"),
       apiRequest("/packages/"),
       apiRequest("/prices/"),
+      apiRequest("/portfolio-items/"),
     ]);
     setServices(serviceData.results || serviceData);
     setPackages(packageData.results || packageData);
     setPrices(priceData.results || priceData);
+    setPortfolioItems(portfolioData.results || portfolioData);
   }
 
   async function loadProfileAndSubscriptions() {
@@ -362,11 +382,21 @@ function App() {
       })),
     [services, packages]
   );
+  const groupedPortfolio = useMemo(
+    () =>
+      services.map((service) => ({
+        ...service,
+        portfolioItems: portfolioItems.filter((item) => item.service === service.id && item.is_active),
+      })),
+    [services, portfolioItems]
+  );
 
   const selectedPackage = packages.find((pkg) => String(pkg.id) === String(selectedPackageId));
   const selectedPrice = prices.find((price) => String(price.id) === String(selectedPriceId));
   const selectedService = services.find((service) => service.id === selectedPackage?.service) || null;
   const selectedBooking = subscriptions.find((booking) => String(booking.id) === String(selectedBookingId)) || null;
+  const selectedPortfolioService =
+    services.find((service) => String(service.id) === String(selectedPortfolioServiceId)) || null;
 
   function requireLogin(nextPath) {
     if (!currentUser) {
@@ -397,6 +427,11 @@ function App() {
       ...previous,
       business_name: previous.business_name || packageMatch.title,
     }));
+  }
+
+  function selectPortfolioService(serviceId) {
+    setSelectedPortfolioServiceId(String(serviceId));
+    navigate("/potfolio");
   }
 
   function continueToPackageTime(packageId) {
@@ -611,6 +646,50 @@ function App() {
     }
   }
 
+  async function savePortfolio() {
+    setLoading(true);
+    setError("");
+    setFeedback("");
+
+    const body = {
+      ...portfolioForm,
+      service: Number(portfolioForm.service),
+      package: Number(portfolioForm.package),
+    };
+
+    try {
+      if (editingPortfolioId) {
+        await apiRequest(`/portfolio-items/${editingPortfolioId}/`, { method: "PUT", body: JSON.stringify(body) });
+        setFeedback("Portfolio updated successfully.");
+      } else {
+        await apiRequest("/portfolio-items/", { method: "POST", body: JSON.stringify(body) });
+        setFeedback("Portfolio created successfully.");
+      }
+      setPortfolioForm(emptyPortfolio);
+      setEditingPortfolioId(null);
+      await loadCatalog();
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deletePortfolio(portfolioId) {
+    setLoading(true);
+    setError("");
+    setFeedback("");
+    try {
+      await apiRequest(`/portfolio-items/${portfolioId}/`, { method: "DELETE" });
+      setFeedback("Portfolio deleted successfully.");
+      await loadCatalog();
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function submitBooking() {
     if (!currentUser) {
       navigate("/login");
@@ -761,8 +840,10 @@ function App() {
     refreshToken,
     services,
     groupedPackages,
+    groupedPortfolio,
     packages,
     prices,
+    portfolioItems,
     subscriptions,
     users,
     selectedPackage,
@@ -771,6 +852,9 @@ function App() {
     selectedBooking,
     selectedBookingId,
     setSelectedBookingId,
+    selectedPortfolioService,
+    selectedPortfolioServiceId,
+    setSelectedPortfolioServiceId,
     selectedPackageId,
     setSelectedPackageId,
     selectedPriceId,
@@ -797,6 +881,10 @@ function App() {
     setPackageForm,
     editingPackageId,
     setEditingPackageId,
+    portfolioForm,
+    setPortfolioForm,
+    editingPortfolioId,
+    setEditingPortfolioId,
     paymentForm,
     setPaymentForm,
     updateField,
@@ -808,10 +896,13 @@ function App() {
     submitAdminUser,
     savePackage,
     deletePackage,
+    savePortfolio,
+    deletePortfolio,
     submitBooking,
     openBooking,
     markBookingDone,
     setBookingPaymentStatus,
+    selectPortfolioService,
     requireLogin,
     beginGoogleLogin,
     logout,
@@ -822,12 +913,15 @@ function App() {
     emptyRegister,
     emptyAdminUser,
     emptyPackage,
+    emptyPortfolio,
     emptyPayment,
     formatPrice,
   };
 
   const routes = {
     "/home": <HomePage app={app} />,
+    "/potfolio": <PortfolioPage app={app} />,
+    "/portfolio": <PortfolioPage app={app} />,
     "/login": <LoginPage app={app} />,
     "/register": <RegisterPage app={app} />,
     "/dashboard": <DashboardPage app={app} />,

@@ -2,8 +2,14 @@ from rest_framework import permissions, viewsets
 
 from accounts.models import CustomUser
 from accounts.views import IsAdminUserRole
-from .models import PackagePrice, Service, ServicePackage, Subscription
-from .serializers import PackagePriceSerializer, ServicePackageSerializer, ServiceSerializer, SubscriptionSerializer
+from .models import PackagePrice, PortfolioItem, Service, ServicePackage, Subscription
+from .serializers import (
+    PackagePriceSerializer,
+    PortfolioItemSerializer,
+    ServicePackageSerializer,
+    ServiceSerializer,
+    SubscriptionSerializer,
+)
 
 
 class IsAdminOrReadOnly(permissions.BasePermission):
@@ -28,6 +34,12 @@ class ServicePackageViewSet(viewsets.ModelViewSet):
 class PackagePriceViewSet(viewsets.ModelViewSet):
     queryset = PackagePrice.objects.select_related("package", "package__service").all()
     serializer_class = PackagePriceSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+
+class PortfolioItemViewSet(viewsets.ModelViewSet):
+    queryset = PortfolioItem.objects.select_related("service", "package").all()
+    serializer_class = PortfolioItemSerializer
     permission_classes = [IsAdminOrReadOnly]
 
 

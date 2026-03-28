@@ -4,6 +4,7 @@ function buildSidebarGroups(app) {
   const publicMenu = [
     { href: "/home", label: "Home", sign: "HM", hint: "services" },
     { href: "/package", label: "Packages", sign: "PK", hint: "plans" },
+    { href: "/potfolio", label: "Portfolio", sign: "PF", hint: "gallery" },
   ];
 
   const customerFlow = [
@@ -26,7 +27,6 @@ function buildSidebarGroups(app) {
     { href: "/login", label: "Customer Login", sign: "LG", hint: "signin" },
     { href: "/register", label: "Customer Register", sign: "RG", hint: "signup" },
     { href: "/admin/login", label: "Admin Login", sign: "AL", hint: "signin" },
-    { href: "/admin/register", label: "Admin Register", sign: "AR", hint: "signup" },
   ];
 
   if (currentUser?.role === "admin") {
@@ -56,7 +56,7 @@ function buildSidebarGroups(app) {
     ];
   }
 
-  const authPages = ["/login", "/register", "/admin/login", "/admin/register"];
+  const authPages = ["/login", "/register", "/admin/login"];
   const guestPrimary = authPages.includes(path) ? guestAccess : publicMenu;
   const guestSecondary = authPages.includes(path) ? publicMenu : guestAccess;
 

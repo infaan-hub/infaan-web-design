@@ -12,6 +12,13 @@ function AdminDashboardPage({ app }) {
     groupedPackages,
     services,
     deletePackage,
+    portfolioItems,
+    portfolioForm,
+    setPortfolioForm,
+    editingPortfolioId,
+    setEditingPortfolioId,
+    savePortfolio,
+    deletePortfolio,
     loading,
     subscriptions,
     formatPrice,
@@ -27,6 +34,24 @@ function AdminDashboardPage({ app }) {
         priceIndex === index ? { ...price, [field]: value } : price
       ),
     }));
+  }
+
+  const filteredPackages = app.packages.filter(
+    (pkg) => String(pkg.service) === String(portfolioForm.service || "")
+  );
+
+  function handlePortfolioImageChange(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPortfolioForm((previous) => ({
+        ...previous,
+        image_data: String(reader.result || ""),
+      }));
+    };
+    reader.readAsDataURL(file);
   }
 
   return (
@@ -97,6 +122,51 @@ function AdminDashboardPage({ app }) {
               </button>
             )}
           </form>
+
+          <form className="form-card" onSubmit={(event) => { event.preventDefault(); savePortfolio(); }}>
+            <h3>{editingPortfolioId ? "Edit portfolio" : "Post portfolio"}</h3>
+            <input
+              value={portfolioForm.name}
+              onChange={(event) => updateField(setPortfolioForm, "name", event.target.value)}
+              placeholder="Portfolio name"
+            />
+            <select value={portfolioForm.service} onChange={(event) => updateField(setPortfolioForm, "service", event.target.value)}>
+              <option value="">Select service</option>
+              {services.map((service) => (
+                <option key={service.id} value={service.id}>{service.name}</option>
+              ))}
+            </select>
+            <select value={portfolioForm.package} onChange={(event) => updateField(setPortfolioForm, "package", event.target.value)}>
+              <option value="">Select package</option>
+              {filteredPackages.map((pkg) => (
+                <option key={pkg.id} value={pkg.id}>{pkg.title}</option>
+              ))}
+            </select>
+            <label className="portfolio-upload-field">
+              <span>Portfolio image</span>
+              <input type="file" accept="image/*" onChange={handlePortfolioImageChange} />
+            </label>
+            {portfolioForm.image_data ? (
+              <div className="portfolio-admin-preview">
+                <img src={portfolioForm.image_data} alt="Portfolio preview" />
+              </div>
+            ) : null}
+            <button type="submit" className="solid-button" disabled={loading}>
+              {editingPortfolioId ? "Update portfolio" : "Create portfolio"}
+            </button>
+            {editingPortfolioId && (
+              <button
+                type="button"
+                className="outline-button"
+                onClick={() => {
+                  setPortfolioForm(app.emptyPortfolio);
+                  setEditingPortfolioId(null);
+                }}
+              >
+                Cancel edit
+              </button>
+            )}
+          </form>
         </div>
 
         <div className="package-grid">
@@ -147,6 +217,51 @@ function AdminDashboardPage({ app }) {
               </div>
             ))
           )}
+        </div>
+
+        <div className="section-headline admin-booking-head">
+          <div>
+            <p className="micro-label">portfolio</p>
+            <h2>Portfolio gallery</h2>
+          </div>
+        </div>
+
+        <div className="package-grid">
+          {portfolioItems.map((item) => (
+            <article key={item.id} className="portfolio-product-card">
+              <button type="button" className="portfolio-heart-button" aria-label="Portfolio item">
+                ♡
+              </button>
+              <div className="portfolio-product-image-wrap">
+                <img src={item.image_data} alt={item.name} className="portfolio-product-image" />
+              </div>
+              <div className="portfolio-product-content">
+                <h3>{item.name}</h3>
+                <p>{item.package_title}</p>
+              </div>
+              <div className="portfolio-product-footer">
+                <button
+                  type="button"
+                  className="outline-button"
+                  onClick={() => {
+                    setPortfolioForm({
+                      name: item.name,
+                      service: String(item.service),
+                      package: String(item.package),
+                      image_data: item.image_data,
+                      is_active: item.is_active,
+                    });
+                    setEditingPortfolioId(item.id);
+                  }}
+                >
+                  Edit
+                </button>
+                <button type="button" className="portfolio-cart-button" onClick={() => deletePortfolio(item.id)} aria-label="Delete portfolio">
+                  ×
+                </button>
+              </div>
+            </article>
+          ))}
         </div>
 
         <div className="section-headline admin-booking-head">

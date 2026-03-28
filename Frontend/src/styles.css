@@ -511,7 +511,8 @@ body[data-theme="dark"] .credential-card {
 body[data-theme="dark"] .package-browser-hero,
 body[data-theme="dark"] .service-catalog-block,
 body[data-theme="dark"] .package-feature-panel,
-body[data-theme="dark"] .price-strip-card {
+body[data-theme="dark"] .price-strip-card,
+body[data-theme="dark"] .portfolio-home-card {
   background: rgba(31, 34, 40, 0.88);
 }
 
@@ -712,6 +713,149 @@ body[data-theme="dark"] .price-strip-card {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 18px;
+}
+
+.portfolio-home-card {
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.portfolio-home-image {
+  min-height: 220px;
+  background-size: cover;
+  background-position: center;
+}
+
+.portfolio-home-copy {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.portfolio-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.portfolio-product-card {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  padding: 12px;
+  border-radius: 28px;
+  background: #2a2a2a;
+  color: white;
+  box-shadow: 0 28px 50px rgba(0, 0, 0, 0.16);
+}
+
+.portfolio-product-image-wrap {
+  overflow: hidden;
+  border: 6px solid #2a2a2a;
+  border-radius: 26px;
+  background: white;
+}
+
+.portfolio-product-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 0.88;
+  object-fit: cover;
+}
+
+.portfolio-heart-button,
+.portfolio-cart-button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: white;
+  color: #1f1f1f;
+}
+
+.portfolio-heart-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 42px;
+  height: 42px;
+  background: #202020;
+  color: white;
+  font-size: 1.2rem;
+  z-index: 1;
+}
+
+.portfolio-product-content {
+  display: grid;
+  gap: 4px;
+  padding-inline: 6px;
+}
+
+.portfolio-product-content h3 {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.85rem;
+  line-height: 0.95;
+}
+
+.portfolio-product-content p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.portfolio-product-footer {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 6px 6px;
+}
+
+.portfolio-product-footer strong {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.portfolio-cart-button {
+  width: 64px;
+  height: 64px;
+  font-size: 2rem;
+}
+
+.portfolio-upload-field {
+  display: grid;
+  gap: 8px;
+}
+
+.portfolio-upload-field span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.portfolio-admin-preview {
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+}
+
+.portfolio-admin-preview img {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
 }
 
 .catalog-package-card {
@@ -1798,6 +1942,8 @@ textarea {
   .form-card,
   .profile-card,
   .subscription-card,
+  .portfolio-home-card,
+  .portfolio-product-card,
   .service-catalog-block,
   .package-service-card,
   .success-ticket,
@@ -1816,6 +1962,7 @@ textarea {
   .main-content,
   .package-catalog,
   .service-visual-grid,
+  .portfolio-grid,
   .booking-review-grid,
   .dashboard-task-grid,
   .selected-credentials,

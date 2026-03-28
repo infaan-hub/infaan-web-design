@@ -8,10 +8,13 @@ const serviceImages = {
 };
 
 function HomePage({ app }) {
-  const { groupedPackages, setSelectedPackageId, requireLogin, formatPrice } = app;
+  const { groupedPackages, groupedPortfolio, setSelectedPackageId, requireLogin, formatPrice, selectPortfolioService } = app;
   const serviceOrder = ["website", "digital_ads", "logo_poster"];
   const visibleServices = serviceOrder
     .map((category) => groupedPackages.find((service) => service.category === category))
+    .filter(Boolean);
+  const visiblePortfolioServices = serviceOrder
+    .map((category) => groupedPortfolio.find((service) => service.category === category))
     .filter(Boolean);
 
   return (
@@ -33,6 +36,38 @@ function HomePage({ app }) {
               </div>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="section-block">
+        <div className="section-headline">
+          <p className="micro-label">portfolio</p>
+          <h2>Latest portfolio samples</h2>
+        </div>
+
+        <div className="package-grid">
+          {visiblePortfolioServices.map((service) => {
+            const portfolioPreview = service.portfolioItems[0];
+
+            return (
+              <article key={service.id} className="portfolio-home-card">
+                <div
+                  className="portfolio-home-image"
+                  style={{
+                    backgroundImage: `url(${portfolioPreview?.image_data || serviceImages[service.category]})`,
+                  }}
+                />
+                <div className="portfolio-home-copy">
+                  <span className="service-badge">{service.category.replaceAll("_", " ")}</span>
+                  <h3>{service.name}</h3>
+                  <p>{portfolioPreview?.name || "View the service portfolio examples uploaded by admin."}</p>
+                  <button type="button" className="solid-button" onClick={() => selectPortfolioService(service.id)}>
+                    View portfolio
+                  </button>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
 
