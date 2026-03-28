@@ -63,7 +63,7 @@ const emptyPayment = {
 
 function App() {
   const [path, setPath] = useState(window.location.pathname);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem("infaan_theme") || "light");
   const [token, setToken] = useState(localStorage.getItem("infaan_token") || "");
   const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem("infaan_user") || "null"));
@@ -221,6 +221,7 @@ function App() {
     const method = replace ? "replaceState" : "pushState";
     window.history[method]({}, "", nextPath);
     setPath(nextPath);
+    setSidebarOpen(false);
     window.scrollTo({ top: 0, behavior: "auto" });
   }
 

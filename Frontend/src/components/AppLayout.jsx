@@ -20,6 +20,11 @@ const accessLinks = [
 function AppLayout({ app, children }) {
   const { currentUser, sidebarOpen, setSidebarOpen, navigate, logout, feedback, error, path, theme, setTheme } = app;
 
+  function handleNavigation(nextPath) {
+    navigate(nextPath);
+    setSidebarOpen(false);
+  }
+
   function NavGroup({ title, items }) {
     return (
       <div className="nav-group">
@@ -30,7 +35,7 @@ function AppLayout({ app, children }) {
               key={item.href}
               type="button"
               className={`nav-link ${path === item.href ? "nav-link-active" : ""}`}
-              onClick={() => navigate(item.href)}
+              onClick={() => handleNavigation(item.href)}
             >
               <span className="nav-sign">{item.sign}</span>
               <span className="nav-label-wrap">
@@ -46,6 +51,14 @@ function AppLayout({ app, children }) {
 
   return (
     <div className={`shell ${sidebarOpen ? "shell-sidebar-open" : "shell-sidebar-closed"}`}>
+      <button
+        type="button"
+        className={`sidebar-backdrop ${sidebarOpen ? "sidebar-backdrop-visible" : ""}`}
+        aria-label="Close sidebar"
+        aria-hidden={!sidebarOpen}
+        onClick={() => setSidebarOpen(false)}
+      />
+
       <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
         <div className="sidebar-window-dots">
           <span />
@@ -74,18 +87,18 @@ function AppLayout({ app, children }) {
               aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
             >
-              {theme === "light" ? "☾" : "☀"}
+              {theme === "light" ? "Moon" : "Sun"}
             </button>
             <button
               type="button"
               className="sidebar-icon-button"
               aria-label={currentUser ? "Go to account" : "Open login"}
-              onClick={() => navigate(currentUser ? "/dashboard" : "/login")}
+              onClick={() => handleNavigation(currentUser ? "/dashboard" : "/login")}
             >
-              {currentUser ? "◉" : "⌁"}
+              {currentUser ? "User" : "Sign"}
             </button>
             <button type="button" className="sidebar-icon-button" aria-label="Logout" onClick={logout}>
-              ⎋
+              Out
             </button>
           </div>
         </div>
@@ -114,7 +127,7 @@ function AppLayout({ app, children }) {
                 </button>
               </>
             ) : (
-              <button type="button" className="header-button" onClick={() => navigate("/login")}>
+              <button type="button" className="header-button" onClick={() => handleNavigation("/login")}>
                 Sign in
               </button>
             )}
