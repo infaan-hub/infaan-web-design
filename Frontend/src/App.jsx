@@ -281,16 +281,21 @@ function App() {
   }
 
   async function loadCatalog() {
-    const [serviceData, packageData, priceData, portfolioData] = await Promise.all([
+    const [serviceData, packageData, priceData] = await Promise.all([
       apiRequest("/services/"),
       apiRequest("/packages/"),
       apiRequest("/prices/"),
-      apiRequest("/portfolio-items/"),
     ]);
     setServices(serviceData.results || serviceData);
     setPackages(packageData.results || packageData);
     setPrices(priceData.results || priceData);
-    setPortfolioItems(portfolioData.results || portfolioData);
+
+    try {
+      const portfolioData = await apiRequest("/portfolio-items/");
+      setPortfolioItems(portfolioData.results || portfolioData);
+    } catch {
+      setPortfolioItems([]);
+    }
   }
 
   async function loadProfileAndSubscriptions() {

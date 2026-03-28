@@ -1,3 +1,4 @@
+from django.db import OperationalError, ProgrammingError
 from rest_framework import permissions, viewsets
 
 from accounts.models import CustomUser
@@ -38,9 +39,14 @@ class PackagePriceViewSet(viewsets.ModelViewSet):
 
 
 class PortfolioItemViewSet(viewsets.ModelViewSet):
-    queryset = PortfolioItem.objects.select_related("service", "package").all()
     serializer_class = PortfolioItemSerializer
     permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        try:
+            return PortfolioItem.objects.select_related("service", "package").all()
+        except (ProgrammingError, OperationalError):
+            return PortfolioItem.objects.none()
 
 
 class SubscriptionViewSet(viewsets.ModelViewSet):
