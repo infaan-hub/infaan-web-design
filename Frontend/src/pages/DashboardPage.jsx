@@ -18,8 +18,8 @@ function DashboardPage({ app }) {
           <h3>{currentUser?.username || "Guest"}</h3>
           <p>
             {activeSubscription
-              ? "Your active package, booking details, and service workflow are ready below."
-              : "Choose a package, select package time, complete billing, and send your booking to admin."}
+              ? "Track your booking, payment approval, and service workflow below."
+              : "Choose a package, select package time, follow the manual payment instructions, and send your booking to admin."}
           </p>
           <div className="hero-actions">
             <button type="button" className="solid-button" onClick={() => navigate(activeSubscription ? "/package" : "/home")}>
@@ -44,6 +44,7 @@ function DashboardPage({ app }) {
             <span className={`status-pill status-${activeSubscription?.status || "pending"}`}>
               {activeSubscription?.status || "not booked"}
             </span>
+            {activeSubscription?.payment_status === "pending" ? <p>Payment is waiting for manual verification from admin.</p> : null}
           </div>
 
           <div className="subscription-card">

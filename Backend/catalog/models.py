@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.db import models
-import uuid
 
 
 class TimeStampedModel(models.Model):
@@ -102,13 +101,9 @@ class Subscription(TimeStampedModel):
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
     payment_method = models.CharField(max_length=30, blank=True)
-    external_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4, editable=False)
     payment_contact = models.CharField(max_length=120, blank=True)
     payment_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     payment_currency = models.CharField(max_length=10, default="USD")
-    payment_reference = models.CharField(max_length=120, blank=True)
-    payment_callback_payload = models.JSONField(default=dict, blank=True)
-    paid_at = models.DateTimeField(null=True, blank=True)
     business_name = models.CharField(max_length=120)
     contact_email = models.EmailField()
     contact_phone = models.CharField(max_length=30)

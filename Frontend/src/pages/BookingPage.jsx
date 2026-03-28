@@ -1,5 +1,9 @@
 import { useEffect, useRef } from "react";
 
+function normalizePhoneNumber(phoneNumber) {
+  return (phoneNumber || "").replace(/[^\d]/g, "");
+}
+
 function BookingPage({ app }) {
   const {
     selectedPackage,
@@ -12,13 +16,17 @@ function BookingPage({ app }) {
     formatPrice,
     pendingPayment,
     navigate,
+    businessWhatsAppNumber,
+    businessMobileMoneyNumber,
   } = app;
   const autoSubmitRef = useRef(false);
   const issuedAt = lastBooking?.created_at ? new Date(lastBooking.created_at) : new Date();
   const ticketId = lastBooking ? `INF${String(lastBooking.id).padStart(6, "0")}${issuedAt.getDate()}` : "Pending";
-  const isAzamPayBooking =
-    (lastBooking?.payment_method || pendingPayment?.method || "").toLowerCase() === "azampay";
-  const bookingCallbackUrl = lastBooking?.azampay_callback_url || "";
+  const businessWhatsAppLink = businessWhatsAppNumber
+    ? `https://wa.me/${normalizePhoneNumber(businessWhatsAppNumber)}?text=${encodeURIComponent(
+        `Hello Infaan, I have sent manual payment for booking ${ticketId}. Please verify and activate my subscription.`
+      )}`
+    : "";
 
   useEffect(() => {
     if (!selectedPackage || !selectedPrice) {
@@ -44,12 +52,8 @@ function BookingPage({ app }) {
             <div className="success-ticket">
               <div className="ticket-top">
                 <div className="ticket-icon">IWD</div>
-                <h3>{isAzamPayBooking ? "Booking created" : "Thank you!"}</h3>
-                <p>
-                  {isAzamPayBooking
-                    ? "Your booking is pending payment. Use the callback URL below in the AzamPay request so payment updates can reach this system."
-                    : "Your booking has been issued successfully and sent to admin."}
-                </p>
+                <h3>Booking pending</h3>
+                <p>Your booking was sent successfully. Finish the manual payment below, then wait for admin approval.</p>
               </div>
 
               <div className="ticket-dash" />
@@ -82,16 +86,32 @@ function BookingPage({ app }) {
                 </div>
               </div>
 
-              {isAzamPayBooking && bookingCallbackUrl ? (
-                <>
-                  <div className="ticket-dash light" />
-                  <div className="subscription-card booking-admin-card">
-                    <span className="micro-label">AzamPay callback URL</span>
-                    <strong>HTTP POST</strong>
-                    <p>{bookingCallbackUrl}</p>
-                  </div>
-                </>
-              ) : null}
+              <div className="ticket-dash light" />
+
+              <div className="subscription-card booking-admin-card">
+                <span className="micro-label">payment instructions</span>
+                <strong>
+                  {lastBooking.payment_method === "whatsapp" ? "Confirm on WhatsApp" : "Send payment manually"}
+                </strong>
+                <p>
+                  Pay using Mixx to <strong>{businessMobileMoneyNumber || "your configured business mobile money number"}</strong> and
+                  use booking ID <strong>{ticketId}</strong> as your reference.
+                </p>
+                <p>
+                  After sending the money, message admin on WhatsApp so the booking can be approved and activated.
+                </p>
+              </div>
+
+              <div className="hero-actions">
+                {businessWhatsAppLink ? (
+                  <a className="solid-button booking-link-button" href={businessWhatsAppLink} target="_blank" rel="noreferrer">
+                    Open WhatsApp
+                  </a>
+                ) : null}
+                <button type="button" className="outline-button" onClick={() => navigate("/dashboard")}>
+                  View dashboard
+                </button>
+              </div>
 
               <div className="ticket-dash light" />
 
@@ -118,7 +138,7 @@ function BookingPage({ app }) {
               </div>
               <div className="subscription-card">
                 <span className="micro-label">payment</span>
-                <strong>{pendingPayment.method === "azampay" ? "AzamPay" : pendingPayment.method === "mixx" ? "Mixx by Yas" : pendingPayment.method}</strong>
+                <strong>{pendingPayment.method === "mixx" ? "Mixx Manual" : "WhatsApp Booking"}</strong>
                 <p>{formatPrice(selectedPrice?.amount || 0, selectedPrice?.currency || "USD")}</p>
               </div>
             </div>

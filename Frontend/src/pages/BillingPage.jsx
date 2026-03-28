@@ -10,6 +10,8 @@ function BillingPage({ app }) {
     selectedPrice,
     formatPrice,
     confirmPayment,
+    businessWhatsAppNumber,
+    businessMobileMoneyNumber,
   } = app;
   const subtotal = Number(selectedPrice?.amount || 0);
   const serviceFee = selectedPrice?.billing_period === "per_task" ? 5 : 0;
@@ -21,8 +23,8 @@ function BillingPage({ app }) {
       <section className="section-card">
         <div className="pricing-heading">
           <p className="micro-label">billing</p>
-          <h2>Billing details</h2>
-          <span>Complete your payment and booking information.</span>
+          <h2>Manual payment</h2>
+          <span>Choose how you want to pay, then send your booking for admin approval.</span>
         </div>
 
         <div className="package-grid billing-grid">
@@ -113,71 +115,36 @@ function BillingPage({ app }) {
 
             <div className="billing-form-fields">
               <div className="payment-method-grid">
-                <button type="button" className={`payment-method-tile ${paymentForm.method === "azampay" ? "payment-method-active" : ""}`} onClick={() => updateField(setPaymentForm, "method", "azampay")}>
-                  <span className="payment-radio" />
-                  <strong>AzamPay</strong>
-                </button>
-                <button type="button" className={`payment-method-tile ${paymentForm.method === "card" ? "payment-method-active" : ""}`} onClick={() => updateField(setPaymentForm, "method", "card")}>
-                  <span className="payment-radio" />
-                  <strong>Mastercard</strong>
-                </button>
-                <button type="button" className={`payment-method-tile ${paymentForm.method === "visa" ? "payment-method-active" : ""}`} onClick={() => updateField(setPaymentForm, "method", "visa")}>
-                  <span className="payment-radio" />
-                  <strong>Visa</strong>
-                </button>
-                <button type="button" className={`payment-method-tile ${paymentForm.method === "paypal" ? "payment-method-active" : ""}`} onClick={() => updateField(setPaymentForm, "method", "paypal")}>
-                  <span className="payment-radio" />
-                  <strong>PayPal</strong>
-                </button>
                 <button type="button" className={`payment-method-tile ${paymentForm.method === "mixx" ? "payment-method-active" : ""}`} onClick={() => updateField(setPaymentForm, "method", "mixx")}>
                   <span className="payment-radio" />
-                  <strong>Mixx by Yas</strong>
+                  <strong>Mixx Manual</strong>
+                </button>
+                <button type="button" className={`payment-method-tile ${paymentForm.method === "whatsapp" ? "payment-method-active" : ""}`} onClick={() => updateField(setPaymentForm, "method", "whatsapp")}>
+                  <span className="payment-radio" />
+                  <strong>WhatsApp Booking</strong>
                 </button>
               </div>
 
-              {paymentForm.method === "azampay" ? (
+              {paymentForm.method === "mixx" ? (
                 <label className="payment-field">
-                  <span>AzamPay phone number</span>
-                  <input value={paymentForm.phone_number} onChange={(event) => updateField(setPaymentForm, "phone_number", event.target.value)} placeholder="2557XXXXXXXX" />
-                </label>
-              ) : paymentForm.method === "card" ? (
-                <>
-                  <div className="payment-field-grid payment-field-grid-wide">
-                    <label className="payment-field">
-                      <span>Cardholder name</span>
-                      <input value={paymentForm.card_name} onChange={(event) => updateField(setPaymentForm, "card_name", event.target.value)} placeholder="Full name on card" />
-                    </label>
-                    <label className="payment-field">
-                      <span>Card number</span>
-                      <input value={paymentForm.card_number} onChange={(event) => updateField(setPaymentForm, "card_number", event.target.value)} placeholder="0000 0000 0000 0000" />
-                    </label>
-                  </div>
-                  <div className="payment-field-grid">
-                    <label className="payment-field">
-                      <span>Expiry date</span>
-                      <input value={paymentForm.expiry_date} onChange={(event) => updateField(setPaymentForm, "expiry_date", event.target.value)} placeholder="MM/YY" />
-                    </label>
-                    <label className="payment-field">
-                      <span>CVV</span>
-                      <input value={paymentForm.cvv} onChange={(event) => updateField(setPaymentForm, "cvv", event.target.value)} placeholder="CVV" />
-                    </label>
-                  </div>
-                </>
-              ) : paymentForm.method === "mixx" ? (
-                <label className="payment-field">
-                  <span>Phone number</span>
-                  <input value={paymentForm.phone_number} onChange={(event) => updateField(setPaymentForm, "phone_number", event.target.value)} placeholder="Phone number to send money" />
+                  <span>Your phone number</span>
+                  <input value={paymentForm.phone_number} onChange={(event) => updateField(setPaymentForm, "phone_number", event.target.value)} placeholder="Phone number used to send Mixx payment" />
                 </label>
               ) : (
                 <div className="payment-helper-box">
-                  <p>After review, you will continue using the selected gateway for secure checkout.</p>
+                  <p>Use WhatsApp to confirm your package, then send payment manually and wait for admin approval.</p>
                 </div>
               )}
 
-              <label className="payment-check">
-                <input type="checkbox" />
-                <span>Save my details for future purchases</span>
-              </label>
+              <div className="payment-helper-box">
+                <p>
+                  Mixx number: <strong>{businessMobileMoneyNumber || "Set VITE_BUSINESS_MOBILE_MONEY_NUMBER to show your real number."}</strong>
+                </p>
+                <p>
+                  WhatsApp number: <strong>{businessWhatsAppNumber || "Set VITE_BUSINESS_WHATSAPP_NUMBER to show your real number."}</strong>
+                </p>
+                <p>After payment, admin will verify and activate the subscription manually.</p>
+              </div>
 
               <div className="payment-total-box">
                 <div className="payment-total-row">
@@ -194,7 +161,7 @@ function BillingPage({ app }) {
                 </div>
               </div>
 
-              <button type="button" className="payment-confirm-button" onClick={confirmPayment}>Confirm payment</button>
+              <button type="button" className="payment-confirm-button" onClick={confirmPayment}>Send booking</button>
             </div>
           </form>
         </div>

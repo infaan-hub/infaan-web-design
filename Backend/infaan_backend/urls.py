@@ -4,14 +4,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.views import AdminRegisterView, GoogleLoginView, LoginView, RegisterView, UserViewSet, profile
-from catalog.views import (
-    AzamPayCallbackView,
-    PortfolioItemViewSet,
-    PackagePriceViewSet,
-    ServicePackageViewSet,
-    ServiceViewSet,
-    SubscriptionViewSet,
-)
+from catalog.views import PortfolioItemViewSet, PackagePriceViewSet, ServicePackageViewSet, ServiceViewSet, SubscriptionViewSet
 
 router = DefaultRouter()
 router.register("users", UserViewSet, basename="user")
@@ -29,6 +22,5 @@ urlpatterns = [
     path("api/auth/google/", GoogleLoginView.as_view(), name="google-login"),
     path("api/auth/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
     path("api/auth/me/", profile, name="profile"),
-    path("api/payments/azampay/callback/", AzamPayCallbackView.as_view(), name="azampay-callback"),
     path("api/", include(router.urls)),
 ]

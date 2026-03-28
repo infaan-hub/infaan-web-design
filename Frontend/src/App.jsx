@@ -19,6 +19,8 @@ import RegisterPage from "./pages/RegisterPage";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://infaan-web-design.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+const BUSINESS_WHATSAPP_NUMBER = import.meta.env.VITE_BUSINESS_WHATSAPP_NUMBER || "";
+const BUSINESS_MOBILE_MONEY_NUMBER = import.meta.env.VITE_BUSINESS_MOBILE_MONEY_NUMBER || "";
 const CUSTOMER_PROTECTED_PATHS = ["/dashboard", "/package", "/package-time", "/billing", "/booking"];
 const ADMIN_PROTECTED_PATHS = ["/admin-dashboard", "/admin/users", "/bookings-services", "/booked-service", "/booking-history"];
 
@@ -64,7 +66,7 @@ const emptyPackage = {
   is_active: true,
 };
 const emptyPayment = {
-  method: "azampay",
+  method: "mixx",
   card_name: "",
   card_number: "",
   expiry_date: "",
@@ -479,16 +481,9 @@ function App() {
       return false;
     }
 
-    if (paymentForm.method === "azampay" && !paymentForm.phone_number) {
-      setError("Enter the phone number that AzamPay will bill.");
+    if (["mixx", "whatsapp"].includes(paymentForm.method) && !paymentForm.phone_number) {
+      setError("Enter the phone number we should use for payment follow-up.");
       return false;
-    }
-
-    if (["card", "visa"].includes(paymentForm.method)) {
-      if (!paymentForm.card_name || !paymentForm.card_number || !paymentForm.expiry_date || !paymentForm.cvv) {
-        setError("Complete all card payment fields to continue.");
-        return false;
-      }
     }
 
     setPendingPayment({
@@ -710,19 +705,17 @@ function App() {
     setFeedback("");
     try {
       const activePaymentMethod = pendingPayment?.method || paymentForm.method;
-      const isAzamPayPayment = activePaymentMethod === "azampay";
       const paymentContact =
-        activePaymentMethod === "azampay"
+        ["mixx", "whatsapp"].includes(activePaymentMethod)
           ? pendingPayment?.phone_number || paymentForm.phone_number
-          : activePaymentMethod === "mixx"
-            ? pendingPayment?.phone_number || paymentForm.phone_number
-            : pendingPayment?.card_name || paymentForm.card_name || "Gateway checkout";
+          : pendingPayment?.card_name || paymentForm.card_name || "Gateway checkout";
       const createdBooking = await apiRequest("/subscriptions/", {
         method: "POST",
         body: JSON.stringify({
           ...subscriptionForm,
           package_price: Number(selectedPriceId),
-          payment_status: isAzamPayPayment ? "pending" : "paid",
+          status: "pending",
+          payment_status: "pending",
           payment_method: activePaymentMethod,
           payment_contact: paymentContact,
           payment_amount: selectedPrice?.amount || 0,
@@ -731,18 +724,14 @@ function App() {
             selectedPrice?.billing_period || ""
           }\nAmount: ${
             selectedPrice?.currency || "USD"
-          } ${selectedPrice?.amount || ""}`.trim(),
+          } ${selectedPrice?.amount || ""}\nManual payment approval pending.`.trim(),
         }),
       });
       setBookingSent(true);
       setLastBooking(createdBooking);
       setSelectedBookingId(String(createdBooking.id));
       setPendingPayment(null);
-      setFeedback(
-        isAzamPayPayment
-          ? "Booking created. Use the callback URL from the booking screen in your AzamPay payment request."
-          : "Booking sent successfully."
-      );
+      setFeedback("Booking sent successfully.");
       await loadProfileAndSubscriptions();
       navigate("/booking");
     } catch (requestError) {
@@ -835,8 +824,11 @@ function App() {
     if (!selectedBookingId) return;
     updateBooking(
       selectedBookingId,
-      { payment_status: paymentStatus },
-      paymentStatus === "paid" ? "Payment marked as paid." : "Payment marked as pending."
+      {
+        payment_status: paymentStatus,
+        status: paymentStatus === "paid" ? "active" : "pending",
+      },
+      paymentStatus === "paid" ? "Payment approved and subscription activated." : "Payment marked as pending."
     );
   }
 
@@ -928,6 +920,8 @@ function App() {
     emptyPortfolio,
     emptyPayment,
     formatPrice,
+    businessWhatsAppNumber: BUSINESS_WHATSAPP_NUMBER,
+    businessMobileMoneyNumber: BUSINESS_MOBILE_MONEY_NUMBER,
   };
 
   const routes = {

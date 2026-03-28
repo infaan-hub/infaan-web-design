@@ -22,6 +22,12 @@ function BookedServicePage({ app }) {
   }
 
   const whatsappUrl = `https://wa.me/${normalizePhoneNumber(selectedBooking.contact_phone)}`;
+  const paymentMethodLabel =
+    selectedBooking.payment_method === "mixx"
+      ? "Mixx Manual"
+      : selectedBooking.payment_method === "whatsapp"
+        ? "WhatsApp Booking"
+        : selectedBooking.payment_method || "Not provided";
 
   return (
     <main className="main-content">
@@ -75,7 +81,7 @@ function BookedServicePage({ app }) {
                 </div>
                 <div className="price-strip-card">
                   <strong>Payment method</strong>
-                  <span>{selectedBooking.payment_method || "Not provided"}</span>
+                  <span>{paymentMethodLabel}</span>
                 </div>
                 <div className="price-strip-card">
                   <strong>Payment contact</strong>
@@ -115,7 +121,7 @@ function BookedServicePage({ app }) {
                 }
                 disabled={loading}
               >
-                Mark payment {selectedBooking.payment_status === "paid" ? "pending" : "paid"}
+                {selectedBooking.payment_status === "paid" ? "Mark payment pending" : "Approve payment"}
               </button>
               <button type="button" className="solid-button" onClick={markBookingDone} disabled={loading}>
                 Mark as done
