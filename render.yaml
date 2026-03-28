@@ -18,13 +18,13 @@ services:
       - key: DJANGO_DEBUG
         value: "false"
       - key: ALLOWED_HOSTS
-        value: "infaan-backend.onrender.com,127.0.0.1,localhost"
+        value: "infaan-web-design.onrender.com,127.0.0.1,localhost"
       - key: CORS_ALLOW_ALL_ORIGINS
         value: "false"
       - key: CORS_ALLOWED_ORIGINS
-        value: "https://infaan-frontend.onrender.com,http://localhost:5173"
+        value: "https://infaanwebdesign.vercel.app,http://localhost:5173"
       - key: CSRF_TRUSTED_ORIGINS
-        value: "https://infaan-backend.onrender.com,https://infaan-frontend.onrender.com"
+        value: "https://infaan-web-design.onrender.com,https://infaanwebdesign.vercel.app"
       - key: DATABASE_URL
         fromDatabase:
           name: infaan-db
@@ -43,4 +43,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://infaan-backend.onrender.com/api
+        value: https://infaan-web-design.onrender.com/api
