@@ -9,6 +9,7 @@ const serviceImages = {
 
 function PackagePage({ app }) {
   const { selectedPackage, selectedService, groupedPackages, navigate, continueToPackageTime } = app;
+  const visibleServices = groupedPackages.filter((service) => service.packages?.length);
 
   return (
     <main className="main-content">
@@ -59,40 +60,52 @@ function PackagePage({ app }) {
             </div>
           </div>
         ) : (
-          <div className="package-grid">
-            {groupedPackages.flatMap((service) =>
-              service.packages.map((pkg) => (
-                <div key={pkg.id} className={`package-card tone-${pkg.tier}`}>
-                  <div
-                    className="package-card-image"
-                    style={{ backgroundImage: `url(${serviceImages[service.category] || serviceImages.website})` }}
-                  />
-                  <h4>{pkg.title}</h4>
-                  <p>{pkg.description}</p>
-                  <div className="hero-actions">
-                    <button
-                      type="button"
-                      className="solid-button"
-                      onClick={() => continueToPackageTime(pkg.id)}
-                    >
-                      Select package
-                    </button>
-                    <button
-                      type="button"
-                      className="outline-button"
-                      onClick={() => {
-                        app.selectPackage(pkg.id);
-                      }}
-                    >
-                      View details
-                    </button>
+          <div className="package-stack">
+            {visibleServices.map((service) => (
+              <article key={service.id} className="package-service-card">
+                <div className="package-service-head">
+                  <div>
+                    <h3>{service.name}</h3>
+                    <p>{service.short_description || service.details}</p>
                   </div>
-                  <button type="button" className="text-button" onClick={() => app.selectPackage(pkg.id)}>
-                    View package credentials
-                  </button>
+                  <span className="service-badge">{service.category.replaceAll("_", " ")}</span>
                 </div>
-              ))
-            )}
+
+                <div className="package-grid">
+                  {service.packages.map((pkg) => (
+                    <div key={pkg.id} className={`package-card tone-${pkg.tier}`}>
+                      <div
+                        className="package-card-image"
+                        style={{ backgroundImage: `url(${serviceImages[service.category] || serviceImages.website})` }}
+                      />
+                      <h4>{pkg.title}</h4>
+                      <p>{pkg.description}</p>
+                      <div className="hero-actions">
+                        <button
+                          type="button"
+                          className="solid-button"
+                          onClick={() => continueToPackageTime(pkg.id)}
+                        >
+                          Select package
+                        </button>
+                        <button
+                          type="button"
+                          className="outline-button"
+                          onClick={() => {
+                            app.selectPackage(pkg.id);
+                          }}
+                        >
+                          View details
+                        </button>
+                      </div>
+                      <button type="button" className="text-button" onClick={() => app.selectPackage(pkg.id)}>
+                        View package credentials
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            ))}
           </div>
         )}
       </section>
