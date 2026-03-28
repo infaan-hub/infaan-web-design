@@ -368,6 +368,41 @@ function App() {
     }
   }
 
+  async function submitGoogleAuth(code) {
+    setLoading(true);
+    setError("");
+    setFeedback("");
+
+    try {
+      const data = await apiRequest(
+        "/auth/google/",
+        {
+          method: "POST",
+          headers: {
+            "X-Requested-With": "XmlHttpRequest",
+          },
+          body: JSON.stringify({
+            code,
+            redirect_uri: window.location.origin,
+          }),
+        },
+        false
+      );
+
+      setToken(data.access);
+      setRefreshToken(data.refresh);
+      setCurrentUser(data.user);
+      localStorage.setItem("infaan_user", JSON.stringify(data.user));
+      setFeedback("Google login successful.");
+      navigate("/dashboard");
+    } catch (requestError) {
+      clearAuthState();
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function submitAdminUser() {
     setLoading(true);
     setError("");
@@ -464,10 +499,28 @@ function App() {
 
   function beginGoogleLogin() {
     if (!GOOGLE_CLIENT_ID) {
-      setError("Google OAuth needs a VITE_GOOGLE_CLIENT_ID and backend token exchange to go live.");
+      setError("Google OAuth needs a VITE_GOOGLE_CLIENT_ID to go live.");
       return;
     }
-    setFeedback(`Google OAuth client detected: ${GOOGLE_CLIENT_ID}. Connect your backend callback to complete login.`);
+    if (!window.google?.accounts?.oauth2) {
+      setError("Google Sign-In is still loading. Please try again.");
+      return;
+    }
+
+    const codeClient = window.google.accounts.oauth2.initCodeClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: "openid email profile",
+      ux_mode: "popup",
+      callback: async (response) => {
+        if (response.error) {
+          setError(response.error);
+          return;
+        }
+        await submitGoogleAuth(response.code);
+      },
+    });
+
+    codeClient.requestCode();
   }
 
   function logout() {

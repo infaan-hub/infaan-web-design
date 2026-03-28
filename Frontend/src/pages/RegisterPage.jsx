@@ -2,7 +2,7 @@ const registerVisualImage =
   "https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80";
 
 function RegisterPage({ app }) {
-  const { registerForm, setRegisterForm, updateField, submitAuth, beginGoogleLogin, loading, navigate } = app;
+  const { registerForm, setRegisterForm, updateField, submitAuth, loading, navigate } = app;
 
   return (
     <main className="auth-page">
@@ -35,12 +35,6 @@ function RegisterPage({ app }) {
               <input type="password" value={registerForm.password} onChange={(event) => updateField(setRegisterForm, "password", event.target.value)} placeholder="Create password" />
             </label>
             <button type="submit" className="auth-submit-button" disabled={loading}>Sign up</button>
-
-            <div className="auth-socials">
-              <button type="button" className="social-icon-button google-button" onClick={beginGoogleLogin} aria-label="Register with Google">
-                <span className="google-g">G</span>
-              </button>
-            </div>
 
             <p className="auth-switch-copy">
               Already have an account? <button type="button" className="auth-inline-link" onClick={() => navigate("/login")}>Sign in</button>
