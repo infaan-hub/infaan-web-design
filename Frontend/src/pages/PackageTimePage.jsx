@@ -1,5 +1,5 @@
 function PackageTimePage({ app }) {
-  const { selectedPackage, selectedPriceId, setSelectedPriceId, navigate } = app;
+  const { selectedPackage, selectedPriceId, setSelectedPriceId, navigate, formatPrice, continueToBilling } = app;
 
   return (
     <main className="main-content">
@@ -14,18 +14,51 @@ function PackageTimePage({ app }) {
             <button type="button" className="solid-button" onClick={() => navigate("/package")}>Go to package</button>
           </div>
         ) : (
-          <div className="form-card">
-            <h3>{selectedPackage.title}</h3>
-            <div className="price-list">
+          <div className="package-stack">
+            <div className="pricing-heading">
+              <p className="micro-label">package time</p>
+              <h2>Select billing duration</h2>
+              <span>Choose weekly, monthly, or yearly billing according to your selected package.</span>
+            </div>
+
+            <div className="package-grid">
               {selectedPackage.prices.map((price) => (
-                <button key={price.id} type="button" className={`price-chip ${String(selectedPriceId) === String(price.id) ? "price-chip-active" : ""}`} onClick={() => setSelectedPriceId(String(price.id))}>
-                  {price.billing_period} - {price.currency} {price.amount}
+                <button
+                  key={price.id}
+                  type="button"
+                  className={`pricing-plan-card duration-card ${String(selectedPriceId) === String(price.id) ? "duration-card-active" : ""}`}
+                  onClick={() => setSelectedPriceId(String(price.id))}
+                >
+                  <div className={`pricing-plan-top pricing-tone-${selectedPackage.tier}`}>
+                    <span className="pricing-mini-pill">{selectedPackage.tier}</span>
+                    <h4>{price.billing_period}</h4>
+                    <div className="pricing-amount">
+                      {price.billing_period === "per_task" ? (
+                        <>
+                          <strong>Custom</strong>
+                          <span>per task</span>
+                        </>
+                      ) : (
+                        <>
+                          <strong>{formatPrice(price.amount, price.currency)}</strong>
+                          <span>/{price.billing_period}</span>
+                        </>
+                      )}
+                    </div>
+                    <p>{selectedPackage.title}</p>
+                  </div>
                 </button>
               ))}
             </div>
-            <button type="button" className="solid-button" onClick={() => navigate("/billing")}>
-              Continue to billing
-            </button>
+
+            <div className="hero-actions">
+              <button type="button" className="solid-button" onClick={continueToBilling}>
+                Continue to billing
+              </button>
+              <button type="button" className="outline-button" onClick={() => navigate("/package")}>
+                Back to package
+              </button>
+            </div>
           </div>
         )}
       </section>

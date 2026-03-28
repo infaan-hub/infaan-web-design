@@ -1,5 +1,16 @@
 function BillingPage({ app }) {
-  const { paymentForm, setPaymentForm, updateField, subscriptionForm, setSubscriptionForm, navigate, selectedPackage, selectedPrice, formatPrice } = app;
+  const {
+    paymentForm,
+    setPaymentForm,
+    updateField,
+    subscriptionForm,
+    setSubscriptionForm,
+    navigate,
+    selectedPackage,
+    selectedPrice,
+    formatPrice,
+    confirmPayment,
+  } = app;
   const subtotal = Number(selectedPrice?.amount || 0);
   const serviceFee = selectedPrice?.billing_period === "per_task" ? 5 : 0;
   const total = subtotal + serviceFee;
@@ -33,8 +44,8 @@ function BillingPage({ app }) {
                 )}
               </div>
               <p>{selectedPackage?.description || "Choose a package and billing time to continue."}</p>
-              <button type="button" className="pricing-cta" onClick={() => navigate("/booking")}>
-                Review booking
+              <button type="button" className="pricing-cta" onClick={() => navigate("/package-time")}>
+                Change package time
               </button>
             </div>
 
@@ -53,11 +64,32 @@ function BillingPage({ app }) {
             </div>
 
             <div className="billing-form-fields">
-            <input value={subscriptionForm.business_name} onChange={(event) => updateField(setSubscriptionForm, "business_name", event.target.value)} placeholder="Business name" />
-            <input type="email" value={subscriptionForm.contact_email} onChange={(event) => updateField(setSubscriptionForm, "contact_email", event.target.value)} placeholder="Contact email" />
-            <input value={subscriptionForm.contact_phone} onChange={(event) => updateField(setSubscriptionForm, "contact_phone", event.target.value)} placeholder="Contact phone" />
-            <input type="date" value={subscriptionForm.start_date} onChange={(event) => updateField(setSubscriptionForm, "start_date", event.target.value)} />
-            <textarea value={subscriptionForm.notes} onChange={(event) => updateField(setSubscriptionForm, "notes", event.target.value)} placeholder="Project notes" />
+              <input
+                value={subscriptionForm.business_name}
+                onChange={(event) => updateField(setSubscriptionForm, "business_name", event.target.value)}
+                placeholder="Business name"
+              />
+              <input
+                type="email"
+                value={subscriptionForm.contact_email}
+                onChange={(event) => updateField(setSubscriptionForm, "contact_email", event.target.value)}
+                placeholder="Contact email"
+              />
+              <input
+                value={subscriptionForm.contact_phone}
+                onChange={(event) => updateField(setSubscriptionForm, "contact_phone", event.target.value)}
+                placeholder="Contact phone"
+              />
+              <input
+                type="date"
+                value={subscriptionForm.start_date}
+                onChange={(event) => updateField(setSubscriptionForm, "start_date", event.target.value)}
+              />
+              <textarea
+                value={subscriptionForm.notes}
+                onChange={(event) => updateField(setSubscriptionForm, "notes", event.target.value)}
+                placeholder="Project notes"
+              />
             </div>
           </form>
 
@@ -153,7 +185,7 @@ function BillingPage({ app }) {
                 </div>
               </div>
 
-              <button type="button" className="payment-confirm-button" onClick={() => navigate("/booking")}>Confirm payment</button>
+              <button type="button" className="payment-confirm-button" onClick={confirmPayment}>Confirm payment</button>
             </div>
           </form>
         </div>

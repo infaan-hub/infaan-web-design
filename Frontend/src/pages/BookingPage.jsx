@@ -1,7 +1,32 @@
+import { useEffect, useRef } from "react";
+
 function BookingPage({ app }) {
-  const { selectedPackage, selectedPrice, submitBooking, bookingSent, loading, lastBooking, currentUser, formatPrice } = app;
+  const {
+    selectedPackage,
+    selectedPrice,
+    submitBooking,
+    bookingSent,
+    loading,
+    lastBooking,
+    currentUser,
+    formatPrice,
+    pendingPayment,
+    navigate,
+  } = app;
+  const autoSubmitRef = useRef(false);
   const issuedAt = lastBooking?.created_at ? new Date(lastBooking.created_at) : new Date();
   const ticketId = lastBooking ? `INF${String(lastBooking.id).padStart(6, "0")}${issuedAt.getDate()}` : "Pending";
+
+  useEffect(() => {
+    if (!selectedPackage || !selectedPrice) {
+      return;
+    }
+    if (!pendingPayment || bookingSent || lastBooking || loading || autoSubmitRef.current) {
+      return;
+    }
+    autoSubmitRef.current = true;
+    submitBooking();
+  }, [selectedPackage, selectedPrice, pendingPayment, bookingSent, lastBooking, loading, submitBooking]);
 
   return (
     <main className="main-content">
@@ -15,7 +40,7 @@ function BookingPage({ app }) {
           <div className="ticket-wrap">
             <div className="success-ticket">
               <div className="ticket-top">
-                <div className="ticket-icon">🎉</div>
+                <div className="ticket-icon">IWD</div>
                 <h3>Thank you!</h3>
                 <p>Your booking has been issued successfully and sent to admin.</p>
               </div>
@@ -59,13 +84,46 @@ function BookingPage({ app }) {
               </div>
             </div>
           </div>
+        ) : pendingPayment ? (
+          <div className="form-card booking-status-card">
+            <h3>Sending booking</h3>
+            <p>
+              We are submitting your selected package, package time, billing details, and payment procedure to the admin
+              dashboard now.
+            </p>
+
+            <div className="booking-review-grid">
+              <div className="subscription-card">
+                <span className="micro-label">package</span>
+                <strong>{selectedPackage?.title}</strong>
+                <p>{selectedPrice?.billing_period}</p>
+              </div>
+              <div className="subscription-card">
+                <span className="micro-label">payment</span>
+                <strong>{pendingPayment.method === "mixx" ? "Mixx by Yas" : pendingPayment.method}</strong>
+                <p>{formatPrice(selectedPrice?.amount || 0, selectedPrice?.currency || "USD")}</p>
+              </div>
+            </div>
+
+            <button type="button" className="outline-button" onClick={() => navigate("/billing")} disabled={loading}>
+              {loading ? "Sending..." : "Back to billing"}
+            </button>
+          </div>
         ) : (
           <div className="form-card">
             <h3>{selectedPackage?.title || "Selected package"}</h3>
-            <p>{selectedPrice?.billing_period || "billing"} - {formatPrice(selectedPrice?.amount || "", selectedPrice?.currency || "USD")}</p>
-            <button type="button" className="solid-button" onClick={submitBooking} disabled={loading || bookingSent}>
-              {bookingSent ? "Booking sent" : "Send booking"}
-            </button>
+            <p>
+              {selectedPrice?.billing_period || "billing"} -{" "}
+              {formatPrice(selectedPrice?.amount || "", selectedPrice?.currency || "USD")}
+            </p>
+            <div className="hero-actions">
+              <button type="button" className="solid-button" onClick={() => navigate("/billing")}>
+                Complete billing first
+              </button>
+              <button type="button" className="outline-button" onClick={() => navigate("/package")}>
+                Change package
+              </button>
+            </div>
           </div>
         )}
       </section>

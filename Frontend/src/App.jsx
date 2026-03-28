@@ -84,6 +84,7 @@ function App() {
   const [path, setPath] = useState(window.location.pathname);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem("infaan_theme") || "light");
+  const [postLoginPath, setPostLoginPath] = useState(localStorage.getItem("infaan_post_login_path") || "");
   const [token, setToken] = useState(localStorage.getItem("infaan_token") || "");
   const [refreshToken, setRefreshToken] = useState(localStorage.getItem("infaan_refresh_token") || "");
   const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem("infaan_user") || "null"));
@@ -141,6 +142,14 @@ function App() {
       localStorage.removeItem("infaan_last_booking");
     }
   }, [lastBooking]);
+
+  useEffect(() => {
+    if (postLoginPath) {
+      localStorage.setItem("infaan_post_login_path", postLoginPath);
+    } else {
+      localStorage.removeItem("infaan_post_login_path");
+    }
+  }, [postLoginPath]);
 
   useEffect(() => {
     document.body.dataset.theme = theme;
@@ -296,6 +305,7 @@ function App() {
   useEffect(() => {
     if (ADMIN_PROTECTED_PATHS.includes(path)) {
       if (!currentUser) {
+        setPostLoginPath(path);
         setFeedback("Please login to access admin functions.");
         navigate("/admin/login", true);
         return;
@@ -309,6 +319,7 @@ function App() {
 
     if (CUSTOMER_PROTECTED_PATHS.includes(path)) {
       if (!currentUser) {
+        setPostLoginPath(path);
         setFeedback("Please login to access your account.");
         navigate("/login", true);
         return;
@@ -341,9 +352,11 @@ function App() {
 
   const selectedPackage = packages.find((pkg) => String(pkg.id) === String(selectedPackageId));
   const selectedPrice = prices.find((price) => String(price.id) === String(selectedPriceId));
+  const selectedService = services.find((service) => service.id === selectedPackage?.service) || null;
 
   function requireLogin(nextPath) {
     if (!currentUser) {
+      setPostLoginPath(nextPath);
       setFeedback("Please login first to continue with a subscription.");
       navigate("/login");
       return false;
@@ -354,6 +367,88 @@ function App() {
 
   function updateField(setter, field, value) {
     setter((previous) => ({ ...previous, [field]: value }));
+  }
+
+  function selectPackage(packageId) {
+    const packageMatch = packages.find((pkg) => String(pkg.id) === String(packageId));
+    setSelectedPackageId(String(packageId));
+    setSelectedPriceId("");
+    setPendingPayment(null);
+    setBookingSent(false);
+    setLastBooking(null);
+    if (!packageMatch) {
+      return;
+    }
+    setSubscriptionForm((previous) => ({
+      ...previous,
+      business_name: previous.business_name || packageMatch.title,
+    }));
+  }
+
+  function continueToPackageTime(packageId) {
+    if (!requireLogin("/package")) {
+      return;
+    }
+    selectPackage(packageId);
+    navigate("/package-time");
+  }
+
+  function continueToBilling() {
+    if (!selectedPackage) {
+      setError("Select a package first.");
+      navigate("/package");
+      return false;
+    }
+    if (!selectedPriceId) {
+      setError("Select weekly, monthly, or yearly package time first.");
+      return false;
+    }
+    navigate("/billing");
+    return true;
+  }
+
+  function confirmPayment() {
+    if (!selectedPackage) {
+      setError("Select a package first.");
+      navigate("/package");
+      return false;
+    }
+
+    if (!selectedPriceId) {
+      setError("Select package time first.");
+      navigate("/package-time");
+      return false;
+    }
+
+    if (!subscriptionForm.business_name || !subscriptionForm.contact_email || !subscriptionForm.contact_phone) {
+      setError("Fill business name, contact email, and contact phone before continuing.");
+      return false;
+    }
+
+    if (paymentForm.method === "mixx" && !paymentForm.phone_number) {
+      setError("Enter the Mixx by Yas phone number to continue.");
+      return false;
+    }
+
+    if (["card", "visa"].includes(paymentForm.method)) {
+      if (!paymentForm.card_name || !paymentForm.card_number || !paymentForm.expiry_date || !paymentForm.cvv) {
+        setError("Complete all card payment fields to continue.");
+        return false;
+      }
+    }
+
+    setPendingPayment({
+      ...paymentForm,
+      subtotal: selectedPrice?.amount || 0,
+      currency: selectedPrice?.currency || "USD",
+      billing_period: selectedPrice?.billing_period || "",
+      package_title: selectedPackage.title,
+    });
+    setBookingSent(false);
+    setLastBooking(null);
+    setError("");
+    navigate("/booking");
+    return true;
   }
 
   async function submitAuth(form, routePath, expectedRole) {
@@ -376,7 +471,9 @@ function App() {
       setCurrentUser(data.user);
       localStorage.setItem("infaan_user", JSON.stringify(data.user));
       setFeedback("Authentication successful.");
-      navigate(data.user.role === "admin" ? "/admin-dashboard" : "/dashboard");
+      const nextPath = data.user.role === "admin" ? "/admin-dashboard" : postLoginPath || "/dashboard";
+      setPostLoginPath("");
+      navigate(nextPath);
     } catch (requestError) {
       clearAuthState();
       setError(requestError.message);
@@ -411,7 +508,8 @@ function App() {
       setCurrentUser(data.user);
       localStorage.setItem("infaan_user", JSON.stringify(data.user));
       setFeedback("Google login successful.");
-      navigate("/dashboard");
+      navigate(postLoginPath || "/dashboard");
+      setPostLoginPath("");
     } catch (requestError) {
       clearAuthState();
       setError(requestError.message);
@@ -497,13 +595,18 @@ function App() {
         body: JSON.stringify({
           ...subscriptionForm,
           package_price: Number(selectedPriceId),
-          notes: `${subscriptionForm.notes}\nPayment method: ${paymentForm.method}\nPayment contact: ${
-            paymentForm.method === "mixx" ? paymentForm.phone_number : paymentForm.card_name
-          }`.trim(),
+          notes: `${subscriptionForm.notes}\nPayment method: ${pendingPayment?.method || paymentForm.method}\nPayment contact: ${
+            (pendingPayment?.method || paymentForm.method) === "mixx"
+              ? pendingPayment?.phone_number || paymentForm.phone_number
+              : pendingPayment?.card_name || paymentForm.card_name || "Gateway checkout"
+          }\nBilling period: ${selectedPrice?.billing_period || ""}\nAmount: ${
+            selectedPrice?.currency || "USD"
+          } ${selectedPrice?.amount || ""}`.trim(),
         }),
       });
       setBookingSent(true);
       setLastBooking(createdBooking);
+      setPendingPayment(null);
       setFeedback("Booking sent successfully.");
       await loadProfileAndSubscriptions();
       navigate("/booking");
@@ -569,6 +672,7 @@ function App() {
     users,
     selectedPackage,
     selectedPrice,
+    selectedService,
     selectedPackageId,
     setSelectedPackageId,
     selectedPriceId,
@@ -577,6 +681,7 @@ function App() {
     setPendingPayment,
     bookingSent,
     lastBooking,
+    postLoginPath,
     feedback,
     error,
     loading,
@@ -597,6 +702,10 @@ function App() {
     paymentForm,
     setPaymentForm,
     updateField,
+    selectPackage,
+    continueToPackageTime,
+    continueToBilling,
+    confirmPayment,
     submitAuth,
     submitAdminUser,
     savePackage,

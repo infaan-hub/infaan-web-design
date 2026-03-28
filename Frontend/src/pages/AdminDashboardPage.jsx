@@ -13,6 +13,9 @@ function AdminDashboardPage({ app }) {
     services,
     deletePackage,
     loading,
+    subscriptions,
+    formatPrice,
+    navigate,
   } = app;
 
   return (
@@ -89,6 +92,34 @@ function AdminDashboardPage({ app }) {
               </div>
             ))
           )}
+        </div>
+
+        <div className="section-headline admin-booking-head">
+          <div>
+            <p className="micro-label">recent bookings</p>
+            <h2>Customer bookings</h2>
+          </div>
+          <button type="button" className="outline-button" onClick={() => navigate("/bookings-services")}>
+            View all bookings
+          </button>
+        </div>
+
+        <div className="subscription-stack">
+          {[...subscriptions]
+            .sort((left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0))
+            .slice(0, 6)
+            .map((booking) => (
+            <div key={booking.id} className="subscription-card">
+              <strong>{booking.user_details?.username}</strong>
+              <p>{booking.business_name}</p>
+              <p>{booking.package_details?.title}</p>
+              <p>
+                {booking.package_details?.billing_period} -{" "}
+                {formatPrice(booking.package_details?.amount, booking.package_details?.currency)}
+              </p>
+              <span className={`status-pill status-${booking.status}`}>{booking.status}</span>
+            </div>
+          ))}
         </div>
       </section>
     </main>

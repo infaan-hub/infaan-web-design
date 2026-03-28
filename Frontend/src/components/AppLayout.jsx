@@ -1,13 +1,72 @@
-const sidebarLinks = [
-  { href: "/home", label: "Home", sign: "HM" },
-  { href: "/admin/register", label: "Admin Register", sign: "AR" },
-  { href: "/admin/login", label: "Admin Login", sign: "AL" },
-  { href: "/register", label: "Register", sign: "RG" },
-  { href: "/login", label: "Login", sign: "LG" },
-];
+function buildSidebarGroups(app) {
+  const { currentUser, path, selectedPackage, selectedPrice, pendingPayment, bookingSent } = app;
+
+  const publicMenu = [
+    { href: "/home", label: "Home", sign: "HM", hint: "services" },
+    { href: "/package", label: "Packages", sign: "PK", hint: "plans" },
+  ];
+
+  const customerFlow = [
+    { href: "/dashboard", label: "Dashboard", sign: "DB", hint: "overview" },
+    { href: "/package", label: "Package", sign: "PK", hint: selectedPackage ? "selected" : "choose" },
+    { href: "/package-time", label: "Package Time", sign: "PT", hint: selectedPrice ? "selected" : "duration" },
+    { href: "/billing", label: "Billing", sign: "BL", hint: pendingPayment ? "ready" : "payment" },
+    { href: "/booking", label: "Booking", sign: "BK", hint: bookingSent ? "sent" : "confirm" },
+  ];
+
+  const adminMenu = [
+    { href: "/admin-dashboard", label: "Admin Dashboard", sign: "AD", hint: "manage" },
+    { href: "/admin/users", label: "Users", sign: "US", hint: "accounts" },
+    { href: "/bookings-services", label: "Bookings", sign: "BS", hint: "orders" },
+  ];
+
+  const guestAccess = [
+    { href: "/login", label: "Customer Login", sign: "LG", hint: "signin" },
+    { href: "/register", label: "Customer Register", sign: "RG", hint: "signup" },
+    { href: "/admin/login", label: "Admin Login", sign: "AL", hint: "signin" },
+    { href: "/admin/register", label: "Admin Register", sign: "AR", hint: "signup" },
+  ];
+
+  if (currentUser?.role === "admin") {
+    return [
+      { title: "Menu", items: adminMenu },
+      { title: "Public", items: publicMenu },
+    ];
+  }
+
+  if (currentUser?.role === "customer") {
+    const flowItems = customerFlow.filter((item) => {
+      if (item.href === "/package-time") {
+        return Boolean(selectedPackage) || path === "/package-time" || path === "/billing" || path === "/booking";
+      }
+      if (item.href === "/billing") {
+        return Boolean(selectedPackage && selectedPrice) || path === "/billing" || path === "/booking";
+      }
+      if (item.href === "/booking") {
+        return Boolean(selectedPackage && selectedPrice) || Boolean(pendingPayment) || bookingSent || path === "/booking";
+      }
+      return true;
+    });
+
+    return [
+      { title: "Menu", items: flowItems },
+      { title: "Browse", items: publicMenu },
+    ];
+  }
+
+  const authPages = ["/login", "/register", "/admin/login", "/admin/register"];
+  const guestPrimary = authPages.includes(path) ? guestAccess : publicMenu;
+  const guestSecondary = authPages.includes(path) ? publicMenu : guestAccess;
+
+  return [
+    { title: authPages.includes(path) ? "Access" : "Browse", items: guestPrimary },
+    { title: authPages.includes(path) ? "Browse" : "Access", items: guestSecondary },
+  ];
+}
 
 function AppLayout({ app, children }) {
   const { currentUser, sidebarOpen, setSidebarOpen, navigate, logout, feedback, error, path, theme, setTheme } = app;
+  const sidebarGroups = buildSidebarGroups(app);
 
   function handleNavigation(nextPath) {
     navigate(nextPath);
@@ -35,26 +94,32 @@ function AppLayout({ app, children }) {
           <span className="sidebar-mark">i</span>
           <div>
             <p>infaan web & design</p>
-            <span>full system</span>
+            <span>{currentUser ? `${currentUser.role} panel` : "full system"}</span>
           </div>
         </div>
 
         <nav className="sidebar-nav">
-          <div className="sidebar-group-card">
-            {sidebarLinks.map((item) => (
-              <button
-                key={item.href}
-                type="button"
-                className={`nav-link ${path === item.href ? "nav-link-active" : ""}`}
-                onClick={() => handleNavigation(item.href)}
-              >
-                <span className="nav-sign">{item.sign}</span>
-                <span className="nav-label-wrap">
-                  <strong>{item.label}</strong>
-                </span>
-              </button>
-            ))}
-          </div>
+          {sidebarGroups.map((group) => (
+            <div key={group.title} className="nav-group">
+              <p className="sidebar-group-title">{group.title}</p>
+              <div className="sidebar-group-card">
+                {group.items.map((item) => (
+                  <button
+                    key={item.href}
+                    type="button"
+                    className={`nav-link ${path === item.href ? "nav-link-active" : ""}`}
+                    onClick={() => handleNavigation(item.href)}
+                  >
+                    <span className="nav-sign">{item.sign}</span>
+                    <span className="nav-label-wrap">
+                      <strong>{item.label}</strong>
+                      <small>{item.hint}</small>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </nav>
 
         <div className="sidebar-footer">
