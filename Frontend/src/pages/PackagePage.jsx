@@ -92,7 +92,7 @@ function PackagePage({ app }) {
 
             <div className="hero-actions">
               <button type="button" className="solid-button" onClick={() => continueToPackageTime(selectedPackage.id)}>
-                Continue to package time
+                {selectedPackage.tier === "extra" ? "Continue to billing" : "Continue to package time"}
               </button>
               <button type="button" className="outline-button" onClick={() => navigate("/package")}>
                 Back to catalog
@@ -145,7 +145,7 @@ function PackagePage({ app }) {
 
                       <div className="hero-actions">
                         <button type="button" className="solid-button" onClick={() => continueToPackageTime(pkg.id)}>
-                          Select package
+                          {pkg.tier === "extra" ? "Use fixed price" : "Select package"}
                         </button>
                         <button type="button" className="outline-button" onClick={() => app.selectPackage(pkg.id)}>
                           View details

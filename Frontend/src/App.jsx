@@ -19,8 +19,6 @@ import RegisterPage from "./pages/RegisterPage";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://infaan-web-design.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
-const BUSINESS_WHATSAPP_NUMBER = import.meta.env.VITE_BUSINESS_WHATSAPP_NUMBER || "";
-const BUSINESS_MOBILE_MONEY_NUMBER = import.meta.env.VITE_BUSINESS_MOBILE_MONEY_NUMBER || "";
 const CUSTOMER_PROTECTED_PATHS = ["/dashboard", "/package", "/package-time", "/billing", "/booking"];
 const ADMIN_PROTECTED_PATHS = ["/admin-dashboard", "/admin/users", "/bookings-services", "/booked-service", "/booking-history"];
 
@@ -66,7 +64,7 @@ const emptyPackage = {
   is_active: true,
 };
 const emptyPayment = {
-  method: "mixx",
+  method: "card",
   card_name: "",
   card_number: "",
   expiry_date: "",
@@ -420,6 +418,14 @@ function App() {
     setter((previous) => ({ ...previous, [field]: value }));
   }
 
+  function getPreferredPrice(packageObject) {
+    if (!packageObject?.prices?.length) return null;
+    if (packageObject.tier === "extra") {
+      return packageObject.prices.find((price) => price.billing_period === "per_task") || packageObject.prices[0];
+    }
+    return packageObject.prices.find((price) => price.billing_period === "monthly") || packageObject.prices[0];
+  }
+
   function selectPackage(packageId) {
     const packageMatch = packages.find((pkg) => String(pkg.id) === String(packageId));
     setSelectedPackageId(String(packageId));
@@ -445,7 +451,16 @@ function App() {
     if (!requireLogin("/package")) {
       return;
     }
+    const packageMatch = packages.find((pkg) => String(pkg.id) === String(packageId));
     selectPackage(packageId);
+    if (packageMatch?.tier === "extra") {
+      const preferredPrice = getPreferredPrice(packageMatch);
+      if (preferredPrice) {
+        setSelectedPriceId(String(preferredPrice.id));
+      }
+      navigate("/billing");
+      return;
+    }
     navigate("/package-time");
   }
 
@@ -454,6 +469,14 @@ function App() {
       setError("Select a package first.");
       navigate("/package");
       return false;
+    }
+    if (selectedPackage.tier === "extra") {
+      const preferredPrice = getPreferredPrice(selectedPackage);
+      if (preferredPrice) {
+        setSelectedPriceId(String(preferredPrice.id));
+      }
+      navigate("/billing");
+      return true;
     }
     if (!selectedPriceId) {
       setError("Select weekly, monthly, or yearly package time first.");
@@ -481,8 +504,20 @@ function App() {
       return false;
     }
 
-    if (["mixx", "whatsapp"].includes(paymentForm.method) && !paymentForm.phone_number) {
-      setError("Enter the phone number we should use for payment follow-up.");
+    if (paymentForm.method === "mixx" && !paymentForm.phone_number) {
+      setError("Enter the Mixx by Yas phone number to continue.");
+      return false;
+    }
+
+    if (["card", "visa"].includes(paymentForm.method)) {
+      if (!paymentForm.card_name || !paymentForm.card_number || !paymentForm.expiry_date || !paymentForm.cvv) {
+        setError("Complete all card payment fields to continue.");
+        return false;
+      }
+    }
+
+    if (paymentForm.method === "paypal") {
+      setError("Please choose Mastercard, Visa, or Mixx by Yas.");
       return false;
     }
 
@@ -706,7 +741,7 @@ function App() {
     try {
       const activePaymentMethod = pendingPayment?.method || paymentForm.method;
       const paymentContact =
-        ["mixx", "whatsapp"].includes(activePaymentMethod)
+        activePaymentMethod === "mixx"
           ? pendingPayment?.phone_number || paymentForm.phone_number
           : pendingPayment?.card_name || paymentForm.card_name || "Gateway checkout";
       const createdBooking = await apiRequest("/subscriptions/", {
@@ -715,7 +750,7 @@ function App() {
           ...subscriptionForm,
           package_price: Number(selectedPriceId),
           status: "pending",
-          payment_status: "pending",
+          payment_status: "paid",
           payment_method: activePaymentMethod,
           payment_contact: paymentContact,
           payment_amount: selectedPrice?.amount || 0,
@@ -724,7 +759,7 @@ function App() {
             selectedPrice?.billing_period || ""
           }\nAmount: ${
             selectedPrice?.currency || "USD"
-          } ${selectedPrice?.amount || ""}\nManual payment approval pending.`.trim(),
+          } ${selectedPrice?.amount || ""}`.trim(),
         }),
       });
       setBookingSent(true);
@@ -920,8 +955,7 @@ function App() {
     emptyPortfolio,
     emptyPayment,
     formatPrice,
-    businessWhatsAppNumber: BUSINESS_WHATSAPP_NUMBER,
-    businessMobileMoneyNumber: BUSINESS_MOBILE_MONEY_NUMBER,
+    getPreferredPrice,
   };
 
   const routes = {

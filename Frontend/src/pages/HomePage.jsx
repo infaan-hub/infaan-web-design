@@ -8,7 +8,7 @@ const serviceImages = {
 };
 
 function HomePage({ app }) {
-  const { groupedPackages, groupedPortfolio, setSelectedPackageId, requireLogin, formatPrice, selectPortfolioService } = app;
+  const { groupedPackages, groupedPortfolio, setSelectedPackageId, requireLogin, formatPrice } = app;
   const serviceOrder = ["website", "digital_ads", "logo_poster"];
   const visibleServices = serviceOrder
     .map((category) => groupedPackages.find((service) => service.category === category))
@@ -124,14 +124,8 @@ function HomePage({ app }) {
                   style={{
                     backgroundImage: `url(${portfolioPreview?.image_data || serviceImages[service.category]})`,
                   }}
-                />
-                <div className="portfolio-home-copy">
-                  <span className="service-badge">{service.category.replaceAll("_", " ")}</span>
-                  <h3>{service.name}</h3>
-                  <p>{portfolioPreview?.name || "View the service portfolio examples uploaded by admin."}</p>
-                  <button type="button" className="solid-button" onClick={() => selectPortfolioService(service.id)}>
-                    View portfolio
-                  </button>
+                >
+                  <span className="portfolio-image-badge">{service.name}</span>
                 </div>
               </article>
             );

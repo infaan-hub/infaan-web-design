@@ -2,31 +2,31 @@ function buildSidebarGroups(app) {
   const { currentUser, path, selectedPackage, selectedPrice, pendingPayment, bookingSent } = app;
 
   const publicMenu = [
-    { href: "/home", label: "Home", sign: "HM", hint: "services" },
-    { href: "/package", label: "Packages", sign: "PK", hint: "plans" },
-    { href: "/potfolio", label: "Portfolio", sign: "PF", hint: "gallery" },
+    { href: "/home", label: "Home", sign: "⌂", hint: "services" },
+    { href: "/package", label: "Packages", sign: "◫", hint: "plans" },
+    { href: "/potfolio", label: "Portfolio", sign: "◩", hint: "gallery" },
   ];
 
   const customerFlow = [
-    { href: "/dashboard", label: "Dashboard", sign: "DB", hint: "overview" },
-    { href: "/package", label: "Package", sign: "PK", hint: selectedPackage ? "selected" : "choose" },
-    { href: "/package-time", label: "Package Time", sign: "PT", hint: selectedPrice ? "selected" : "duration" },
-    { href: "/billing", label: "Billing", sign: "BL", hint: pendingPayment ? "ready" : "payment" },
-    { href: "/booking", label: "Booking", sign: "BK", hint: bookingSent ? "sent" : "confirm" },
+    { href: "/dashboard", label: "Dashboard", sign: "◈", hint: "overview" },
+    { href: "/package", label: "Package", sign: "◫", hint: selectedPackage ? "selected" : "choose" },
+    { href: "/package-time", label: "Package Time", sign: "◷", hint: selectedPrice ? "selected" : "duration" },
+    { href: "/billing", label: "Billing", sign: "◳", hint: pendingPayment ? "ready" : "payment" },
+    { href: "/booking", label: "Booking", sign: "✓", hint: bookingSent ? "sent" : "confirm" },
   ];
 
   const adminMenu = [
-    { href: "/admin-dashboard", label: "Admin Dashboard", sign: "AD", hint: "manage" },
-    { href: "/admin/users", label: "Users", sign: "US", hint: "accounts" },
-    { href: "/bookings-services", label: "Bookings", sign: "BS", hint: "orders" },
-    { href: "/booked-service", label: "Booked Service", sign: "SV", hint: "detail" },
-    { href: "/booking-history", label: "History", sign: "BH", hint: "done" },
+    { href: "/admin-dashboard", label: "Admin Dashboard", sign: "◈", hint: "manage" },
+    { href: "/admin/users", label: "Users", sign: "☺", hint: "accounts" },
+    { href: "/bookings-services", label: "Bookings", sign: "▤", hint: "orders" },
+    { href: "/booked-service", label: "Booked Service", sign: "◉", hint: "detail" },
+    { href: "/booking-history", label: "History", sign: "⟲", hint: "done" },
   ];
 
   const guestAccess = [
-    { href: "/login", label: "Customer Login", sign: "LG", hint: "signin" },
-    { href: "/register", label: "Customer Register", sign: "RG", hint: "signup" },
-    { href: "/admin/login", label: "Admin Login", sign: "AL", hint: "signin" },
+    { href: "/login", label: "Customer Login", sign: "→", hint: "signin" },
+    { href: "/register", label: "Customer Register", sign: "+", hint: "signup" },
+    { href: "/admin/login", label: "Admin Login", sign: "◇", hint: "signin" },
   ];
 
   if (currentUser?.role === "admin") {
@@ -149,8 +149,8 @@ function AppLayout({ app, children }) {
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
             >
               <span className="theme-switch-track">
-                <span className="theme-switch-label">Light</span>
-                <span className="theme-switch-label">Dark</span>
+                <span className="theme-switch-label">☼</span>
+                <span className="theme-switch-label">◐</span>
                 <span className="theme-switch-thumb" />
               </span>
             </button>
