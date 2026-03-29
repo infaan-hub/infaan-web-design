@@ -777,7 +777,6 @@ function App() {
         body: JSON.stringify({
           ...subscriptionForm,
           package_price: Number(activePriceId),
-          status: "pending",
           payment_status: "paid",
           payment_method: activePaymentMethod,
           payment_contact: paymentContact,

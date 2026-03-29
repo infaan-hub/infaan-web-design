@@ -72,16 +72,6 @@ function AdminSubscriptionPage({ app }) {
                     type="button"
                     className="solid-button"
                     disabled={loading}
-                    onClick={() =>
-                      patchSubscription(subscription.id, { status: "active", payment_status: "paid" }, "Subscription activated.")
-                    }
-                  >
-                    Activate
-                  </button>
-                  <button
-                    type="button"
-                    className="outline-button"
-                    disabled={loading}
                     onClick={() => patchSubscription(subscription.id, { status: "suspended" }, "Subscription suspended.")}
                   >
                     Suspend
