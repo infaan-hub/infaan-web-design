@@ -190,6 +190,7 @@ function BookingPage({ app }) {
   const { selectedPackage, selectedPrice, submitBooking, bookingSent, loading, lastBooking, currentUser, formatPrice, pendingPayment, navigate } =
     app;
   const autoSubmitRef = useRef(false);
+  const autoDownloadRef = useRef("");
   const issuedAt = lastBooking?.created_at ? new Date(lastBooking.created_at) : new Date();
   const receiptNumber = buildReceiptNumber(lastBooking);
   const customerName = currentUser?.first_name || currentUser?.username || "Customer";
@@ -208,6 +209,23 @@ function BookingPage({ app }) {
     submitBooking();
   }, [selectedPackage, selectedPrice, pendingPayment, bookingSent, lastBooking, loading, submitBooking]);
 
+  useEffect(() => {
+    if (!lastBooking?.id) {
+      return;
+    }
+    if (autoDownloadRef.current === String(lastBooking.id)) {
+      return;
+    }
+    autoDownloadRef.current = String(lastBooking.id);
+    downloadReceiptImage({
+      receiptNumber,
+      amountText,
+      dateText,
+      customerName,
+      packageName,
+    });
+  }, [lastBooking, receiptNumber, amountText, dateText, customerName, packageName]);
+
   return (
     <main className="main-content">
       <section className="section-card single-column-card">
@@ -216,7 +234,7 @@ function BookingPage({ app }) {
           <h2>Booking</h2>
         </div>
 
-        {bookingSent && lastBooking ? (
+        {lastBooking ? (
           <div className="ticket-wrap">
             <div className="success-ticket receipt-ticket">
               <div className="ticket-top">
