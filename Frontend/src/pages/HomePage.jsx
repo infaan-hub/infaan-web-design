@@ -147,6 +147,14 @@ function HomePage({ app }) {
               <div className="package-grid">
                 {service.packages.map((pkg) => (
                   <div key={pkg.id} className="pricing-plan-card">
+                    {(() => {
+                      const headlinePrices = pkg.prices.filter((price) =>
+                        pkg.prices[0]?.billing_period === "per_task"
+                          ? price.billing_period === "per_task"
+                          : price.billing_period === "monthly"
+                      );
+
+                      return (
                     <div className={`pricing-plan-top pricing-tone-${pkg.tier}`}>
                       <span className="pricing-mini-pill">{pkg.tier}</span>
                       <h4>{pkg.title}</h4>
@@ -168,6 +176,15 @@ function HomePage({ app }) {
                           </>
                         )}
                       </div>
+                      {headlinePrices.length > 1 ? (
+                        <div className="price-list">
+                          {headlinePrices.map((price) => (
+                            <span key={`${pkg.id}-${price.id}`} className="price-chip">
+                              {formatPrice(price.amount, price.currency)}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
                       <p>{pkg.description}</p>
                       <button
                         type="button"
@@ -180,6 +197,8 @@ function HomePage({ app }) {
                         Subscribe
                       </button>
                     </div>
+                      );
+                    })()}
 
                     <ul className="pricing-feature-list">
                       {pkg.features.map((feature) => (

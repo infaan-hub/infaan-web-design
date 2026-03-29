@@ -626,18 +626,27 @@ function App() {
     setFeedback("");
     const pricesPayload = (packageForm.prices || []).flatMap((price) => {
       const rows = [];
-      if (price.usd_amount !== "" && price.usd_amount !== null && price.usd_amount !== undefined) {
+      const normalizedUsdAmount =
+        price.usd_amount === "" || price.usd_amount === null || price.usd_amount === undefined
+          ? ""
+          : String(price.usd_amount).trim();
+      const normalizedTzsAmount =
+        price.tzs_amount === "" || price.tzs_amount === null || price.tzs_amount === undefined
+          ? ""
+          : String(price.tzs_amount).trim();
+
+      if (normalizedUsdAmount !== "") {
         rows.push({
           billing_period: price.billing_period,
-          amount: price.usd_amount,
+          amount: normalizedUsdAmount,
           currency: "USD",
           is_default: true,
         });
       }
-      if (price.tzs_amount !== "" && price.tzs_amount !== null && price.tzs_amount !== undefined) {
+      if (normalizedTzsAmount !== "") {
         rows.push({
           billing_period: price.billing_period,
-          amount: price.tzs_amount,
+          amount: normalizedTzsAmount,
           currency: "TZS",
           is_default: false,
         });

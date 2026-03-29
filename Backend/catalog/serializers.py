@@ -13,6 +13,10 @@ class PackagePriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = PackagePrice
         fields = "__all__"
+        read_only_fields = ("id", "package", "created_at", "updated_at")
+
+    def validate_currency(self, value):
+        return (value or "USD").upper()
 
 
 class ServicePackageSerializer(serializers.ModelSerializer):

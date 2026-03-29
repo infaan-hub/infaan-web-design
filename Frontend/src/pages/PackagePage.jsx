@@ -119,6 +119,9 @@ function PackagePage({ app }) {
               <div className="service-package-track">
                 {service.packages.map((pkg) => {
                   const monthlyPrice = pkg.prices.find((price) => price.billing_period === "monthly") || pkg.prices[0];
+                  const displayPrices = pkg.prices.filter((price) =>
+                    monthlyPrice?.billing_period === "per_task" ? price.billing_period === "per_task" : price.billing_period === "monthly"
+                  );
 
                   return (
                     <div key={pkg.id} className={`package-card tone-${pkg.tier} catalog-package-card`}>
@@ -136,6 +139,16 @@ function PackagePage({ app }) {
                         </strong>
                         <span>{monthlyPrice?.billing_period === "per_task" ? "per task" : `/${monthlyPrice?.billing_period}`}</span>
                       </div>
+
+                      {displayPrices.length > 1 ? (
+                        <div className="price-list">
+                          {displayPrices.map((price) => (
+                            <span key={`${pkg.id}-${price.id}`} className="price-chip">
+                              {formatPrice(price.amount, price.currency)}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
 
                       <ul className="catalog-feature-list">
                         {pkg.features.slice(0, 4).map((feature) => (

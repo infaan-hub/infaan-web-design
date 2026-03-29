@@ -528,6 +528,14 @@ body[data-theme="dark"] .ticket-barcode span {
   background: #f1f3f7;
 }
 
+body[data-theme="dark"] .receipt-barcode-svg rect {
+  fill: #f1f3f7;
+}
+
+body[data-theme="dark"] .receipt-barcode-text {
+  color: #d7dde8;
+}
+
 body[data-theme="dark"] .credential-card {
   background: rgba(31, 34, 40, 0.88);
 }
@@ -1965,6 +1973,77 @@ body[data-theme="dark"] .home-hero {
   background: linear-gradient(180deg, #fafbfd 0%, #f2f5fa 100%);
 }
 
+.receipt-ticket {
+  padding-top: 30px;
+}
+
+.receipt-ticket-icon {
+  background: linear-gradient(180deg, #f4ebff 0%, #ebe3ff 100%);
+  color: #6b58ff;
+  font-size: 1.5rem;
+}
+
+.receipt-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 22px;
+}
+
+.receipt-meta-grid div:last-child {
+  grid-column: 1 / -1;
+}
+
+.receipt-meta-grid span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.receipt-meta-grid strong {
+  font-size: 1rem;
+}
+
+.receipt-user-card {
+  margin-top: 20px;
+}
+
+.receipt-admin-note {
+  margin-top: 18px;
+  color: var(--muted);
+  line-height: 1.6;
+  text-align: center;
+}
+
+.receipt-barcode-wrap {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.receipt-barcode-svg {
+  width: min(100%, 250px);
+  height: 82px;
+}
+
+.receipt-barcode-svg rect {
+  fill: #111;
+}
+
+.receipt-barcode-text {
+  font-size: 0.82rem;
+  letter-spacing: 0.22em;
+  color: #2d3448;
+}
+
+.receipt-actions {
+  justify-content: center;
+  margin-top: 18px;
+}
+
 .ticket-payment-card strong,
 .ticket-payment-card span {
   display: block;
@@ -2256,6 +2335,14 @@ button:disabled {
 
   .auth-shell {
     grid-template-columns: 1fr;
+  }
+
+  .auth-visual-side {
+    order: -1;
+  }
+
+  .auth-form-side {
+    order: 1;
   }
 
   .auth-visual-side {

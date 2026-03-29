@@ -1,32 +1,201 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
-function normalizePhoneNumber(phoneNumber) {
-  return (phoneNumber || "").replace(/[^\d]/g, "");
+function buildReceiptNumber(booking) {
+  if (!booking) return "000000000000";
+  const date = booking.created_at ? new Date(booking.created_at) : new Date();
+  const year = String(date.getFullYear()).slice(-2);
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const bookingId = String(booking.id || 0).padStart(6, "0");
+  return `${year}${month}${day}${bookingId}`;
+}
+
+function buildBarcodeBars(value) {
+  const digits = String(value || "")
+    .replace(/[^\d]/g, "")
+    .padEnd(12, "0")
+    .slice(0, 12)
+    .split("");
+
+  const bars = [
+    { width: 2, height: 68 },
+    { width: 1, height: 68 },
+    { width: 2, height: 68 },
+  ];
+
+  digits.forEach((digit, index) => {
+    const number = Number(digit);
+    const pattern = [
+      1 + (number % 2),
+      1 + ((number + index) % 3),
+      1 + ((number + 1) % 2),
+      2 + ((number + index) % 2),
+    ];
+
+    pattern.forEach((width, patternIndex) => {
+      bars.push({
+        width,
+        height: patternIndex % 2 === 0 ? 54 + ((number + index) % 12) : 66,
+      });
+    });
+
+    bars.push({ width: 1, height: 52 });
+  });
+
+  bars.push(
+    { width: 2, height: 68 },
+    { width: 1, height: 68 },
+    { width: 2, height: 68 }
+  );
+
+  return bars;
+}
+
+function ReceiptBarcode({ value }) {
+  const bars = useMemo(() => buildBarcodeBars(value), [value]);
+  const gap = 2;
+  const totalWidth = bars.reduce((sum, bar) => sum + bar.width + gap, 0);
+  let offset = 0;
+
+  return (
+    <svg className="receipt-barcode-svg" viewBox={`0 0 ${totalWidth} 82`} role="img" aria-label={`Receipt barcode ${value}`}>
+      {bars.map((bar, index) => {
+        const x = offset;
+        offset += bar.width + gap;
+        return <rect key={`${value}-${index}`} x={x} y={72 - bar.height} width={bar.width} height={bar.height} rx="0.6" />;
+      })}
+    </svg>
+  );
+}
+
+function downloadReceiptImage({ receiptNumber, amountText, dateText, customerName, packageName }) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 900;
+  canvas.height = 1600;
+  const context = canvas.getContext("2d");
+  if (!context) return;
+
+  const bars = buildBarcodeBars(receiptNumber);
+
+  function roundRect(x, y, width, height, radius, fillStyle) {
+    context.beginPath();
+    context.moveTo(x + radius, y);
+    context.arcTo(x + width, y, x + width, y + height, radius);
+    context.arcTo(x + width, y + height, x, y + height, radius);
+    context.arcTo(x, y + height, x, y, radius);
+    context.arcTo(x, y, x + width, y, radius);
+    context.closePath();
+    context.fillStyle = fillStyle;
+    context.fill();
+  }
+
+  context.fillStyle = "#f3f4fb";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  roundRect(145, 120, 610, 1120, 42, "#ffffff");
+  roundRect(145, 120, 610, 286, 42, "#ffffff");
+
+  context.fillStyle = "#f2f4ff";
+  roundRect(210, 760, 480, 96, 22, "#f5f7ff");
+
+  context.fillStyle = "#6a58ff";
+  context.beginPath();
+  context.arc(450, 238, 34, 0, Math.PI * 2);
+  context.fill();
+
+  context.fillStyle = "#ffffff";
+  context.font = "700 32px Segoe UI";
+  context.textAlign = "center";
+  context.fillText("✓", 450, 250);
+
+  context.fillStyle = "#171717";
+  context.font = "700 48px Plus Jakarta Sans";
+  context.fillText("Thank you!", 450, 320);
+
+  context.fillStyle = "#7f8596";
+  context.font = "28px Plus Jakarta Sans";
+  context.fillText("Your receipt has been issued successfully", 450, 366);
+
+  context.strokeStyle = "#d1d5df";
+  context.setLineDash([8, 8]);
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(215, 470);
+  context.lineTo(685, 470);
+  context.stroke();
+  context.setLineDash([]);
+
+  context.textAlign = "left";
+  context.fillStyle = "#8c93a3";
+  context.font = "22px Plus Jakarta Sans";
+  context.fillText("RECEIPT ID", 210, 550);
+  context.fillText("AMOUNT", 560, 550);
+  context.fillText("DATE & TIME", 210, 655);
+
+  context.fillStyle = "#121826";
+  context.font = "700 32px Plus Jakarta Sans";
+  context.fillText(receiptNumber, 210, 592);
+  context.fillText(amountText, 560, 592);
+  context.fillText(dateText, 210, 698);
+
+  context.beginPath();
+  context.fillStyle = "#ff4b3e";
+  context.arc(235, 808, 16, 0, Math.PI * 2);
+  context.fill();
+  context.beginPath();
+  context.fillStyle = "#f8b627";
+  context.arc(253, 808, 16, 0, Math.PI * 2);
+  context.fill();
+
+  context.fillStyle = "#1b2130";
+  context.font = "700 28px Plus Jakarta Sans";
+  context.fillText(customerName, 292, 800);
+  context.fillStyle = "#4d566a";
+  context.font = "24px Plus Jakarta Sans";
+  context.fillText(packageName, 292, 838);
+
+  context.strokeStyle = "#eceff5";
+  context.beginPath();
+  context.moveTo(180, 930);
+  context.lineTo(720, 930);
+  context.stroke();
+
+  let x = 255;
+  context.fillStyle = "#121212";
+  bars.forEach((bar) => {
+    context.fillRect(x, 980 - bar.height, bar.width * 3, bar.height);
+    x += bar.width * 3 + 4;
+  });
+
+  context.fillStyle = "#2d3448";
+  context.font = "22px Plus Jakarta Sans";
+  context.textAlign = "center";
+  context.fillText(receiptNumber, 450, 1045);
+
+  const scallopY = 1218;
+  for (let index = 0; index < 7; index += 1) {
+    context.beginPath();
+    context.fillStyle = "#f3f4fb";
+    context.arc(230 + index * 73, scallopY, 20, 0, Math.PI, true);
+    context.fill();
+  }
+
+  const link = document.createElement("a");
+  link.href = canvas.toDataURL("image/jpeg", 0.96);
+  link.download = `${receiptNumber}.jpeg`;
+  link.click();
 }
 
 function BookingPage({ app }) {
-  const {
-    selectedPackage,
-    selectedPrice,
-    submitBooking,
-    bookingSent,
-    loading,
-    lastBooking,
-    currentUser,
-    formatPrice,
-    pendingPayment,
-    navigate,
-    businessWhatsAppNumber,
-    businessMobileMoneyNumber,
-  } = app;
+  const { selectedPackage, selectedPrice, submitBooking, bookingSent, loading, lastBooking, currentUser, formatPrice, pendingPayment, navigate } =
+    app;
   const autoSubmitRef = useRef(false);
   const issuedAt = lastBooking?.created_at ? new Date(lastBooking.created_at) : new Date();
-  const ticketId = lastBooking ? `INF${String(lastBooking.id).padStart(6, "0")}${issuedAt.getDate()}` : "Pending";
-  const businessWhatsAppLink = businessWhatsAppNumber
-    ? `https://wa.me/${normalizePhoneNumber(businessWhatsAppNumber)}?text=${encodeURIComponent(
-        `Hello Infaan, I have sent manual payment for booking ${ticketId}. Please verify and activate my subscription.`
-      )}`
-    : "";
+  const receiptNumber = buildReceiptNumber(lastBooking);
+  const customerName = currentUser?.first_name || currentUser?.username || "Customer";
+  const packageName = selectedPackage?.title || lastBooking?.package_details?.title || "Selected package";
+  const amountText = formatPrice(lastBooking?.package_details?.amount, lastBooking?.package_details?.currency);
+  const dateText = `${issuedAt.toLocaleDateString()} · ${issuedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 
   useEffect(() => {
     if (!selectedPackage || !selectedPrice) {
@@ -49,86 +218,79 @@ function BookingPage({ app }) {
 
         {bookingSent && lastBooking ? (
           <div className="ticket-wrap">
-            <div className="success-ticket">
+            <div className="success-ticket receipt-ticket">
               <div className="ticket-top">
-                <div className="ticket-icon">IWD</div>
-                <h3>Booking pending</h3>
-                <p>Your booking was sent successfully. Finish the manual payment below, then wait for admin approval.</p>
+                <div className="ticket-icon receipt-ticket-icon">✓</div>
+                <h3>Thank you!</h3>
+                <p>Your ticket has been issued successfully</p>
               </div>
 
               <div className="ticket-dash" />
 
-              <div className="ticket-meta">
+              <div className="receipt-meta-grid">
                 <div>
-                  <span>Booking ID</span>
-                  <strong>{ticketId}</strong>
+                  <span>Receipt ID</span>
+                  <strong>{receiptNumber}</strong>
                 </div>
                 <div>
                   <span>Amount</span>
-                  <strong>{formatPrice(lastBooking.package_details?.amount, lastBooking.package_details?.currency)}</strong>
+                  <strong>{amountText}</strong>
                 </div>
                 <div>
                   <span>Date & time</span>
-                  <strong>
-                    {issuedAt.toLocaleDateString()} · {issuedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </strong>
+                  <strong>{dateText}</strong>
                 </div>
               </div>
 
-              <div className="ticket-payment-card">
+              <div className="ticket-payment-card receipt-user-card">
                 <div className="ticket-payment-logo">
                   <span className="dot-red" />
                   <span className="dot-gold" />
                 </div>
                 <div>
-                  <strong>{currentUser?.first_name || currentUser?.username || "Customer"}</strong>
-                  <span>{selectedPackage?.title || lastBooking.package_details?.title}</span>
+                  <strong>{customerName}</strong>
+                  <span>{packageName}</span>
                 </div>
               </div>
 
               <div className="ticket-dash light" />
 
-              <div className="subscription-card booking-admin-card">
-                <span className="micro-label">payment instructions</span>
-                <strong>
-                  {lastBooking.payment_method === "whatsapp" ? "Confirm on WhatsApp" : "Send payment manually"}
-                </strong>
-                <p>
-                  Pay using Mixx to <strong>{businessMobileMoneyNumber || "your configured business mobile money number"}</strong> and
-                  use booking ID <strong>{ticketId}</strong> as your reference.
-                </p>
-                <p>
-                  After sending the money, message admin on WhatsApp so the booking can be approved and activated.
-                </p>
+              <div className="receipt-admin-note">
+                Booking sent to admin successfully. You can now track it in admin <strong>/bookings-services</strong> and customer
+                history.
               </div>
 
-              <div className="hero-actions">
-                {businessWhatsAppLink ? (
-                  <a className="solid-button booking-link-button" href={businessWhatsAppLink} target="_blank" rel="noreferrer">
-                    Open WhatsApp
-                  </a>
-                ) : null}
+              <div className="receipt-barcode-wrap">
+                <ReceiptBarcode value={receiptNumber} />
+                <div className="receipt-barcode-text">{receiptNumber}</div>
+              </div>
+
+              <div className="hero-actions receipt-actions">
+                <button
+                  type="button"
+                  className="solid-button"
+                  onClick={() =>
+                    downloadReceiptImage({
+                      receiptNumber,
+                      amountText,
+                      dateText,
+                      customerName,
+                      packageName,
+                    })
+                  }
+                >
+                  Download JPEG receipt
+                </button>
                 <button type="button" className="outline-button" onClick={() => navigate("/dashboard")}>
                   View dashboard
                 </button>
-              </div>
-
-              <div className="ticket-dash light" />
-
-              <div className="ticket-barcode" aria-hidden="true">
-                {Array.from({ length: 34 }).map((_, index) => (
-                  <span key={index} style={{ height: `${28 + ((index * 7) % 26)}px` }} />
-                ))}
               </div>
             </div>
           </div>
         ) : pendingPayment ? (
           <div className="form-card booking-status-card">
             <h3>Sending booking</h3>
-            <p>
-              We are submitting your selected package, package time, billing details, and payment procedure to the admin
-              dashboard now.
-            </p>
+            <p>We are submitting your selected package, payment details, and receipt data to the admin dashboard now.</p>
 
             <div className="booking-review-grid">
               <div className="subscription-card">
@@ -138,7 +300,7 @@ function BookingPage({ app }) {
               </div>
               <div className="subscription-card">
                 <span className="micro-label">payment</span>
-                <strong>{pendingPayment.method === "mixx" ? "Mixx Manual" : "WhatsApp Booking"}</strong>
+                <strong>{pendingPayment.method === "mixx" ? "Mixx by Yas" : pendingPayment.method === "visa" ? "Visa" : "Mastercard"}</strong>
                 <p>{formatPrice(selectedPrice?.amount || 0, selectedPrice?.currency || "USD")}</p>
               </div>
             </div>
@@ -151,8 +313,7 @@ function BookingPage({ app }) {
           <div className="form-card">
             <h3>{selectedPackage?.title || "Selected package"}</h3>
             <p>
-              {selectedPrice?.billing_period || "billing"} -{" "}
-              {formatPrice(selectedPrice?.amount || "", selectedPrice?.currency || "USD")}
+              {selectedPrice?.billing_period || "billing"} - {formatPrice(selectedPrice?.amount || "", selectedPrice?.currency || "USD")}
             </p>
             <div className="hero-actions">
               <button type="button" className="solid-button" onClick={() => navigate("/billing")}>
