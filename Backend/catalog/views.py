@@ -54,12 +54,15 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Subscription.objects.select_related(
-            "user", "package_price", "package_price__package", "package_price__package__service"
-        )
-        if self.request.user.role == CustomUser.Role.ADMIN:
-            return queryset.all()
-        return queryset.filter(user=self.request.user)
+        try:
+            queryset = Subscription.objects.select_related(
+                "user", "package_price", "package_price__package", "package_price__package__service"
+            )
+            if self.request.user.role == CustomUser.Role.ADMIN:
+                return queryset.all()
+            return queryset.filter(user=self.request.user)
+        except (ProgrammingError, OperationalError):
+            return Subscription.objects.none()
 
     def get_permissions(self):
         if self.action in ("update", "partial_update", "destroy"):

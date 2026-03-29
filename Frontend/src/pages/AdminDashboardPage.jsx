@@ -4,6 +4,12 @@ function AdminDashboardPage({ app }) {
     setAdminUserForm,
     updateField,
     submitAdminUser,
+    serviceForm,
+    setServiceForm,
+    saveService,
+    editingServiceId,
+    setEditingServiceId,
+    deleteService,
     packageForm,
     setPackageForm,
     savePackage,
@@ -71,6 +77,50 @@ function AdminDashboardPage({ app }) {
             <input value={adminUserForm.phone_number} onChange={(event) => updateField(setAdminUserForm, "phone_number", event.target.value)} placeholder="Phone number" />
             <input type="password" value={adminUserForm.password} onChange={(event) => updateField(setAdminUserForm, "password", event.target.value)} placeholder="Password" />
             <button type="submit" className="solid-button" disabled={loading}>Create customer</button>
+          </form>
+
+          <form className="form-card" onSubmit={(event) => { event.preventDefault(); saveService(); }}>
+            <h3>{editingServiceId ? "Edit service" : "Post service"}</h3>
+            <input value={serviceForm.name} onChange={(event) => updateField(setServiceForm, "name", event.target.value)} placeholder="Service name" />
+            <select value={serviceForm.category} onChange={(event) => updateField(setServiceForm, "category", event.target.value)}>
+              <option value="website">Website Developing and Design</option>
+              <option value="digital_ads">Digital Ads</option>
+              <option value="logo_poster">Logo & Poster Design</option>
+              <option value="maintenance">Maintenance & Fix Web System</option>
+            </select>
+            <input
+              value={serviceForm.short_description}
+              onChange={(event) => updateField(setServiceForm, "short_description", event.target.value)}
+              placeholder="Short description"
+            />
+            <textarea
+              value={serviceForm.details}
+              onChange={(event) => updateField(setServiceForm, "details", event.target.value)}
+              placeholder="Full service details"
+            />
+            <label className="check-row">
+              <input
+                type="checkbox"
+                checked={serviceForm.is_active}
+                onChange={(event) => updateField(setServiceForm, "is_active", event.target.checked)}
+              />
+              Active service
+            </label>
+            <button type="submit" className="solid-button" disabled={loading}>
+              {editingServiceId ? "Update service" : "Create service"}
+            </button>
+            {editingServiceId && (
+              <button
+                type="button"
+                className="outline-button"
+                onClick={() => {
+                  setServiceForm(app.emptyService);
+                  setEditingServiceId(null);
+                }}
+              >
+                Cancel edit
+              </button>
+            )}
           </form>
 
           <form className="form-card" onSubmit={(event) => { event.preventDefault(); savePackage(); }}>
@@ -167,6 +217,50 @@ function AdminDashboardPage({ app }) {
               </button>
             )}
           </form>
+        </div>
+
+        <div className="section-headline admin-booking-head">
+          <div>
+            <p className="micro-label">services</p>
+            <h2>Service catalog</h2>
+          </div>
+        </div>
+
+        <div className="package-grid">
+          {services.map((service) => (
+            <div key={service.id} className="package-card service-admin-card">
+              <div className="package-topline">
+                <span className="tier-pill">{service.category.replace("_", " ")}</span>
+                <span className={`status-pill ${service.is_active ? "status-active" : "status-cancelled"}`}>
+                  {service.is_active ? "active" : "inactive"}
+                </span>
+              </div>
+              <h4>{service.name}</h4>
+              <p>{service.short_description}</p>
+              <p>{service.details}</p>
+              <div className="price-list">
+                <button
+                  type="button"
+                  className="outline-button"
+                  onClick={() => {
+                    setServiceForm({
+                      name: service.name,
+                      category: service.category,
+                      short_description: service.short_description,
+                      details: service.details,
+                      is_active: service.is_active,
+                    });
+                    setEditingServiceId(service.id);
+                  }}
+                >
+                  Edit
+                </button>
+                <button type="button" className="header-button" onClick={() => deleteService(service.id)}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
 
         <div className="package-grid">

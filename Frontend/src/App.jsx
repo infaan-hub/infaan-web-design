@@ -52,6 +52,13 @@ const emptyAdminUser = {
   role: "customer",
   is_active: true,
 };
+const emptyService = {
+  name: "",
+  category: "website",
+  short_description: "",
+  details: "",
+  is_active: true,
+};
 const emptyPackage = {
   service: "",
   tier: "silver",
@@ -128,6 +135,8 @@ function App() {
   const [adminRegisterForm, setAdminRegisterForm] = useState({ ...emptyAdminUser, role: "admin" });
   const [subscriptionForm, setSubscriptionForm] = useState(emptySubscription);
   const [adminUserForm, setAdminUserForm] = useState(emptyAdminUser);
+  const [serviceForm, setServiceForm] = useState(emptyService);
+  const [editingServiceId, setEditingServiceId] = useState(null);
   const [packageForm, setPackageForm] = useState(emptyPackage);
   const [editingPackageId, setEditingPackageId] = useState(null);
   const [portfolioForm, setPortfolioForm] = useState(emptyPortfolio);
@@ -630,6 +639,97 @@ function App() {
     }
   }
 
+  async function saveService() {
+    setLoading(true);
+    setError("");
+    setFeedback("");
+    const body = {
+      ...serviceForm,
+      name: String(serviceForm.name || "").trim(),
+      short_description: String(serviceForm.short_description || "").trim(),
+      details: String(serviceForm.details || "").trim(),
+    };
+
+    try {
+      if (editingServiceId) {
+        await apiRequest(`/services/${editingServiceId}/`, { method: "PUT", body: JSON.stringify(body) });
+        setFeedback("Service updated successfully.");
+      } else {
+        await apiRequest("/services/", { method: "POST", body: JSON.stringify(body) });
+        setFeedback("Service created successfully.");
+      }
+      setServiceForm(emptyService);
+      setEditingServiceId(null);
+      await loadCatalog();
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deleteService(serviceId) {
+    setLoading(true);
+    setError("");
+    setFeedback("");
+    try {
+      await apiRequest(`/services/${serviceId}/`, { method: "DELETE" });
+      setFeedback("Service deleted successfully.");
+      if (String(editingServiceId) === String(serviceId)) {
+        setServiceForm(emptyService);
+        setEditingServiceId(null);
+      }
+      await loadCatalog();
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function saveUser(userId, userData) {
+    setLoading(true);
+    setError("");
+    setFeedback("");
+    const body = {
+      username: userData.username,
+      first_name: userData.first_name,
+      last_name: userData.last_name,
+      email: userData.email,
+      phone_number: userData.phone_number,
+      role: userData.role,
+      is_active: userData.is_active,
+    };
+    if (userData.password) {
+      body.password = userData.password;
+    }
+
+    try {
+      await apiRequest(`/users/${userId}/`, { method: "PATCH", body: JSON.stringify(body) });
+      await loadUsers();
+      setFeedback("User updated successfully.");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deleteUser(userId) {
+    setLoading(true);
+    setError("");
+    setFeedback("");
+    try {
+      await apiRequest(`/users/${userId}/`, { method: "DELETE" });
+      await loadUsers();
+      setFeedback("User deleted successfully.");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function savePackage() {
     setLoading(true);
     setError("");
@@ -947,6 +1047,10 @@ function App() {
     setSubscriptionForm,
     adminUserForm,
     setAdminUserForm,
+    serviceForm,
+    setServiceForm,
+    editingServiceId,
+    setEditingServiceId,
     packageForm,
     setPackageForm,
     editingPackageId,
@@ -964,6 +1068,10 @@ function App() {
     confirmPayment,
     submitAuth,
     submitAdminUser,
+    saveService,
+    deleteService,
+    saveUser,
+    deleteUser,
     savePackage,
     deletePackage,
     savePortfolio,
@@ -983,6 +1091,7 @@ function App() {
     emptyLogin,
     emptyRegister,
     emptyAdminUser,
+    emptyService,
     emptyPackage,
     emptyPortfolio,
     emptyPayment,
