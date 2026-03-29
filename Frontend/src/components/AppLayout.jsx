@@ -22,6 +22,7 @@ function buildSidebarGroups(app) {
   const adminMenu = [
     { href: "/admin-dashboard", label: "Admin Dashboard", sign: "\u25C8", hint: "manage" },
     { href: "/admin/users", label: "Users", sign: "\u263A", hint: "accounts" },
+    { href: "/admin-subscription", label: "Subscriptions", sign: "\u25CE", hint: "plans" },
     { href: "/bookings-services", label: "Bookings", sign: "\u25A4", hint: "orders" },
     { href: "/booked-service", label: "Booked Service", sign: "\u25C9", hint: "detail" },
     { href: "/booking-history", label: "History", sign: "\u27F2", hint: "done" },

@@ -7,17 +7,10 @@ const serviceImages = {
     "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
 };
 
-function normalizePackageStatus(status) {
-  if (status === "active" || status === "grace_period") {
-    return { label: status.replace("_", " "), tone: "active" };
-  }
-  if (status === "suspended") {
-    return { label: "suspended", tone: "suspended" };
-  }
-  if (status === "expired" || status === "cancelled") {
-    return { label: status, tone: "expired" };
-  }
-  return { label: status || "not active", tone: "inactive" };
+function getStatusTone(status) {
+  if (status === "active" || status === "grace_period") return "active";
+  if (status === "suspended") return "suspended";
+  return "expired";
 }
 
 function DashboardPage({ app }) {
@@ -27,18 +20,36 @@ function DashboardPage({ app }) {
     .map((category) => groupedPackages.find((service) => service.category === category))
     .filter(Boolean);
 
-  function getPackageSubscription(pkg) {
-    return [...subscriptions]
-      .filter(
-        (subscription) =>
-          subscription.package_details?.title === pkg.title &&
-          subscription.package_details?.service === visibleServices.find((service) => service.id === pkg.service)?.name
-      )
-      .sort((left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0))[0];
-  }
-
   return (
     <main className="main-content">
+      {subscriptions.length ? (
+        <section className="section-card">
+          <div className="section-headline">
+            <div>
+              <p className="micro-label">subscription status</p>
+              <h2>Current subscription status</h2>
+            </div>
+          </div>
+
+          <div className="subscription-detail-grid">
+            {subscriptions.map((subscription) => {
+              const status = subscription.service_access?.status || subscription.status || "cancelled";
+              return (
+                <article key={subscription.id} className="subscription-card">
+                  <div className="package-status-inline">
+                    <span className={`status-dot status-dot-${getStatusTone(status)}`} />
+                    <small>{status.replace("_", " ")}</small>
+                  </div>
+                  <strong>{subscription.package_details?.title || "-"}</strong>
+                  <p>{subscription.package_details?.service || "-"}</p>
+                  <p>{subscription.end_date ? `Ends ${subscription.end_date}` : "No end date yet"}</p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
       <section className="section-block">
         <div className="section-headline">
           <div>
@@ -79,25 +90,11 @@ function DashboardPage({ app }) {
                     <div className="service-package-track">
                       {service.packages.map((pkg) => {
                         const preferredPrice = app.getPreferredPrice(pkg);
-                        const packageSubscription = [...subscriptions]
-                          .filter(
-                            (subscription) =>
-                              subscription.package_details?.title === pkg.title &&
-                              subscription.package_details?.service === service.name
-                          )
-                          .sort((left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0))[0];
-                        const packageStatus = normalizePackageStatus(packageSubscription?.service_access?.status || packageSubscription?.status || "not active");
 
                         return (
                           <div key={pkg.id} className="pricing-plan-card">
                             <div className={`pricing-plan-top pricing-tone-${pkg.tier}`}>
-                              <div className="package-status-row">
-                                <span className="pricing-mini-pill">{pkg.tier}</span>
-                                <span className="package-status-inline">
-                                  <span className={`status-dot status-dot-${packageStatus.tone}`} />
-                                  <small>{packageStatus.label}</small>
-                                </span>
-                              </div>
+                              <span className="pricing-mini-pill">{pkg.tier}</span>
                               <h4>{pkg.title}</h4>
                               <div className="pricing-amount">
                                 {preferredPrice?.billing_period === "per_task" ? (

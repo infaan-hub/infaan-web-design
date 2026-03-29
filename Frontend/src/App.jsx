@@ -4,6 +4,7 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminRegisterPage from "./pages/AdminRegisterPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import AdminSubscriptionPage from "./pages/AdminSubscriptionPage";
 import BillingPage from "./pages/BillingPage";
 import BookingPage from "./pages/BookingPage";
 import BookedServicePage from "./pages/BookedServicePage";
@@ -23,7 +24,7 @@ import SubscriptionPage from "./pages/SubscriptionPage";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://infaan-web-design.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 const CUSTOMER_PROTECTED_PATHS = ["/dashboard", "/profile", "/subscription", "/package", "/package-time", "/billing", "/booking", "/billing-history"];
-const ADMIN_PROTECTED_PATHS = ["/admin-dashboard", "/admin/users", "/bookings-services", "/booked-service", "/booking-history"];
+const ADMIN_PROTECTED_PATHS = ["/admin-dashboard", "/admin/users", "/admin-subscription", "/bookings-services", "/booked-service", "/booking-history"];
 
 const emptySubscription = {
   business_name: "",
@@ -871,6 +872,10 @@ function App() {
     }
   }
 
+  async function updateSubscription(bookingId, updates, successMessage = "Subscription updated successfully.") {
+    return updateBooking(bookingId, updates, successMessage);
+  }
+
   function markBookingDone() {
     if (!selectedBookingId) return;
     updateBooking(selectedBookingId, { status: "completed" }, "Booking marked as done and moved to history.").then(
@@ -968,6 +973,7 @@ function App() {
     openBooking,
     markBookingDone,
     setBookingPaymentStatus,
+    updateSubscription,
     selectPortfolioService,
     requireLogin,
     beginGoogleLogin,
@@ -1005,6 +1011,7 @@ function App() {
     "/admin/register": <AdminRegisterPage app={app} />,
     "/admin-dashboard": <AdminDashboardPage app={app} />,
     "/admin/users": <AdminUsersPage app={app} />,
+    "/admin-subscription": <AdminSubscriptionPage app={app} />,
     "/bookings-services": <BookingsServicesPage app={app} />,
   };
 
