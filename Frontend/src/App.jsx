@@ -405,6 +405,7 @@ function App() {
   const selectedBooking = subscriptions.find((booking) => String(booking.id) === String(selectedBookingId)) || null;
   const selectedPortfolioService =
     services.find((service) => String(service.id) === String(selectedPortfolioServiceId)) || null;
+  const resolvedSelectedPrice = selectedPrice || getPreferredPrice(selectedPackage);
 
   function requireLogin(nextPath) {
     if (!currentUser) {
@@ -432,7 +433,7 @@ function App() {
   function selectPackage(packageId) {
     const packageMatch = packages.find((pkg) => String(pkg.id) === String(packageId));
     setSelectedPackageId(String(packageId));
-    setSelectedPriceId("");
+    setSelectedPriceId(packageMatch ? String(getPreferredPrice(packageMatch)?.id || "") : "");
     setPendingPayment(null);
     setBookingSent(false);
     setLastBooking(null);
@@ -481,9 +482,12 @@ function App() {
       navigate("/billing");
       return true;
     }
-    if (!selectedPriceId) {
+    if (!selectedPriceId && !resolvedSelectedPrice) {
       setError("Select weekly, monthly, or yearly package time first.");
       return false;
+    }
+    if (!selectedPriceId && resolvedSelectedPrice?.id) {
+      setSelectedPriceId(String(resolvedSelectedPrice.id));
     }
     navigate("/billing");
     return true;
@@ -496,10 +500,14 @@ function App() {
       return false;
     }
 
-    if (!selectedPriceId) {
+    if (!selectedPriceId && !resolvedSelectedPrice) {
       setError("Select package time first.");
       navigate("/package-time");
       return false;
+    }
+    const activePrice = selectedPrice || resolvedSelectedPrice;
+    if (!selectedPriceId && activePrice?.id) {
+      setSelectedPriceId(String(activePrice.id));
     }
 
     if (!subscriptionForm.business_name || !subscriptionForm.contact_email || !subscriptionForm.contact_phone) {
@@ -526,9 +534,9 @@ function App() {
 
     setPendingPayment({
       ...paymentForm,
-      subtotal: selectedPrice?.amount || 0,
-      currency: selectedPrice?.currency || "USD",
-      billing_period: selectedPrice?.billing_period || "",
+      subtotal: activePrice?.amount || 0,
+      currency: activePrice?.currency || "USD",
+      billing_period: activePrice?.billing_period || "",
       package_title: selectedPackage.title,
     });
     setBookingSent(false);
@@ -742,9 +750,16 @@ function App() {
       navigate("/login");
       return;
     }
-    if (!selectedPriceId) {
+    if (!selectedPriceId && !resolvedSelectedPrice) {
       setError("Select package time first.");
       navigate("/package-time");
+      return;
+    }
+    const activePrice = selectedPrice || resolvedSelectedPrice;
+    const activePriceId = selectedPriceId || String(activePrice?.id || "");
+    if (!activePriceId) {
+      setError("Package price is missing. Please choose the package again.");
+      navigate("/package");
       return;
     }
     setLoading(true);
@@ -760,18 +775,18 @@ function App() {
         method: "POST",
         body: JSON.stringify({
           ...subscriptionForm,
-          package_price: Number(selectedPriceId),
+          package_price: Number(activePriceId),
           status: "pending",
           payment_status: "paid",
           payment_method: activePaymentMethod,
           payment_contact: paymentContact,
-          payment_amount: selectedPrice?.amount || 0,
-          payment_currency: selectedPrice?.currency || "USD",
+          payment_amount: activePrice?.amount || 0,
+          payment_currency: activePrice?.currency || "USD",
           notes: `${subscriptionForm.notes}\nPayment method: ${activePaymentMethod}\nPayment contact: ${paymentContact}\nBilling period: ${
-            selectedPrice?.billing_period || ""
+            activePrice?.billing_period || ""
           }\nAmount: ${
-            selectedPrice?.currency || "USD"
-          } ${selectedPrice?.amount || ""}`.trim(),
+            activePrice?.currency || "USD"
+          } ${activePrice?.amount || ""}`.trim(),
         }),
       });
       setBookingSent(true);
@@ -898,7 +913,7 @@ function App() {
     subscriptions,
     users,
     selectedPackage,
-    selectedPrice,
+    selectedPrice: resolvedSelectedPrice,
     selectedService,
     selectedBooking,
     selectedBookingId,

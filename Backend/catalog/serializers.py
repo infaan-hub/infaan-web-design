@@ -1,5 +1,6 @@
-from rest_framework import serializers
 from django.utils import timezone
+from django.db import transaction
+from rest_framework import serializers
 
 from .models import PackagePrice, PortfolioItem, Service, ServicePackage, Subscription
 
@@ -51,9 +52,36 @@ class ServicePackageSerializer(serializers.ModelSerializer):
         instance.save()
 
         if prices_data is not None:
-            instance.prices.all().delete()
+            incoming_by_key = {}
             for price_data in prices_data:
-                PackagePrice.objects.create(package=instance, **price_data)
+                key = (price_data["billing_period"], (price_data.get("currency") or "USD").upper())
+                incoming_by_key[key] = {
+                    **price_data,
+                    "currency": (price_data.get("currency") or "USD").upper(),
+                }
+
+            existing_prices = {
+                (price.billing_period, (price.currency or "USD").upper()): price
+                for price in instance.prices.all()
+            }
+
+            with transaction.atomic():
+                for key, price_data in incoming_by_key.items():
+                    existing_price = existing_prices.get(key)
+                    if existing_price:
+                        for field, value in price_data.items():
+                            setattr(existing_price, field, value)
+                        existing_price.save()
+                    else:
+                        PackagePrice.objects.create(package=instance, **price_data)
+
+                for key, existing_price in existing_prices.items():
+                    if key in incoming_by_key:
+                        continue
+                    if existing_price.subscriptions.exists():
+                        # Keep historical prices referenced by subscriptions.
+                        continue
+                    existing_price.delete()
 
         return instance
 

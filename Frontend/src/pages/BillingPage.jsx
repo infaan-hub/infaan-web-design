@@ -11,10 +11,15 @@ function BillingPage({ app }) {
     formatPrice,
     confirmPayment,
   } = app;
+
   const subtotal = Number(selectedPrice?.amount || 0);
-  const serviceFee = selectedPrice?.billing_period === "per_task" ? 5 : 0;
-  const total = subtotal + serviceFee;
   const activeCurrency = selectedPrice?.currency || "USD";
+  const serviceFeeByCurrency = {
+    USD: 5,
+    TZS: 15000,
+  };
+  const serviceFee = selectedPrice?.billing_period === "per_task" ? serviceFeeByCurrency[activeCurrency] || 0 : 0;
+  const total = subtotal + serviceFee;
 
   return (
     <main className="main-content">
@@ -33,8 +38,8 @@ function BillingPage({ app }) {
               <div className="pricing-amount">
                 {selectedPrice?.billing_period === "per_task" ? (
                   <>
-                    <strong>Custom</strong>
-                    <span>per task</span>
+                    <strong>{formatPrice(selectedPrice?.amount || "0", activeCurrency)}</strong>
+                    <span>fixed</span>
                   </>
                 ) : (
                   <>
@@ -113,15 +118,27 @@ function BillingPage({ app }) {
 
             <div className="billing-form-fields">
               <div className="payment-method-grid">
-                <button type="button" className={`payment-method-tile ${paymentForm.method === "card" ? "payment-method-active" : ""}`} onClick={() => updateField(setPaymentForm, "method", "card")}>
+                <button
+                  type="button"
+                  className={`payment-method-tile ${paymentForm.method === "card" ? "payment-method-active" : ""}`}
+                  onClick={() => updateField(setPaymentForm, "method", "card")}
+                >
                   <span className="payment-radio" />
                   <strong>Mastercard</strong>
                 </button>
-                <button type="button" className={`payment-method-tile ${paymentForm.method === "visa" ? "payment-method-active" : ""}`} onClick={() => updateField(setPaymentForm, "method", "visa")}>
+                <button
+                  type="button"
+                  className={`payment-method-tile ${paymentForm.method === "visa" ? "payment-method-active" : ""}`}
+                  onClick={() => updateField(setPaymentForm, "method", "visa")}
+                >
                   <span className="payment-radio" />
                   <strong>Visa</strong>
                 </button>
-                <button type="button" className={`payment-method-tile ${paymentForm.method === "mixx" ? "payment-method-active" : ""}`} onClick={() => updateField(setPaymentForm, "method", "mixx")}>
+                <button
+                  type="button"
+                  className={`payment-method-tile ${paymentForm.method === "mixx" ? "payment-method-active" : ""}`}
+                  onClick={() => updateField(setPaymentForm, "method", "mixx")}
+                >
                   <span className="payment-radio" />
                   <strong>Mixx by Yas</strong>
                 </button>
@@ -130,24 +147,40 @@ function BillingPage({ app }) {
               {paymentForm.method === "mixx" ? (
                 <label className="payment-field">
                   <span>Phone number</span>
-                  <input value={paymentForm.phone_number} onChange={(event) => updateField(setPaymentForm, "phone_number", event.target.value)} placeholder="Phone number to send money" />
+                  <input
+                    value={paymentForm.phone_number}
+                    onChange={(event) => updateField(setPaymentForm, "phone_number", event.target.value)}
+                    placeholder="Phone number to send money"
+                  />
                 </label>
               ) : (
                 <>
                   <div className="payment-field-grid payment-field-grid-wide">
                     <label className="payment-field">
                       <span>Cardholder name</span>
-                      <input value={paymentForm.card_name} onChange={(event) => updateField(setPaymentForm, "card_name", event.target.value)} placeholder="Full name on card" />
+                      <input
+                        value={paymentForm.card_name}
+                        onChange={(event) => updateField(setPaymentForm, "card_name", event.target.value)}
+                        placeholder="Full name on card"
+                      />
                     </label>
                     <label className="payment-field">
                       <span>Card number</span>
-                      <input value={paymentForm.card_number} onChange={(event) => updateField(setPaymentForm, "card_number", event.target.value)} placeholder="0000 0000 0000 0000" />
+                      <input
+                        value={paymentForm.card_number}
+                        onChange={(event) => updateField(setPaymentForm, "card_number", event.target.value)}
+                        placeholder="0000 0000 0000 0000"
+                      />
                     </label>
                   </div>
                   <div className="payment-field-grid">
                     <label className="payment-field">
                       <span>Expiry date</span>
-                      <input value={paymentForm.expiry_date} onChange={(event) => updateField(setPaymentForm, "expiry_date", event.target.value)} placeholder="MM/YY" />
+                      <input
+                        value={paymentForm.expiry_date}
+                        onChange={(event) => updateField(setPaymentForm, "expiry_date", event.target.value)}
+                        placeholder="MM/YY"
+                      />
                     </label>
                     <label className="payment-field">
                       <span>CVV</span>
@@ -172,7 +205,9 @@ function BillingPage({ app }) {
                 </div>
               </div>
 
-              <button type="button" className="payment-confirm-button" onClick={confirmPayment}>Confirm payment</button>
+              <button type="button" className="payment-confirm-button" onClick={confirmPayment}>
+                Confirm payment
+              </button>
             </div>
           </form>
         </div>
