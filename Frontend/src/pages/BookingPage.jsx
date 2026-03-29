@@ -167,11 +167,18 @@ function downloadReceiptImage({ receiptNumber, amountText, dateText, customerNam
   context.lineTo(720, 930);
   context.stroke();
 
-  let x = 255;
+  const barcodeAreaWidth = 360;
+  const barcodeLeft = 270;
+  const barcodeGap = 2;
+  const rawBarcodeWidth = bars.reduce((sum, bar) => sum + bar.width * 3 + 4, 0);
+  const barcodeScale = Math.min(1, barcodeAreaWidth / rawBarcodeWidth);
+  let x = barcodeLeft + (barcodeAreaWidth - rawBarcodeWidth * barcodeScale) / 2;
   context.fillStyle = "#121212";
   bars.forEach((bar) => {
-    context.fillRect(x, 980 - bar.height, bar.width * 3, bar.height);
-    x += bar.width * 3 + 4;
+    const scaledWidth = Math.max(1, bar.width * 3 * barcodeScale);
+    const scaledHeight = bar.height * barcodeScale;
+    context.fillRect(x, 980 - scaledHeight, scaledWidth, scaledHeight);
+    x += scaledWidth + barcodeGap * barcodeScale;
   });
 
   context.fillStyle = "#2d3448";
