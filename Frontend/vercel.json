@@ -1,6 +1,10 @@
 {
   "routes": [
     {
+      "src": "/sitemap\\.xml",
+      "dest": "https://infaan-web-design.onrender.com/sitemap.xml"
+    },
+    {
       "handle": "filesystem"
     },
     {
