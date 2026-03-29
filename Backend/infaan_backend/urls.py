@@ -1,9 +1,11 @@
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.views import AdminRegisterView, GoogleLoginView, LoginView, RegisterView, UserViewSet, profile
+from catalog.sitemaps import PackageSitemap, PortfolioSitemap, ServiceSitemap, StaticViewSitemap
 from catalog.views import PortfolioItemViewSet, PackagePriceViewSet, ServicePackageViewSet, ServiceViewSet, SubscriptionViewSet
 
 router = DefaultRouter()
@@ -14,8 +16,17 @@ router.register("prices", PackagePriceViewSet, basename="price")
 router.register("portfolio-items", PortfolioItemViewSet, basename="portfolio-item")
 router.register("subscriptions", SubscriptionViewSet, basename="subscription")
 
+sitemaps = {
+    "static": StaticViewSitemap,
+    "services": ServiceSitemap,
+    "packages": PackageSitemap,
+    "portfolio": PortfolioSitemap,
+}
+
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="django.contrib.sitemaps.views.sitemap"),
+    path("", include("catalog.site_urls")),
     path("api/auth/register/", RegisterView.as_view(), name="register"),
     path("api/auth/admin/register/", AdminRegisterView.as_view(), name="admin-register"),
     path("api/auth/login/", LoginView.as_view(), name="login"),
