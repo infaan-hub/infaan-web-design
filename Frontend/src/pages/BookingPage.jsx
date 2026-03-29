@@ -10,6 +10,15 @@ function buildReceiptNumber(booking) {
   return `${year}${month}${day}${bookingId}`;
 }
 
+function buildPendingReceiptNumber(selectedPrice) {
+  const now = new Date();
+  const year = String(now.getFullYear()).slice(-2);
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const amountSeed = String(Math.round(Number(selectedPrice?.amount || 0))).padStart(6, "0").slice(-6);
+  return `${year}${month}${day}${amountSeed}`;
+}
+
 function buildBarcodeBars(value) {
   const digits = String(value || "")
     .replace(/[^\d]/g, "")
@@ -94,8 +103,6 @@ function downloadReceiptImage({ receiptNumber, amountText, dateText, customerNam
 
   roundRect(145, 120, 610, 1120, 42, "#ffffff");
   roundRect(145, 120, 610, 286, 42, "#ffffff");
-
-  context.fillStyle = "#f2f4ff";
   roundRect(210, 760, 480, 96, 22, "#f5f7ff");
 
   context.fillStyle = "#6a58ff";
@@ -104,7 +111,7 @@ function downloadReceiptImage({ receiptNumber, amountText, dateText, customerNam
   context.fill();
 
   context.fillStyle = "#ffffff";
-  context.font = "700 32px Segoe UI";
+  context.font = "700 32px Segoe UI Symbol";
   context.textAlign = "center";
   context.fillText("✓", 450, 250);
 
@@ -114,7 +121,7 @@ function downloadReceiptImage({ receiptNumber, amountText, dateText, customerNam
 
   context.fillStyle = "#7f8596";
   context.font = "28px Plus Jakarta Sans";
-  context.fillText("Your receipt has been issued successfully", 450, 366);
+  context.fillText("Your ticket has been issued successfully", 450, 366);
 
   context.strokeStyle = "#d1d5df";
   context.setLineDash([8, 8]);
@@ -128,7 +135,7 @@ function downloadReceiptImage({ receiptNumber, amountText, dateText, customerNam
   context.textAlign = "left";
   context.fillStyle = "#8c93a3";
   context.font = "22px Plus Jakarta Sans";
-  context.fillText("RECEIPT ID", 210, 550);
+  context.fillText("TICKET ID", 210, 550);
   context.fillText("AMOUNT", 560, 550);
   context.fillText("DATE & TIME", 210, 655);
 
@@ -191,11 +198,27 @@ function BookingPage({ app }) {
     app;
   const autoSubmitRef = useRef(false);
   const autoDownloadRef = useRef("");
-  const issuedAt = lastBooking?.created_at ? new Date(lastBooking.created_at) : new Date();
-  const receiptNumber = buildReceiptNumber(lastBooking);
+
+  const receiptBooking = useMemo(() => {
+    if (lastBooking) return lastBooking;
+    if (!pendingPayment || !selectedPackage || !selectedPrice) return null;
+    return {
+      id: buildPendingReceiptNumber(selectedPrice),
+      created_at: new Date().toISOString(),
+      package_details: {
+        title: selectedPackage.title,
+        amount: selectedPrice.amount,
+        currency: selectedPrice.currency,
+        billing_period: selectedPrice.billing_period,
+      },
+    };
+  }, [lastBooking, pendingPayment, selectedPackage, selectedPrice]);
+
+  const issuedAt = receiptBooking?.created_at ? new Date(receiptBooking.created_at) : new Date();
+  const receiptNumber = lastBooking ? buildReceiptNumber(lastBooking) : buildPendingReceiptNumber(selectedPrice);
   const customerName = currentUser?.first_name || currentUser?.username || "Customer";
-  const packageName = selectedPackage?.title || lastBooking?.package_details?.title || "Selected package";
-  const amountText = formatPrice(lastBooking?.package_details?.amount, lastBooking?.package_details?.currency);
+  const packageName = selectedPackage?.title || receiptBooking?.package_details?.title || "Selected package";
+  const amountText = formatPrice(receiptBooking?.package_details?.amount, receiptBooking?.package_details?.currency);
   const dateText = `${issuedAt.toLocaleDateString()} · ${issuedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 
   useEffect(() => {
@@ -210,13 +233,13 @@ function BookingPage({ app }) {
   }, [selectedPackage, selectedPrice, pendingPayment, bookingSent, lastBooking, loading, submitBooking]);
 
   useEffect(() => {
-    if (!lastBooking?.id) {
+    if (!receiptBooking?.id) {
       return;
     }
-    if (autoDownloadRef.current === String(lastBooking.id)) {
+    if (autoDownloadRef.current === String(receiptBooking.id)) {
       return;
     }
-    autoDownloadRef.current = String(lastBooking.id);
+    autoDownloadRef.current = String(receiptBooking.id);
     downloadReceiptImage({
       receiptNumber,
       amountText,
@@ -224,7 +247,7 @@ function BookingPage({ app }) {
       customerName,
       packageName,
     });
-  }, [lastBooking, receiptNumber, amountText, dateText, customerName, packageName]);
+  }, [receiptBooking, receiptNumber, amountText, dateText, customerName, packageName]);
 
   return (
     <main className="main-content">
@@ -234,7 +257,7 @@ function BookingPage({ app }) {
           <h2>Booking</h2>
         </div>
 
-        {lastBooking ? (
+        {receiptBooking ? (
           <div className="ticket-wrap">
             <div className="success-ticket receipt-ticket">
               <div className="ticket-top">
@@ -247,7 +270,7 @@ function BookingPage({ app }) {
 
               <div className="receipt-meta-grid">
                 <div>
-                  <span>Receipt ID</span>
+                  <span>Ticket ID</span>
                   <strong>{receiptNumber}</strong>
                 </div>
                 <div>
@@ -274,8 +297,9 @@ function BookingPage({ app }) {
               <div className="ticket-dash light" />
 
               <div className="receipt-admin-note">
-                Booking sent to admin successfully. You can now track it in admin <strong>/bookings-services</strong> and customer
-                history.
+                {lastBooking
+                  ? "Booking sent to admin successfully."
+                  : "Receipt is ready now. Booking is being sent silently to admin in the background."}
               </div>
 
               <div className="receipt-barcode-wrap">
@@ -304,28 +328,6 @@ function BookingPage({ app }) {
                 </button>
               </div>
             </div>
-          </div>
-        ) : pendingPayment ? (
-          <div className="form-card booking-status-card">
-            <h3>Sending booking</h3>
-            <p>We are submitting your selected package, payment details, and receipt data to the admin dashboard now.</p>
-
-            <div className="booking-review-grid">
-              <div className="subscription-card">
-                <span className="micro-label">package</span>
-                <strong>{selectedPackage?.title}</strong>
-                <p>{selectedPrice?.billing_period}</p>
-              </div>
-              <div className="subscription-card">
-                <span className="micro-label">payment</span>
-                <strong>{pendingPayment.method === "mixx" ? "Mixx by Yas" : pendingPayment.method === "visa" ? "Visa" : "Mastercard"}</strong>
-                <p>{formatPrice(selectedPrice?.amount || 0, selectedPrice?.currency || "USD")}</p>
-              </div>
-            </div>
-
-            <button type="button" className="outline-button" onClick={() => navigate("/billing")} disabled={loading}>
-              {loading ? "Sending..." : "Back to billing"}
-            </button>
           </div>
         ) : (
           <div className="form-card">
