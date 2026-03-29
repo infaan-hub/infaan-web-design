@@ -365,6 +365,8 @@ body[data-theme="dark"] .sidebar {
   color: #315362;
   font-size: 1rem;
   font-weight: 700;
+  font-family: "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols", "Plus Jakarta Sans", sans-serif;
+  line-height: 1;
   text-align: center;
   text-transform: none;
   letter-spacing: 0;

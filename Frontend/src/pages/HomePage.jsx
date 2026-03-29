@@ -8,7 +8,7 @@ const serviceImages = {
 };
 
 const heroImage =
-  "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1600&q=80";
+  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80";
 
 function WhatsAppIcon() {
   return (

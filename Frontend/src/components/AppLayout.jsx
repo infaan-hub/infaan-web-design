@@ -166,8 +166,8 @@ function AppLayout({ app, children }) {
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
             >
               <span className="theme-switch-track">
-                <span className="theme-switch-label">\u263C</span>
-                <span className="theme-switch-label">\u25D0</span>
+                <span className="theme-switch-label">☼</span>
+                <span className="theme-switch-label">◐</span>
                 <span className="theme-switch-thumb" />
               </span>
             </button>
