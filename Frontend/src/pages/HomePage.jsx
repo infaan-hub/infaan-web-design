@@ -7,8 +7,11 @@ const serviceImages = {
     "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
 };
 
+const heroImage =
+  "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1600&q=80";
+
 function HomePage({ app }) {
-  const { groupedPackages, groupedPortfolio, setSelectedPackageId, requireLogin, formatPrice } = app;
+  const { groupedPackages, groupedPortfolio, setSelectedPackageId, requireLogin, formatPrice, currentUser, navigate } = app;
   const serviceOrder = ["website", "digital_ads", "logo_poster"];
   const visibleServices = serviceOrder
     .map((category) => groupedPackages.find((service) => service.category === category))
@@ -19,6 +22,35 @@ function HomePage({ app }) {
 
   return (
     <main className="main-content">
+      <section className="home-hero">
+        <div className="home-hero-media" style={{ backgroundImage: `url(${heroImage})` }} />
+        <div className="home-hero-glow" />
+        <div className="home-hero-copy">
+          <span className="home-hero-pill">Open for business systems</span>
+          <h2>Build websites, digital ads, and design systems without limits.</h2>
+          <p>
+            Infaan Web & Design helps businesses launch software development, branding, maintenance, and digital growth
+            services in one complete workflow.
+          </p>
+          <div className="hero-actions">
+            <button type="button" className="header-button home-hero-button" onClick={() => navigate("/package")}>
+              View Plans & Pricing
+            </button>
+          </div>
+        </div>
+
+        <div className="home-hero-facts">
+          <div className="home-hero-fact">
+            <strong>Full Service</strong>
+            <span>Web, ads, branding, and maintenance</span>
+          </div>
+          <div className="home-hero-fact">
+            <strong>Flexible Plans</strong>
+            <span>Weekly, monthly, yearly, and fixed extra tasks</span>
+          </div>
+        </div>
+      </section>
+
       <section className="section-block">
         <div className="section-headline">
           <p className="micro-label">service images</p>
@@ -27,7 +59,29 @@ function HomePage({ app }) {
 
         <div className="service-visual-grid">
           {visibleServices.map((service) => (
-            <article key={service.id} className="visual-card">
+            <article
+              key={service.id}
+              className="visual-card visual-card-action"
+              onClick={() => {
+                if (!currentUser) {
+                  navigate("/login");
+                  return;
+                }
+                navigate("/package");
+              }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  if (!currentUser) {
+                    navigate("/login");
+                    return;
+                  }
+                  navigate("/package");
+                }
+              }}
+            >
               <div className="visual-image" style={{ backgroundImage: `url(${serviceImages[service.category]})` }} />
               <div className="visual-copy">
                 <span>{service.category.replaceAll("_", " ")}</span>

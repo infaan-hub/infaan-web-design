@@ -10,16 +10,18 @@ import BookedServicePage from "./pages/BookedServicePage";
 import BookingsServicesPage from "./pages/BookingsServicesPage";
 import BookingHistoryPage from "./pages/BookingHistoryPage";
 import DashboardPage from "./pages/DashboardPage";
+import BillingHistoryPage from "./pages/BillingHistoryPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import PackagePage from "./pages/PackagePage";
 import PackageTimePage from "./pages/PackageTimePage";
 import PortfolioPage from "./pages/PortfolioPage";
+import ProfilePage from "./pages/ProfilePage";
 import RegisterPage from "./pages/RegisterPage";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://infaan-web-design.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
-const CUSTOMER_PROTECTED_PATHS = ["/dashboard", "/package", "/package-time", "/billing", "/booking"];
+const CUSTOMER_PROTECTED_PATHS = ["/dashboard", "/profile", "/package", "/package-time", "/billing", "/booking", "/billing-history"];
 const ADMIN_PROTECTED_PATHS = ["/admin-dashboard", "/admin/users", "/bookings-services", "/booked-service", "/booking-history"];
 
 const emptySubscription = {
@@ -965,10 +967,12 @@ function App() {
     "/login": <LoginPage app={app} />,
     "/register": <RegisterPage app={app} />,
     "/dashboard": <DashboardPage app={app} />,
+    "/profile": <ProfilePage app={app} />,
     "/package": <PackagePage app={app} />,
     "/package-time": <PackageTimePage app={app} />,
     "/billing": <BillingPage app={app} />,
     "/booking": <BookingPage app={app} />,
+    "/billing-history": <BillingHistoryPage app={app} />,
     "/booked-service": <BookedServicePage app={app} />,
     "/booking-history": <BookingHistoryPage app={app} />,
     "/admin/login": <AdminLoginPage app={app} />,

@@ -1,32 +1,34 @@
 function buildSidebarGroups(app) {
-  const { currentUser, path, selectedPackage, selectedPrice, pendingPayment, bookingSent } = app;
+  const { currentUser, path, selectedPackage, selectedPrice, pendingPayment, bookingSent, subscriptions } = app;
+  const hasCompletedBilling = (subscriptions || []).some((item) => item.status === "completed");
 
   const publicMenu = [
-    { href: "/home", label: "Home", sign: "⌂", hint: "services" },
-    { href: "/package", label: "Packages", sign: "◫", hint: "plans" },
-    { href: "/potfolio", label: "Portfolio", sign: "◩", hint: "gallery" },
+    { href: "/home", label: "Home", sign: "\u2302", hint: "services" },
+    { href: "/package", label: "Packages", sign: "\u25A3", hint: "plans" },
+    { href: "/potfolio", label: "Portfolio", sign: "\u25A7", hint: "gallery" },
   ];
 
   const customerFlow = [
-    { href: "/dashboard", label: "Dashboard", sign: "◈", hint: "overview" },
-    { href: "/package", label: "Package", sign: "◫", hint: selectedPackage ? "selected" : "choose" },
-    { href: "/package-time", label: "Package Time", sign: "◷", hint: selectedPrice ? "selected" : "duration" },
-    { href: "/billing", label: "Billing", sign: "◳", hint: pendingPayment ? "ready" : "payment" },
-    { href: "/booking", label: "Booking", sign: "✓", hint: bookingSent ? "sent" : "confirm" },
+    { href: "/dashboard", label: "Dashboard", sign: "\u25C8", hint: "overview" },
+    { href: "/package", label: "Package", sign: "\u25A3", hint: selectedPackage ? "selected" : "choose" },
+    { href: "/package-time", label: "Package Time", sign: "\u25F7", hint: selectedPrice ? "selected" : "duration" },
+    { href: "/billing", label: "Billing", sign: "\u25B3", hint: pendingPayment ? "ready" : "payment" },
+    { href: "/booking", label: "Booking", sign: "\u2713", hint: bookingSent ? "sent" : "confirm" },
+    { href: "/billing-history", label: "Billing History", sign: "\u27F2", hint: hasCompletedBilling ? "records" : "history" },
   ];
 
   const adminMenu = [
-    { href: "/admin-dashboard", label: "Admin Dashboard", sign: "◈", hint: "manage" },
-    { href: "/admin/users", label: "Users", sign: "☺", hint: "accounts" },
-    { href: "/bookings-services", label: "Bookings", sign: "▤", hint: "orders" },
-    { href: "/booked-service", label: "Booked Service", sign: "◉", hint: "detail" },
-    { href: "/booking-history", label: "History", sign: "⟲", hint: "done" },
+    { href: "/admin-dashboard", label: "Admin Dashboard", sign: "\u25C8", hint: "manage" },
+    { href: "/admin/users", label: "Users", sign: "\u263A", hint: "accounts" },
+    { href: "/bookings-services", label: "Bookings", sign: "\u25A4", hint: "orders" },
+    { href: "/booked-service", label: "Booked Service", sign: "\u25C9", hint: "detail" },
+    { href: "/booking-history", label: "History", sign: "\u27F2", hint: "done" },
   ];
 
   const guestAccess = [
-    { href: "/login", label: "Customer Login", sign: "→", hint: "signin" },
-    { href: "/register", label: "Customer Register", sign: "+", hint: "signup" },
-    { href: "/admin/login", label: "Admin Login", sign: "◇", hint: "signin" },
+    { href: "/login", label: "Customer Login", sign: "\u21AA", hint: "signin" },
+    { href: "/register", label: "Customer Register", sign: "\u271A", hint: "signup" },
+    { href: "/admin/login", label: "Admin Login", sign: "\u2699", hint: "admin" },
   ];
 
   if (currentUser?.role === "admin") {
@@ -46,6 +48,9 @@ function buildSidebarGroups(app) {
       }
       if (item.href === "/booking") {
         return Boolean(selectedPackage && selectedPrice) || Boolean(pendingPayment) || bookingSent || path === "/booking";
+      }
+      if (item.href === "/billing-history") {
+        return hasCompletedBilling || path === "/billing-history";
       }
       return true;
     });
@@ -69,6 +74,7 @@ function buildSidebarGroups(app) {
 function AppLayout({ app, children }) {
   const { currentUser, sidebarOpen, setSidebarOpen, navigate, logout, feedback, error, path, theme, setTheme } = app;
   const sidebarGroups = buildSidebarGroups(app);
+  const isCustomer = currentUser?.role === "customer";
 
   function handleNavigation(nextPath) {
     navigate(nextPath);
@@ -92,13 +98,24 @@ function AppLayout({ app, children }) {
           <span />
         </div>
 
-        <div className="sidebar-brand">
+        <button
+          type="button"
+          className={`sidebar-brand ${isCustomer ? "sidebar-brand-button" : ""}`}
+          onClick={isCustomer ? () => handleNavigation("/profile") : undefined}
+          disabled={!isCustomer}
+        >
           <span className="sidebar-mark">i</span>
           <div>
-            <p>infaan web & design</p>
-            <span>{currentUser ? `${currentUser.role} panel` : "full system"}</span>
+            <p>{isCustomer ? currentUser?.username || "customer profile" : "infaan web & design"}</p>
+            <span>
+              {isCustomer
+                ? currentUser?.email || "open profile"
+                : currentUser
+                  ? `${currentUser.role} panel`
+                  : "full system"}
+            </span>
           </div>
-        </div>
+        </button>
 
         <nav className="sidebar-nav">
           {sidebarGroups.map((group) => (
@@ -149,8 +166,8 @@ function AppLayout({ app, children }) {
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
             >
               <span className="theme-switch-track">
-                <span className="theme-switch-label">☼</span>
-                <span className="theme-switch-label">◐</span>
+                <span className="theme-switch-label">\u263C</span>
+                <span className="theme-switch-label">\u25D0</span>
                 <span className="theme-switch-thumb" />
               </span>
             </button>

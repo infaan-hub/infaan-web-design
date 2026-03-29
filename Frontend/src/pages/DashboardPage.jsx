@@ -1,107 +1,133 @@
+const serviceImages = {
+  website:
+    "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80",
+  digital_ads:
+    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
+  logo_poster:
+    "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
+};
+
 function DashboardPage({ app }) {
-  const { currentUser, subscriptions, selectedPackage, navigate, formatPrice } = app;
-  const activeSubscription = [...subscriptions].sort(
-    (left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0)
-  )[0] || null;
-  const packageDetails = activeSubscription?.package_details;
-  const workChecklist = selectedPackage?.features || [];
+  const { groupedPackages, groupedPortfolio, formatPrice, continueToPackageTime, selectPackage, navigate } = app;
+  const serviceOrder = ["website", "digital_ads", "logo_poster"];
+  const visibleServices = serviceOrder
+    .map((category) => groupedPackages.find((service) => service.category === category))
+    .filter(Boolean);
 
   return (
     <main className="main-content">
-      <section className="section-card">
+      <section className="section-block">
         <div className="section-headline">
-          <p className="micro-label">dashboard</p>
-          <h2>Customer Dashboard</h2>
-        </div>
-        <div className="profile-card dashboard-summary">
-          <span className="profile-sign">iwd</span>
-          <h3>{currentUser?.username || "Guest"}</h3>
-          <p>
-            {activeSubscription
-              ? "Track your booking, payment approval, and service workflow below."
-              : "Choose a package, select package time, follow the manual payment instructions, and send your booking to admin."}
-          </p>
-          <div className="hero-actions">
-            <button type="button" className="solid-button" onClick={() => navigate(activeSubscription ? "/package" : "/home")}>
-              {activeSubscription ? "View selected package" : "Browse packages"}
-            </button>
-            <button type="button" className="outline-button" onClick={() => navigate("/booking")}>
-              View booking status
-            </button>
+          <div>
+            <p className="micro-label">customer dashboard</p>
+            <h2>Services, pricing plans, and portfolio</h2>
           </div>
         </div>
 
-        <div className="admin-grid dashboard-work-grid">
-          <div className="subscription-card">
-            <p className="micro-label">selected package</p>
-            <strong>{packageDetails?.title || selectedPackage?.title || "No package selected yet"}</strong>
-            <p>{packageDetails?.service || app.selectedService?.name || "Choose one of the Infaan packages to begin."}</p>
-            <p>
-              {packageDetails
-                ? `${packageDetails.billing_period} · ${formatPrice(packageDetails.amount, packageDetails.currency)}`
-                : "Weekly, monthly, and yearly plans are available according to the package."}
-            </p>
-            <span className={`status-pill status-${activeSubscription?.status || "pending"}`}>
-              {activeSubscription?.status || "not booked"}
-            </span>
-            {activeSubscription?.payment_status === "pending" ? <p>Payment is waiting for manual verification from admin.</p> : null}
-          </div>
+        <div className="dashboard-service-stack">
+          {visibleServices.map((service) => {
+            const portfolioGroup = groupedPortfolio.find((item) => item.id === service.id);
+            const portfolioPreview = portfolioGroup?.portfolioItems?.[0];
 
-          <div className="subscription-card">
-            <p className="micro-label">customer credentials</p>
-            <strong>{currentUser?.first_name || currentUser?.username}</strong>
-            <p>{currentUser?.email || "No email available"}</p>
-            <p>{activeSubscription?.contact_phone || "Add your phone number during billing."}</p>
-            <button type="button" className="outline-button" onClick={() => navigate(activeSubscription ? "/billing" : "/package")}>
-              {activeSubscription ? "Update billing details" : "Continue setup"}
-            </button>
-          </div>
-        </div>
+            return (
+              <article key={service.id} className="service-catalog-block dashboard-service-card">
+                <div className="service-catalog-head">
+                  <div
+                    className="service-catalog-cover"
+                    style={{ backgroundImage: `url(${serviceImages[service.category] || serviceImages.website})` }}
+                  />
 
-        <div className="section-card dashboard-flow-card">
-          <div className="section-headline">
-            <div>
-              <p className="micro-label">work according to package</p>
-              <h2>Service Workflow</h2>
-            </div>
-          </div>
-
-          {workChecklist.length ? (
-            <div className="dashboard-task-grid">
-              {workChecklist.map((feature, index) => (
-                <div key={feature} className="subscription-card">
-                  <p className="micro-label">step {index + 1}</p>
-                  <strong>{feature}</strong>
-                  <p>
-                    {activeSubscription
-                      ? "This work item is included in your selected package and is now visible to admin through your booking."
-                      : "This work item will appear in your dashboard after you finish subscription, billing, and booking."}
-                  </p>
+                  <div className="service-catalog-copy">
+                    <p className="micro-label">{service.category.replaceAll("_", " ")}</p>
+                    <h3>{service.name}</h3>
+                    <p>{service.short_description || service.details}</p>
+                  </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="form-card">
-              <h3>No package workflow yet</h3>
-              <p>Select a package first so we can show the full work list according to your chosen service.</p>
-              <button type="button" className="solid-button" onClick={() => navigate("/package")}>Choose package</button>
-            </div>
-          )}
-        </div>
 
-        <div className="subscription-stack">
-          {subscriptions.map((item) => (
-            <div key={item.id} className="subscription-card">
-              <strong>{item.package_details?.title}</strong>
-              <p>{item.business_name}</p>
-              <p>{item.package_details?.service}</p>
-              <p>
-                {item.package_details?.billing_period} -{" "}
-                {formatPrice(item.package_details?.amount, item.package_details?.currency)}
-              </p>
-              <span className={`status-pill status-${item.status}`}>{item.status}</span>
-            </div>
-          ))}
+                <div className="dashboard-under-service-grid">
+                  <div className="section-card dashboard-under-card">
+                    <div className="section-headline">
+                      <div>
+                        <p className="micro-label">pricing plan package</p>
+                        <h2>Packages</h2>
+                      </div>
+                    </div>
+
+                    <div className="service-package-track">
+                      {service.packages.map((pkg) => {
+                        const preferredPrice = app.getPreferredPrice(pkg);
+
+                        return (
+                          <div key={pkg.id} className="pricing-plan-card">
+                            <div className={`pricing-plan-top pricing-tone-${pkg.tier}`}>
+                              <span className="pricing-mini-pill">{pkg.tier}</span>
+                              <h4>{pkg.title}</h4>
+                              <div className="pricing-amount">
+                                {preferredPrice?.billing_period === "per_task" ? (
+                                  <>
+                                    <strong>{formatPrice(preferredPrice?.amount || 0, preferredPrice?.currency || "USD")}</strong>
+                                    <span>fixed</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <strong>{formatPrice(preferredPrice?.amount || 0, preferredPrice?.currency || "USD")}</strong>
+                                    <span>/{preferredPrice?.billing_period || "month"}</span>
+                                  </>
+                                )}
+                              </div>
+                              <p>{pkg.description}</p>
+                              <button
+                                type="button"
+                                className="pricing-cta"
+                                onClick={() => {
+                                  selectPackage(pkg.id);
+                                  continueToPackageTime(pkg.id);
+                                }}
+                              >
+                                Continue
+                              </button>
+                            </div>
+
+                            <ul className="pricing-feature-list">
+                              {pkg.features.map((feature) => (
+                                <li key={feature}>{feature}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="section-card dashboard-under-card">
+                    <div className="section-headline">
+                      <div>
+                        <p className="micro-label">portfolio</p>
+                        <h2>Portfolio</h2>
+                      </div>
+                    </div>
+
+                    <div className="dashboard-portfolio-preview">
+                      <article className="portfolio-home-card">
+                        <div
+                          className="portfolio-home-image"
+                          style={{
+                            backgroundImage: `url(${portfolioPreview?.image_data || serviceImages[service.category] || serviceImages.website})`,
+                          }}
+                        >
+                          <span className="portfolio-image-badge">{service.name}</span>
+                        </div>
+                      </article>
+
+                      <button type="button" className="outline-button" onClick={() => navigate("/potfolio")}>
+                        View portfolio
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
     </main>
