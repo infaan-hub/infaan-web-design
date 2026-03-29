@@ -152,15 +152,26 @@ class Command(BaseCommand):
                     defaults=package_data,
                 )
                 for billing_period, amount in prices:
-                    PackagePrice.objects.update_or_create(
+                    existing_prices = PackagePrice.objects.filter(
                         package=package,
                         billing_period=billing_period,
-                        defaults={
-                            "amount": amount,
-                            "currency": "USD",
-                            "is_default": billing_period in {"monthly", "per_task"},
-                        },
-                    )
+                        currency="USD",
+                    ).order_by("id")
+
+                    seeded_price = existing_prices.first()
+                    if seeded_price:
+                        seeded_price.amount = amount
+                        seeded_price.is_default = billing_period in {"monthly", "per_task"}
+                        seeded_price.save(update_fields=["amount", "is_default", "updated_at"])
+                        existing_prices.exclude(id=seeded_price.id).delete()
+                    else:
+                        PackagePrice.objects.create(
+                            package=package,
+                            billing_period=billing_period,
+                            amount=amount,
+                            currency="USD",
+                            is_default=billing_period in {"monthly", "per_task"},
+                        )
 
         if not CustomUser.objects.filter(username="admin").exists():
             CustomUser.objects.create_superuser(
