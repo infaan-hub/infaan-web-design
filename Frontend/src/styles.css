@@ -1443,9 +1443,13 @@ body[data-theme="dark"] .home-hero {
   margin-bottom: 18px;
 }
 
-.package-grid,
-.admin-grid {
+.package-grid {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.admin-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
 }
 
 .pricing-heading {
