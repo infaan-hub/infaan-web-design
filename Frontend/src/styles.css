@@ -913,6 +913,51 @@ body[data-theme="dark"] .home-hero {
   box-shadow: 0 28px 50px rgba(0, 0, 0, 0.16);
 }
 
+.admin-portfolio-card {
+  gap: 10px;
+  max-width: 220px;
+  padding: 10px;
+  border-radius: 22px;
+}
+
+.admin-portfolio-card .portfolio-heart-button {
+  width: 34px;
+  height: 34px;
+  top: 10px;
+  right: 10px;
+  font-size: 1rem;
+}
+
+.admin-portfolio-card .portfolio-product-image-wrap {
+  border-width: 4px;
+  border-radius: 20px;
+}
+
+.admin-portfolio-card .portfolio-product-image {
+  aspect-ratio: 1 / 1;
+}
+
+.admin-portfolio-card .portfolio-product-content {
+  gap: 2px;
+}
+
+.admin-portfolio-card .portfolio-product-content h3 {
+  font-size: 1rem;
+}
+
+.admin-portfolio-card .portfolio-product-content p {
+  font-size: 0.82rem;
+}
+
+.admin-portfolio-card .portfolio-product-footer {
+  gap: 10px;
+}
+
+.admin-portfolio-card .portfolio-cart-button {
+  width: 44px;
+  height: 44px;
+}
+
 .portfolio-view-card {
   padding: 10px;
   gap: 0;

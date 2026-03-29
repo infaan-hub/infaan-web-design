@@ -67,8 +67,15 @@ function AdminDashboardPage({ app }) {
           <p className="micro-label">admin dashboard</p>
           <h2>Admin Dashboard</h2>
         </div>
+
         <div className="admin-grid">
-          <form className="form-card" onSubmit={(event) => { event.preventDefault(); submitAdminUser(); }}>
+          <form
+            className="form-card"
+            onSubmit={(event) => {
+              event.preventDefault();
+              submitAdminUser();
+            }}
+          >
             <h3>Add customer account</h3>
             <input value={adminUserForm.username} onChange={(event) => updateField(setAdminUserForm, "username", event.target.value)} placeholder="Username" />
             <input value={adminUserForm.first_name} onChange={(event) => updateField(setAdminUserForm, "first_name", event.target.value)} placeholder="First name" />
@@ -76,10 +83,18 @@ function AdminDashboardPage({ app }) {
             <input type="email" value={adminUserForm.email} onChange={(event) => updateField(setAdminUserForm, "email", event.target.value)} placeholder="Email" />
             <input value={adminUserForm.phone_number} onChange={(event) => updateField(setAdminUserForm, "phone_number", event.target.value)} placeholder="Phone number" />
             <input type="password" value={adminUserForm.password} onChange={(event) => updateField(setAdminUserForm, "password", event.target.value)} placeholder="Password" />
-            <button type="submit" className="solid-button" disabled={loading}>Create customer</button>
+            <button type="submit" className="solid-button" disabled={loading}>
+              Create customer
+            </button>
           </form>
 
-          <form className="form-card" onSubmit={(event) => { event.preventDefault(); saveService(); }}>
+          <form
+            className="form-card"
+            onSubmit={(event) => {
+              event.preventDefault();
+              saveService();
+            }}
+          >
             <h3>{editingServiceId ? "Edit service" : "Post service"}</h3>
             <input value={serviceForm.name} onChange={(event) => updateField(setServiceForm, "name", event.target.value)} placeholder="Service name" />
             <select value={serviceForm.category} onChange={(event) => updateField(setServiceForm, "category", event.target.value)}>
@@ -123,12 +138,20 @@ function AdminDashboardPage({ app }) {
             )}
           </form>
 
-          <form className="form-card" onSubmit={(event) => { event.preventDefault(); savePackage(); }}>
+          <form
+            className="form-card"
+            onSubmit={(event) => {
+              event.preventDefault();
+              savePackage();
+            }}
+          >
             <h3>{editingPackageId ? "Edit package" : "Post package"}</h3>
             <select value={packageForm.service} onChange={(event) => updateField(setPackageForm, "service", event.target.value)}>
               <option value="">Select service</option>
               {services.map((service) => (
-                <option key={service.id} value={service.id}>{service.name}</option>
+                <option key={service.id} value={service.id}>
+                  {service.name}
+                </option>
               ))}
             </select>
             <select value={packageForm.tier} onChange={(event) => updateField(setPackageForm, "tier", event.target.value)}>
@@ -165,15 +188,30 @@ function AdminDashboardPage({ app }) {
                 </div>
               ))}
             </div>
-            <button type="submit" className="solid-button" disabled={loading}>{editingPackageId ? "Update package" : "Create package"}</button>
+            <button type="submit" className="solid-button" disabled={loading}>
+              {editingPackageId ? "Update package" : "Create package"}
+            </button>
             {editingPackageId && (
-              <button type="button" className="outline-button" onClick={() => { setPackageForm(app.emptyPackage); setEditingPackageId(null); }}>
+              <button
+                type="button"
+                className="outline-button"
+                onClick={() => {
+                  setPackageForm(app.emptyPackage);
+                  setEditingPackageId(null);
+                }}
+              >
                 Cancel edit
               </button>
             )}
           </form>
 
-          <form className="form-card" onSubmit={(event) => { event.preventDefault(); savePortfolio(); }}>
+          <form
+            className="form-card"
+            onSubmit={(event) => {
+              event.preventDefault();
+              savePortfolio();
+            }}
+          >
             <h3>{editingPortfolioId ? "Edit portfolio" : "Post portfolio"}</h3>
             <input
               value={portfolioForm.name}
@@ -183,13 +221,17 @@ function AdminDashboardPage({ app }) {
             <select value={portfolioForm.service} onChange={(event) => updateField(setPortfolioForm, "service", event.target.value)}>
               <option value="">Select service</option>
               {services.map((service) => (
-                <option key={service.id} value={service.id}>{service.name}</option>
+                <option key={service.id} value={service.id}>
+                  {service.name}
+                </option>
               ))}
             </select>
             <select value={portfolioForm.package} onChange={(event) => updateField(setPortfolioForm, "package", event.target.value)}>
               <option value="">Select package</option>
               {filteredPackages.map((pkg) => (
-                <option key={pkg.id} value={pkg.id}>{pkg.title}</option>
+                <option key={pkg.id} value={pkg.id}>
+                  {pkg.title}
+                </option>
               ))}
             </select>
             <label className="portfolio-upload-field">
@@ -217,6 +259,56 @@ function AdminDashboardPage({ app }) {
               </button>
             )}
           </form>
+        </div>
+
+        <div className="section-headline admin-booking-head">
+          <div>
+            <p className="micro-label">portfolio</p>
+            <h2>Portfolio gallery</h2>
+          </div>
+        </div>
+
+        <div className="package-grid">
+          {portfolioItems.map((item) => (
+            <article key={item.id} className="portfolio-product-card admin-portfolio-card">
+              <button type="button" className="portfolio-heart-button" aria-label="Portfolio item">
+                ♡
+              </button>
+              <div className="portfolio-product-image-wrap">
+                <img src={item.image_data} alt={item.name} className="portfolio-product-image" />
+              </div>
+              <div className="portfolio-product-content">
+                <h3>{item.name}</h3>
+                <p>{item.package_title}</p>
+              </div>
+              <div className="portfolio-product-footer">
+                <button
+                  type="button"
+                  className="outline-button"
+                  onClick={() => {
+                    setPortfolioForm({
+                      name: item.name,
+                      service: String(item.service),
+                      package: String(item.package),
+                      image_data: item.image_data,
+                      is_active: item.is_active,
+                    });
+                    setEditingPortfolioId(item.id);
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  className="portfolio-cart-button"
+                  onClick={() => deletePortfolio(item.id)}
+                  aria-label="Delete portfolio"
+                >
+                  ×
+                </button>
+              </div>
+            </article>
+          ))}
         </div>
 
         <div className="section-headline admin-booking-head">
@@ -272,36 +364,41 @@ function AdminDashboardPage({ app }) {
                 <div className="admin-package-prices">
                   {pkg.prices.map((price) => (
                     <span key={`${price.billing_period}-${price.currency}`} className="price-chip">
-                      {price.billing_period} {price.currency} {formatPrice(price.amount, price.currency).replace(`${price.currency} `, "")}
+                      {price.billing_period} {price.currency}{" "}
+                      {formatPrice(price.amount, price.currency).replace(`${price.currency} `, "")}
                     </span>
                   ))}
                 </div>
                 <div className="price-list">
-                  <button type="button" className="outline-button" onClick={() => {
-                    const priceMap = {
-                      weekly: { billing_period: "weekly", usd_amount: "", tzs_amount: "" },
-                      monthly: { billing_period: "monthly", usd_amount: "", tzs_amount: "" },
-                      yearly: { billing_period: "yearly", usd_amount: "", tzs_amount: "" },
-                      per_task: { billing_period: "per_task", usd_amount: "", tzs_amount: "" },
-                    };
-                    pkg.prices.forEach((price) => {
-                      const amountKey = price.currency === "TZS" ? "tzs_amount" : "usd_amount";
-                      if (priceMap[price.billing_period]) {
-                        priceMap[price.billing_period][amountKey] = String(price.amount);
-                      }
-                    });
-                    setPackageForm({
-                      service: String(pkg.service),
-                      tier: pkg.tier,
-                      title: pkg.title,
-                      description: pkg.description,
-                      features: pkg.features.join("\n"),
-                      payment_notes: pkg.payment_notes,
-                      prices: Object.values(priceMap),
-                      is_active: pkg.is_active,
-                    });
-                    setEditingPackageId(pkg.id);
-                  }}>
+                  <button
+                    type="button"
+                    className="outline-button"
+                    onClick={() => {
+                      const priceMap = {
+                        weekly: { billing_period: "weekly", usd_amount: "", tzs_amount: "" },
+                        monthly: { billing_period: "monthly", usd_amount: "", tzs_amount: "" },
+                        yearly: { billing_period: "yearly", usd_amount: "", tzs_amount: "" },
+                        per_task: { billing_period: "per_task", usd_amount: "", tzs_amount: "" },
+                      };
+                      pkg.prices.forEach((price) => {
+                        const amountKey = price.currency === "TZS" ? "tzs_amount" : "usd_amount";
+                        if (priceMap[price.billing_period]) {
+                          priceMap[price.billing_period][amountKey] = String(price.amount);
+                        }
+                      });
+                      setPackageForm({
+                        service: String(pkg.service),
+                        tier: pkg.tier,
+                        title: pkg.title,
+                        description: pkg.description,
+                        features: pkg.features.join("\n"),
+                        payment_notes: pkg.payment_notes,
+                        prices: Object.values(priceMap),
+                        is_active: pkg.is_active,
+                      });
+                      setEditingPackageId(pkg.id);
+                    }}
+                  >
                     Edit
                   </button>
                   <button type="button" className="header-button" onClick={() => deletePackage(pkg.id)}>
@@ -311,51 +408,6 @@ function AdminDashboardPage({ app }) {
               </div>
             ))
           )}
-        </div>
-
-        <div className="section-headline admin-booking-head">
-          <div>
-            <p className="micro-label">portfolio</p>
-            <h2>Portfolio gallery</h2>
-          </div>
-        </div>
-
-        <div className="package-grid">
-          {portfolioItems.map((item) => (
-            <article key={item.id} className="portfolio-product-card">
-              <button type="button" className="portfolio-heart-button" aria-label="Portfolio item">
-                ♡
-              </button>
-              <div className="portfolio-product-image-wrap">
-                <img src={item.image_data} alt={item.name} className="portfolio-product-image" />
-              </div>
-              <div className="portfolio-product-content">
-                <h3>{item.name}</h3>
-                <p>{item.package_title}</p>
-              </div>
-              <div className="portfolio-product-footer">
-                <button
-                  type="button"
-                  className="outline-button"
-                  onClick={() => {
-                    setPortfolioForm({
-                      name: item.name,
-                      service: String(item.service),
-                      package: String(item.package),
-                      image_data: item.image_data,
-                      is_active: item.is_active,
-                    });
-                    setEditingPortfolioId(item.id);
-                  }}
-                >
-                  Edit
-                </button>
-                <button type="button" className="portfolio-cart-button" onClick={() => deletePortfolio(item.id)} aria-label="Delete portfolio">
-                  ×
-                </button>
-              </div>
-            </article>
-          ))}
         </div>
 
         <div className="section-headline admin-booking-head">
@@ -373,17 +425,17 @@ function AdminDashboardPage({ app }) {
             .sort((left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0))
             .slice(0, 6)
             .map((booking) => (
-            <div key={booking.id} className="subscription-card">
-              <strong>{booking.user_details?.username}</strong>
-              <p>{booking.business_name}</p>
-              <p>{booking.package_details?.title}</p>
-              <p>
-                {booking.package_details?.billing_period} -{" "}
-                {formatPrice(booking.package_details?.amount, booking.package_details?.currency)}
-              </p>
-              <span className={`status-pill status-${booking.status}`}>{booking.status}</span>
-            </div>
-          ))}
+              <div key={booking.id} className="subscription-card">
+                <strong>{booking.user_details?.username}</strong>
+                <p>{booking.business_name}</p>
+                <p>{booking.package_details?.title}</p>
+                <p>
+                  {booking.package_details?.billing_period} -{" "}
+                  {formatPrice(booking.package_details?.amount, booking.package_details?.currency)}
+                </p>
+                <span className={`status-pill status-${booking.status}`}>{booking.status}</span>
+              </div>
+            ))}
         </div>
       </section>
     </main>
