@@ -7,12 +7,35 @@ const serviceImages = {
     "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
 };
 
+function normalizePackageStatus(status) {
+  if (status === "active" || status === "grace_period") {
+    return { label: status.replace("_", " "), tone: "active" };
+  }
+  if (status === "suspended") {
+    return { label: "suspended", tone: "suspended" };
+  }
+  if (status === "expired" || status === "cancelled") {
+    return { label: status, tone: "expired" };
+  }
+  return { label: status || "not active", tone: "inactive" };
+}
+
 function DashboardPage({ app }) {
-  const { groupedPackages, groupedPortfolio, formatPrice, continueToPackageTime, selectPackage, navigate } = app;
+  const { groupedPackages, groupedPortfolio, formatPrice, continueToPackageTime, selectPackage, navigate, subscriptions } = app;
   const serviceOrder = ["website", "digital_ads", "logo_poster"];
   const visibleServices = serviceOrder
     .map((category) => groupedPackages.find((service) => service.category === category))
     .filter(Boolean);
+
+  function getPackageSubscription(pkg) {
+    return [...subscriptions]
+      .filter(
+        (subscription) =>
+          subscription.package_details?.title === pkg.title &&
+          subscription.package_details?.service === visibleServices.find((service) => service.id === pkg.service)?.name
+      )
+      .sort((left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0))[0];
+  }
 
   return (
     <main className="main-content">
@@ -56,11 +79,25 @@ function DashboardPage({ app }) {
                     <div className="service-package-track">
                       {service.packages.map((pkg) => {
                         const preferredPrice = app.getPreferredPrice(pkg);
+                        const packageSubscription = [...subscriptions]
+                          .filter(
+                            (subscription) =>
+                              subscription.package_details?.title === pkg.title &&
+                              subscription.package_details?.service === service.name
+                          )
+                          .sort((left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0))[0];
+                        const packageStatus = normalizePackageStatus(packageSubscription?.service_access?.status || packageSubscription?.status || "not active");
 
                         return (
                           <div key={pkg.id} className="pricing-plan-card">
                             <div className={`pricing-plan-top pricing-tone-${pkg.tier}`}>
-                              <span className="pricing-mini-pill">{pkg.tier}</span>
+                              <div className="package-status-row">
+                                <span className="pricing-mini-pill">{pkg.tier}</span>
+                                <span className="package-status-inline">
+                                  <span className={`status-dot status-dot-${packageStatus.tone}`} />
+                                  <small>{packageStatus.label}</small>
+                                </span>
+                              </div>
                               <h4>{pkg.title}</h4>
                               <div className="pricing-amount">
                                 {preferredPrice?.billing_period === "per_task" ? (

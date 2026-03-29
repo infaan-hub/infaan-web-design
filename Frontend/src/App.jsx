@@ -18,10 +18,11 @@ import PackageTimePage from "./pages/PackageTimePage";
 import PortfolioPage from "./pages/PortfolioPage";
 import ProfilePage from "./pages/ProfilePage";
 import RegisterPage from "./pages/RegisterPage";
+import SubscriptionPage from "./pages/SubscriptionPage";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://infaan-web-design.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
-const CUSTOMER_PROTECTED_PATHS = ["/dashboard", "/profile", "/package", "/package-time", "/billing", "/booking", "/billing-history"];
+const CUSTOMER_PROTECTED_PATHS = ["/dashboard", "/profile", "/subscription", "/package", "/package-time", "/billing", "/booking", "/billing-history"];
 const ADMIN_PROTECTED_PATHS = ["/admin-dashboard", "/admin/users", "/bookings-services", "/booked-service", "/booking-history"];
 
 const emptySubscription = {
@@ -977,6 +978,7 @@ function App() {
     "/register": <RegisterPage app={app} />,
     "/dashboard": <DashboardPage app={app} />,
     "/profile": <ProfilePage app={app} />,
+    "/subscription": <SubscriptionPage app={app} />,
     "/package": <PackagePage app={app} />,
     "/package-time": <PackageTimePage app={app} />,
     "/billing": <BillingPage app={app} />,

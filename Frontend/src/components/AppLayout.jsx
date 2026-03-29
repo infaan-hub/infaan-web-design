@@ -1,6 +1,7 @@
 function buildSidebarGroups(app) {
   const { currentUser, path, selectedPackage, selectedPrice, pendingPayment, bookingSent, subscriptions } = app;
   const hasCompletedBilling = (subscriptions || []).some((item) => item.status === "completed");
+  const hasSubscriptions = (subscriptions || []).length > 0;
 
   const publicMenu = [
     { href: "/home", label: "Home", sign: "\u2302", hint: "services" },
@@ -10,6 +11,7 @@ function buildSidebarGroups(app) {
 
   const customerFlow = [
     { href: "/dashboard", label: "Dashboard", sign: "\u25C8", hint: "overview" },
+    { href: "/subscription", label: "Subscription", sign: "\u25CE", hint: hasSubscriptions ? "active" : "status" },
     { href: "/package", label: "Package", sign: "\u25A3", hint: selectedPackage ? "selected" : "choose" },
     { href: "/package-time", label: "Package Time", sign: "\u25F7", hint: selectedPrice ? "selected" : "duration" },
     { href: "/billing", label: "Billing", sign: "\u25B3", hint: pendingPayment ? "ready" : "payment" },
@@ -48,6 +50,9 @@ function buildSidebarGroups(app) {
       }
       if (item.href === "/booking") {
         return Boolean(selectedPackage && selectedPrice) || Boolean(pendingPayment) || bookingSent || path === "/booking";
+      }
+      if (item.href === "/subscription") {
+        return hasSubscriptions || path === "/subscription";
       }
       if (item.href === "/billing-history") {
         return hasCompletedBilling || path === "/billing-history";

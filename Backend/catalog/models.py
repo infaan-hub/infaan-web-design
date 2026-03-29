@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
+from datetime import timedelta
 
 
 class TimeStampedModel(models.Model):
@@ -90,6 +92,9 @@ class Subscription(TimeStampedModel):
         PENDING = "pending", "Pending"
         ACTIVE = "active", "Active"
         COMPLETED = "completed", "Completed"
+        EXPIRED = "expired", "Expired"
+        SUSPENDED = "suspended", "Suspended"
+        GRACE_PERIOD = "grace_period", "Grace Period"
         CANCELLED = "cancelled", "Cancelled"
 
     class PaymentStatus(models.TextChoices):
@@ -109,6 +114,51 @@ class Subscription(TimeStampedModel):
     contact_phone = models.CharField(max_length=30)
     notes = models.TextField(blank=True)
     start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    next_billing_date = models.DateField(null=True, blank=True)
+    auto_renew = models.BooleanField(default=False)
+    grace_period_days = models.PositiveIntegerField(default=3)
 
     class Meta:
         ordering = ["-created_at"]
+
+    def get_duration_days(self):
+        period = self.package_price.billing_period
+        return {
+            PackagePrice.BillingPeriod.WEEKLY: 7,
+            PackagePrice.BillingPeriod.MONTHLY: 30,
+            PackagePrice.BillingPeriod.YEARLY: 365,
+            # Task-based packages use a short managed service window by default.
+            PackagePrice.BillingPeriod.PER_TASK: 30,
+        }.get(period, 30)
+
+    def assign_service_window(self, reference_date=None):
+        start = reference_date or self.start_date or timezone.localdate()
+        self.start_date = start
+        duration_days = self.get_duration_days()
+        self.end_date = start + timedelta(days=duration_days)
+        self.next_billing_date = self.end_date
+
+    def get_effective_status(self, reference_date=None):
+        today = reference_date or timezone.localdate()
+
+        if self.status in {self.Status.CANCELLED, self.Status.SUSPENDED, self.Status.COMPLETED}:
+            return self.status
+
+        if not self.end_date:
+            return self.Status.ACTIVE if self.payment_status == self.PaymentStatus.PAID else self.Status.PENDING
+
+        if self.payment_status != self.PaymentStatus.PAID:
+            return self.Status.PENDING
+
+        if today <= self.end_date:
+            return self.Status.ACTIVE
+
+        grace_end = self.end_date + timedelta(days=self.grace_period_days)
+        if today <= grace_end:
+            return self.Status.GRACE_PERIOD
+
+        return self.Status.EXPIRED
+
+    def can_access_service(self, reference_date=None):
+        return self.get_effective_status(reference_date) in {self.Status.ACTIVE, self.Status.GRACE_PERIOD}

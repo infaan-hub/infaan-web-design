@@ -1476,6 +1476,45 @@ body[data-theme="dark"] .home-hero {
   text-transform: uppercase;
 }
 
+.package-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.package-status-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.package-status-inline small {
+  font-size: 0.78rem;
+  text-transform: capitalize;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot-active {
+  background: #36c46b;
+}
+
+.status-dot-suspended {
+  background: #9ea6b2;
+}
+
+.status-dot-expired,
+.status-dot-inactive {
+  background: #e34a4a;
+}
+
 .pricing-plan-top h4 {
   margin: 0 0 10px;
   font-family: "Space Grotesk", sans-serif;
@@ -2264,6 +2303,24 @@ button:disabled {
   height: 100%;
 }
 
+.subscription-detail-card {
+  display: grid;
+  gap: 16px;
+}
+
+.subscription-detail-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.subscription-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
 .dashboard-portfolio-preview {
   display: grid;
   gap: 16px;
@@ -2298,6 +2355,18 @@ button:disabled {
 
 .status-completed {
   background: #d8e5ff;
+}
+
+.status-expired {
+  background: #f1d7d7;
+}
+
+.status-suspended {
+  background: #f0ddc8;
+}
+
+.status-grace_period {
+  background: #fff0bf;
 }
 
 .status-cancelled {

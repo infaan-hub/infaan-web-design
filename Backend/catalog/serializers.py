@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.utils import timezone
 
 from .models import PackagePrice, PortfolioItem, Service, ServicePackage, Subscription
 
@@ -69,6 +70,7 @@ class PortfolioItemSerializer(serializers.ModelSerializer):
 class SubscriptionSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField(read_only=True)
     package_details = serializers.SerializerMethodField(read_only=True)
+    service_access = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Subscription
@@ -87,10 +89,15 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             "contact_phone",
             "notes",
             "start_date",
+            "end_date",
+            "next_billing_date",
+            "auto_renew",
+            "grace_period_days",
             "created_at",
             "updated_at",
             "user_details",
             "package_details",
+            "service_access",
         )
         read_only_fields = ("user", "created_at", "updated_at")
 
@@ -116,6 +123,17 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             "currency": price.currency,
         }
 
+    def get_service_access(self, obj):
+        effective_status = obj.get_effective_status()
+        return {
+            "status": effective_status,
+            "can_access": obj.can_access_service(),
+            "start_date": obj.start_date,
+            "end_date": obj.end_date,
+            "next_billing_date": obj.next_billing_date,
+            "grace_period_days": obj.grace_period_days,
+        }
+
     def validate_package_price(self, value):
         if not value.package.is_active or not value.package.service.is_active:
             raise serializers.ValidationError("This package is not currently available.")
@@ -123,4 +141,32 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         request = self.context["request"]
-        return Subscription.objects.create(user=request.user, **validated_data)
+        payment_status = validated_data.get("payment_status", Subscription.PaymentStatus.PENDING)
+        start_date = validated_data.get("start_date") or timezone.localdate()
+        subscription = Subscription(user=request.user, **validated_data)
+
+        if payment_status == Subscription.PaymentStatus.PAID:
+            subscription.status = Subscription.Status.ACTIVE
+            subscription.assign_service_window(start_date)
+        else:
+            subscription.status = Subscription.Status.PENDING
+            subscription.start_date = start_date
+
+        subscription.save()
+        return subscription
+
+    def update(self, instance, validated_data):
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+
+        if instance.payment_status == Subscription.PaymentStatus.PAID and instance.status not in {
+            Subscription.Status.CANCELLED,
+            Subscription.Status.SUSPENDED,
+            Subscription.Status.COMPLETED,
+        }:
+            instance.status = instance.get_effective_status()
+            if not instance.start_date or not instance.end_date:
+                instance.assign_service_window(instance.start_date or timezone.localdate())
+
+        instance.save()
+        return instance
