@@ -1,6 +1,18 @@
 {
   "routes": [
     {
+      "src": "/sitemap\\.xml",
+      "dest": "/sitemap.xml"
+    },
+    {
+      "src": "/robots\\.txt",
+      "dest": "/robots.txt"
+    },
+    {
+      "src": "/google1508cf61bdce0ebd\\.html",
+      "dest": "/google1508cf61bdce0ebd.html"
+    },
+    {
       "handle": "filesystem"
     },
     {
