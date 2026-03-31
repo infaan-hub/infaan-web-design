@@ -1553,6 +1553,51 @@ body[data-theme="dark"] .home-hero {
   width: fit-content;
 }
 
+.system-admin-card {
+  max-width: 100%;
+  padding: 14px;
+  border: 1px solid rgba(96, 122, 153, 0.26);
+  background:
+    radial-gradient(circle at top right, rgba(108, 177, 255, 0.18), transparent 35%),
+    linear-gradient(180deg, #163041 0%, #101f2c 100%);
+  box-shadow: 0 24px 48px rgba(7, 18, 28, 0.28);
+}
+
+.system-admin-card .portfolio-product-image-wrap {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.system-admin-card .portfolio-product-content {
+  gap: 8px;
+}
+
+.system-admin-summary {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.system-admin-meta {
+  color: rgba(171, 204, 233, 0.9);
+  word-break: break-word;
+}
+
+.system-admin-price-list {
+  gap: 8px;
+}
+
+.system-admin-price-list .price-chip {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f8fbff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.system-admin-actions {
+  align-items: stretch;
+}
+
+.system-admin-button {
+  min-width: 110px;
+}
+
 .visual-copy p,
 .package-service-head p,
 .package-card p,

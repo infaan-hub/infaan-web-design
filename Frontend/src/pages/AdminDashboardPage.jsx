@@ -96,6 +96,17 @@ function AdminDashboardPage({ app }) {
     };
   }
 
+  function getSystemPricePreview(system) {
+    return (system.packages || [])
+      .flatMap((pkg) =>
+        (pkg.prices || []).map((price) => ({
+          key: `${pkg.id}-${price.id}`,
+          label: `${pkg.title} ${price.billing_period} ${formatPrice(price.amount, price.currency)}`,
+        }))
+      )
+      .slice(0, 6);
+  }
+
   return (
     <main className="main-content">
       <section className="section-card">
@@ -433,48 +444,63 @@ function AdminDashboardPage({ app }) {
         </div>
 
         <div className="package-grid">
-          {subscriptionSystems.map((system) => (
-            <article key={system.id} className="portfolio-product-card admin-portfolio-card">
-              <div className="portfolio-product-image-wrap">
-                <img src={system.cover_image} alt={system.name} className="portfolio-product-image" />
-              </div>
-              <div className="portfolio-product-content">
-                <h3>{system.name}</h3>
-                <p>{system.summary}</p>
-                <p>{system.service_name}</p>
-                <p>{system.system_url || "No system URL"}</p>
-              </div>
-              <div className="portfolio-product-footer">
-                <button
-                  type="button"
-                  className="outline-button"
-                  onClick={() => {
-                    setSystemForm({
-                      service: String(system.service),
-                      name: system.name,
-                      summary: system.summary,
-                      details: system.details,
-                      system_url: system.system_url || "",
-                      cover_image: system.cover_image,
-                      gallery_images: [...(system.gallery_images || []), "", "", "", "", ""].slice(0, 5),
-                      is_active: system.is_active,
-                    });
-                    setEditingSystemId(system.id);
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  className="header-button"
-                  onClick={() => deleteSubscriptionSystem(system.id)}
-                  aria-label="Delete system subscription"
-                >
-                  Delete
-                </button>
-              </div>
-            </article>
-          ))}
+          {subscriptionSystems.map((system) => {
+            const pricePreview = getSystemPricePreview(system);
+
+            return (
+              <article key={system.id} className="portfolio-product-card admin-portfolio-card system-admin-card">
+                <div className="portfolio-product-image-wrap">
+                  <img src={system.cover_image} alt={system.name} className="portfolio-product-image" />
+                </div>
+                <div className="portfolio-product-content">
+                  <h3>{system.name}</h3>
+                  <p className="system-admin-summary">{system.summary}</p>
+                  <p className="system-admin-meta">{system.service_name}</p>
+                  <p className="system-admin-meta">{system.system_url || "No system URL"}</p>
+                  {pricePreview.length ? (
+                    <div className="price-list system-admin-price-list">
+                      {pricePreview.map((price) => (
+                        <span key={price.key} className="price-chip">
+                          {price.label}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>No package price yet</p>
+                  )}
+                </div>
+                <div className="portfolio-product-footer system-admin-actions">
+                  <button
+                    type="button"
+                    className="outline-button system-admin-button"
+                    onClick={() => {
+                      setSystemForm({
+                        service: String(system.service),
+                        name: system.name,
+                        summary: system.summary,
+                        details: system.details,
+                        system_url: system.system_url || "",
+                        cover_image: system.cover_image,
+                        gallery_images: [...(system.gallery_images || []), "", "", "", "", ""].slice(0, 5),
+                        is_active: system.is_active,
+                      });
+                      setEditingSystemId(system.id);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="header-button system-admin-button"
+                    onClick={() => deleteSubscriptionSystem(system.id)}
+                    aria-label="Delete system subscription"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </article>
+            );
+          })}
         </div>
 
         <div className="section-headline admin-booking-head">

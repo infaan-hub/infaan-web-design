@@ -1,4 +1,4 @@
-from django.db import OperationalError, ProgrammingError
+from django.db import OperationalError, ProgrammingError, transaction
 from rest_framework import permissions, viewsets
 
 from accounts.models import CustomUser
@@ -64,6 +64,12 @@ class SubscriptionSystemViewSet(viewsets.ModelViewSet):
             return queryset.all()
         except (ProgrammingError, OperationalError):
             return SubscriptionSystem.objects.none()
+
+    def perform_destroy(self, instance):
+        # Clear references explicitly before delete so admin deletes stay reliable.
+        with transaction.atomic():
+            instance.subscriptions.update(subscription_system=None)
+            instance.delete()
 
 
 class SubscriptionViewSet(viewsets.ModelViewSet):

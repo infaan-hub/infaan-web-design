@@ -89,6 +89,7 @@ class ServicePackageSerializer(serializers.ModelSerializer):
 class SubscriptionSystemSerializer(serializers.ModelSerializer):
     service_name = serializers.CharField(source="service.name", read_only=True)
     packages = serializers.SerializerMethodField(read_only=True)
+    price_preview = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = SubscriptionSystem
@@ -98,16 +99,38 @@ class SubscriptionSystemSerializer(serializers.ModelSerializer):
         packages = obj.service.packages.filter(is_active=True).prefetch_related("prices")
         return ServicePackageSerializer(packages, many=True).data
 
+    def get_price_preview(self, obj):
+        preview = []
+        for package in obj.service.packages.filter(is_active=True).prefetch_related("prices"):
+            for price in package.prices.all():
+                preview.append(
+                    {
+                        "package_id": package.id,
+                        "package_title": package.title,
+                        "billing_period": price.billing_period,
+                        "amount": str(price.amount),
+                        "currency": price.currency,
+                        "is_default": price.is_default,
+                    }
+                )
+        return preview
+
     def validate_service(self, value):
         if value.category != Service.Category.SYSTEM_SUBSCRIPTION:
             raise serializers.ValidationError("System subscriptions must use the system subscription service category.")
         return value
 
     def validate_gallery_images(self, value):
-        gallery_images = [String for String in (value or []) if String]
+        gallery_images = [image for image in (value or []) if image]
         if len(gallery_images) != 5:
             raise serializers.ValidationError("Provide exactly 5 gallery images for the system view.")
         return gallery_images
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if "system_url" in attrs:
+            attrs["system_url"] = (attrs.get("system_url") or "").strip()
+        return attrs
 
 
 class PortfolioItemSerializer(serializers.ModelSerializer):
