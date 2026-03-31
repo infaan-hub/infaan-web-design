@@ -1492,6 +1492,57 @@ body[data-theme="dark"] .home-hero {
   width: 100%;
 }
 
+.system-home-card {
+  display: grid;
+  gap: 16px;
+  cursor: pointer;
+  border-radius: 30px;
+  border: 1px solid rgba(207, 214, 225, 0.9);
+  background:
+    radial-gradient(circle at top right, rgba(197, 225, 255, 0.75), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(243, 247, 252, 0.98));
+  box-shadow: 0 24px 56px rgba(39, 56, 77, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.system-home-card:hover,
+.system-home-card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 28px 60px rgba(39, 56, 77, 0.16);
+}
+
+.system-home-card-image {
+  min-height: 240px;
+  border-radius: 24px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-start;
+  padding: 16px;
+}
+
+.system-home-card-copy {
+  display: grid;
+  gap: 12px;
+}
+
+.system-home-card-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.system-home-card-head h3 {
+  margin: 0;
+}
+
+.system-home-card-head strong {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.1rem;
+  white-space: nowrap;
+}
+
 .visual-copy p,
 .package-service-head p,
 .package-card p,

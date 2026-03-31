@@ -1,9 +1,4 @@
-import {
-  formatServiceCategoryLabel,
-  getOrderedServices,
-  getServiceImage,
-  getSystemServices,
-} from "../lib/serviceCatalog";
+import { formatServiceCategoryLabel, getOrderedServices, getServiceImage } from "../lib/serviceCatalog";
 
 const heroImage =
   "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80";
@@ -53,9 +48,9 @@ function HomePage({ app }) {
     currentUser,
     navigate,
   } = app;
+
   const visibleServices = getOrderedServices(groupedPackages.filter((service) => service.packages?.length)).slice(0, 4);
   const visiblePortfolioServices = getOrderedServices(groupedPortfolio.filter((service) => service.portfolioItems?.length)).slice(0, 4);
-  const systemServices = getSystemServices(groupedPackages);
 
   return (
     <main className="main-content">
@@ -159,48 +154,48 @@ function HomePage({ app }) {
                       );
 
                       return (
-                    <div className={`pricing-plan-top pricing-tone-${pkg.tier}`}>
-                      <span className="pricing-mini-pill">{pkg.tier}</span>
-                      <h4>{pkg.title}</h4>
-                      <div className="pricing-amount">
-                        {pkg.prices[0]?.billing_period === "per_task" ? (
-                          <>
-                            <strong>Custom</strong>
-                            <span>per task</span>
-                          </>
-                        ) : (
-                          <>
-                            <strong>
-                              {formatPrice(
-                                pkg.prices.find((price) => price.billing_period === "monthly")?.amount || pkg.prices[0]?.amount,
-                                pkg.prices.find((price) => price.billing_period === "monthly")?.currency || pkg.prices[0]?.currency || "USD"
-                              )}
-                            </strong>
-                            <span>/month</span>
-                          </>
-                        )}
-                      </div>
-                      {headlinePrices.length > 1 ? (
-                        <div className="price-list">
-                          {headlinePrices.map((price) => (
-                            <span key={`${pkg.id}-${price.id}`} className="price-chip">
-                              {formatPrice(price.amount, price.currency)}
-                            </span>
-                          ))}
+                        <div className={`pricing-plan-top pricing-tone-${pkg.tier}`}>
+                          <span className="pricing-mini-pill">{pkg.tier}</span>
+                          <h4>{pkg.title}</h4>
+                          <div className="pricing-amount">
+                            {pkg.prices[0]?.billing_period === "per_task" ? (
+                              <>
+                                <strong>Custom</strong>
+                                <span>per task</span>
+                              </>
+                            ) : (
+                              <>
+                                <strong>
+                                  {formatPrice(
+                                    pkg.prices.find((price) => price.billing_period === "monthly")?.amount || pkg.prices[0]?.amount,
+                                    pkg.prices.find((price) => price.billing_period === "monthly")?.currency || pkg.prices[0]?.currency || "USD"
+                                  )}
+                                </strong>
+                                <span>/month</span>
+                              </>
+                            )}
+                          </div>
+                          {headlinePrices.length > 1 ? (
+                            <div className="price-list">
+                              {headlinePrices.map((price) => (
+                                <span key={`${pkg.id}-${price.id}`} className="price-chip">
+                                  {formatPrice(price.amount, price.currency)}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null}
+                          <p>{pkg.description}</p>
+                          <button
+                            type="button"
+                            className="pricing-cta"
+                            onClick={() => {
+                              selectPackage(pkg.id);
+                              requireLogin("/package");
+                            }}
+                          >
+                            Subscribe
+                          </button>
                         </div>
-                      ) : null}
-                      <p>{pkg.description}</p>
-                      <button
-                        type="button"
-                        className="pricing-cta"
-                        onClick={() => {
-                          selectPackage(pkg.id);
-                          requireLogin("/package");
-                        }}
-                      >
-                        Subscribe
-                      </button>
-                    </div>
                       );
                     })()}
 
@@ -224,17 +219,20 @@ function HomePage({ app }) {
         </div>
 
         {subscriptionSystems.length ? (
-          <div className="service-visual-grid">
+          <div className="package-grid">
             {subscriptionSystems.slice(0, 4).map((system) => {
               const preferredPackage = system.packages?.[0];
               const monthlyPrice =
                 preferredPackage?.prices?.find((price) => price.billing_period === "monthly") ||
                 preferredPackage?.prices?.[0];
+              const availableTimes = (preferredPackage?.prices || [])
+                .filter((price) => price.billing_period !== "per_task")
+                .slice(0, 3);
 
               return (
                 <article
                   key={system.id}
-                  className="visual-card visual-card-action system-subscription-card"
+                  className="package-card system-home-card"
                   onClick={() => {
                     selectSystem(system.id);
                     navigate("/system-subscription");
@@ -249,16 +247,30 @@ function HomePage({ app }) {
                     }
                   }}
                 >
-                  <div className="visual-image system-subscription-image" style={{ backgroundImage: `url(${system.cover_image})` }} />
-                  <div className="visual-copy system-subscription-copy">
+                  <div className="system-home-card-image" style={{ backgroundImage: `url(${system.cover_image})` }}>
                     <span className="system-subscription-pill">{system.service_name || "System subscription"}</span>
-                    <h3>{system.name}</h3>
+                  </div>
+
+                  <div className="system-home-card-copy">
+                    <div className="system-home-card-head">
+                      <h3>{system.name}</h3>
+                      {monthlyPrice ? <strong>{formatPrice(monthlyPrice.amount, monthlyPrice.currency)}</strong> : null}
+                    </div>
+
                     <p>{system.summary || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}</p>
-                    <strong className="system-subscription-link">
-                      {monthlyPrice
-                        ? `See /system-subscription • ${formatPrice(monthlyPrice.amount, monthlyPrice.currency)}`
-                        : "See /system-subscription"}
-                    </strong>
+
+                    {availableTimes.length ? (
+                      <div className="price-list">
+                        {availableTimes.map((price) => (
+                          <span key={`${system.id}-${price.id}`} className="price-chip">
+                            {price.billing_period}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    <strong className="system-subscription-link">See /system-subscription</strong>
+
                     {preferredPackage ? (
                       <button
                         type="button"
