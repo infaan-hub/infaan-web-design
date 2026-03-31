@@ -20,6 +20,7 @@ import PortfolioPage from "./pages/PortfolioPage";
 import ProfilePage from "./pages/ProfilePage";
 import RegisterPage from "./pages/RegisterPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
+import SystemSubscriptionPage from "./pages/SystemSubscriptionPage";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://infaan-web-design.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
@@ -1108,6 +1109,7 @@ function App() {
     "/dashboard": <DashboardPage app={app} />,
     "/profile": <ProfilePage app={app} />,
     "/subscription": <SubscriptionPage app={app} />,
+    "/system-subscription": <SystemSubscriptionPage app={app} />,
     "/package": <PackagePage app={app} />,
     "/package-time": <PackageTimePage app={app} />,
     "/billing": <BillingPage app={app} />,

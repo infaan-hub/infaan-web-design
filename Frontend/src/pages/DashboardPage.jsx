@@ -1,11 +1,4 @@
-const serviceImages = {
-  website:
-    "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80",
-  digital_ads:
-    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
-  logo_poster:
-    "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
-};
+import { formatServiceCategoryLabel, getOrderedServices, getServiceImage } from "../lib/serviceCatalog";
 
 function getStatusTone(status) {
   if (status === "active" || status === "grace_period") return "active";
@@ -15,10 +8,7 @@ function getStatusTone(status) {
 
 function DashboardPage({ app }) {
   const { groupedPackages, groupedPortfolio, formatPrice, continueToPackageTime, selectPackage, navigate, subscriptions } = app;
-  const serviceOrder = ["website", "digital_ads", "logo_poster"];
-  const visibleServices = serviceOrder
-    .map((category) => groupedPackages.find((service) => service.category === category))
-    .filter(Boolean);
+  const visibleServices = getOrderedServices(groupedPackages.filter((service) => service.packages?.length)).slice(0, 4);
 
   return (
     <main className="main-content">
@@ -68,11 +58,11 @@ function DashboardPage({ app }) {
                 <div className="service-catalog-head">
                   <div
                     className="service-catalog-cover"
-                    style={{ backgroundImage: `url(${serviceImages[service.category] || serviceImages.website})` }}
+                    style={{ backgroundImage: `url(${getServiceImage(service)})` }}
                   />
 
                   <div className="service-catalog-copy">
-                    <p className="micro-label">{service.category.replaceAll("_", " ")}</p>
+                    <p className="micro-label">{formatServiceCategoryLabel(service.category)}</p>
                     <h3>{service.name}</h3>
                     <p>{service.short_description || service.details}</p>
                   </div>
@@ -146,7 +136,7 @@ function DashboardPage({ app }) {
                         <div
                           className="portfolio-home-image"
                           style={{
-                            backgroundImage: `url(${portfolioPreview?.image_data || serviceImages[service.category] || serviceImages.website})`,
+                            backgroundImage: `url(${portfolioPreview?.image_data || getServiceImage(service)})`,
                           }}
                         >
                           <span className="portfolio-image-badge">{service.name}</span>

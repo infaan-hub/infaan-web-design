@@ -102,6 +102,7 @@ function AdminDashboardPage({ app }) {
               <option value="digital_ads">Digital Ads</option>
               <option value="logo_poster">Logo & Poster Design</option>
               <option value="maintenance">Maintenance & Fix Web System</option>
+              <option value="system_subscription">System Developing and Subscription Service</option>
             </select>
             <input
               value={serviceForm.short_description}

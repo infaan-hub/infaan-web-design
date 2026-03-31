@@ -6,6 +6,7 @@ function buildSidebarGroups(app) {
   const publicMenu = [
     { href: "/home", label: "Home", sign: "\u2302", hint: "services" },
     { href: "/package", label: "Packages", sign: "\u25A3", hint: "plans" },
+    { href: "/system-subscription", label: "System Subscription", sign: "\u25A9", hint: "hire" },
     { href: "/potfolio", label: "Portfolio", sign: "\u25A7", hint: "gallery" },
   ];
 

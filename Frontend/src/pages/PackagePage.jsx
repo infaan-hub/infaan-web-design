@@ -1,11 +1,4 @@
-const serviceImages = {
-  website:
-    "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80",
-  digital_ads:
-    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
-  logo_poster:
-    "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
-};
+import { formatServiceCategoryLabel, getServiceImage } from "../lib/serviceCatalog";
 
 function PackagePage({ app }) {
   const { selectedPackage, selectedService, groupedPackages, navigate, continueToPackageTime, formatPrice } = app;
@@ -39,7 +32,7 @@ function PackagePage({ app }) {
           <div className="package-detail-media">
             <div
               className="package-card-image package-card-image-large"
-              style={{ backgroundImage: `url(${serviceImages[selectedService?.category] || serviceImages.website})` }}
+              style={{ backgroundImage: `url(${getServiceImage(selectedService)})` }}
             />
             <div className="package-detail-badges">
               <span className="tier-pill">{selectedPackage.tier}</span>
@@ -105,12 +98,12 @@ function PackagePage({ app }) {
           {visibleServices.map((service) => (
             <article key={service.id} className="service-catalog-block">
               <div className="service-catalog-head">
-                <div
-                  className="service-catalog-cover"
-                  style={{ backgroundImage: `url(${serviceImages[service.category] || serviceImages.website})` }}
-                />
+                  <div
+                    className="service-catalog-cover"
+                    style={{ backgroundImage: `url(${getServiceImage(service)})` }}
+                  />
                 <div className="service-catalog-copy">
-                  <p className="micro-label">{service.category.replaceAll("_", " ")}</p>
+                  <p className="micro-label">{formatServiceCategoryLabel(service.category)}</p>
                   <h3>{service.name}</h3>
                   <p>{service.short_description || service.details}</p>
                 </div>

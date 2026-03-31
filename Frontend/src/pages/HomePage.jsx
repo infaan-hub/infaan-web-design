@@ -1,11 +1,9 @@
-const serviceImages = {
-  website:
-    "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80",
-  digital_ads:
-    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
-  logo_poster:
-    "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
-};
+import {
+  formatServiceCategoryLabel,
+  getOrderedServices,
+  getServiceImage,
+  getSystemServices,
+} from "../lib/serviceCatalog";
 
 const heroImage =
   "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80";
@@ -44,14 +42,10 @@ function GmailIcon() {
 }
 
 function HomePage({ app }) {
-  const { groupedPackages, groupedPortfolio, setSelectedPackageId, requireLogin, formatPrice, currentUser, navigate } = app;
-  const serviceOrder = ["website", "digital_ads", "logo_poster"];
-  const visibleServices = serviceOrder
-    .map((category) => groupedPackages.find((service) => service.category === category))
-    .filter(Boolean);
-  const visiblePortfolioServices = serviceOrder
-    .map((category) => groupedPortfolio.find((service) => service.category === category))
-    .filter(Boolean);
+  const { groupedPackages, groupedPortfolio, selectPackage, requireLogin, formatPrice, currentUser, navigate } = app;
+  const visibleServices = getOrderedServices(groupedPackages.filter((service) => service.packages?.length)).slice(0, 4);
+  const visiblePortfolioServices = getOrderedServices(groupedPortfolio.filter((service) => service.portfolioItems?.length)).slice(0, 4);
+  const systemServices = getSystemServices(groupedPackages);
 
   return (
     <main className="main-content">
@@ -115,9 +109,9 @@ function HomePage({ app }) {
                 }
               }}
             >
-              <div className="visual-image" style={{ backgroundImage: `url(${serviceImages[service.category]})` }} />
+              <div className="visual-image" style={{ backgroundImage: `url(${getServiceImage(service)})` }} />
               <div className="visual-copy">
-                <span>{service.category.replaceAll("_", " ")}</span>
+                <span>{formatServiceCategoryLabel(service.category)}</span>
                 <h3>{service.name}</h3>
                 <p>{service.short_description}</p>
               </div>
@@ -141,7 +135,7 @@ function HomePage({ app }) {
                   <h3>{service.name}</h3>
                   <p>{service.details}</p>
                 </div>
-                <span className="service-badge">{service.category.replaceAll("_", " ")}</span>
+                <span className="service-badge">{formatServiceCategoryLabel(service.category)}</span>
               </div>
 
               <div className="package-grid">
@@ -190,7 +184,7 @@ function HomePage({ app }) {
                         type="button"
                         className="pricing-cta"
                         onClick={() => {
-                          setSelectedPackageId(String(pkg.id));
+                          selectPackage(pkg.id);
                           requireLogin("/package");
                         }}
                       >
@@ -215,6 +209,79 @@ function HomePage({ app }) {
 
       <section className="section-block">
         <div className="section-headline">
+          <p className="micro-label">system subscription</p>
+          <h2>System subscription</h2>
+        </div>
+
+        {systemServices.length ? (
+          <div className="service-visual-grid">
+            {systemServices.map((service) => {
+              const preferredPackage = service.packages[0];
+
+              return (
+                <article
+                  key={service.id}
+                  className="visual-card visual-card-action"
+                  onClick={() => navigate("/system-subscription")}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      navigate("/system-subscription");
+                    }
+                  }}
+                >
+                  <div className="visual-image" style={{ backgroundImage: `url(${getServiceImage(service)})` }} />
+                  <div className="visual-copy">
+                    <span>{formatServiceCategoryLabel(service.category)}</span>
+                    <h3>{service.name}</h3>
+                    <p>
+                      {service.short_description || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}
+                    </p>
+                    {preferredPackage ? (
+                      <button
+                        type="button"
+                        className="outline-button system-preview-button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          selectPackage(preferredPackage.id);
+                          requireLogin("/system-subscription");
+                        }}
+                      >
+                        View system
+                      </button>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <article className="service-catalog-block">
+            <div className="service-catalog-head">
+              <div
+                className="service-catalog-cover"
+                style={{ backgroundImage: `url(${getServiceImage("system_subscription")})` }}
+              />
+              <div className="service-catalog-copy">
+                <p className="micro-label">system subscription</p>
+                <h3>Hire ready systems by time</h3>
+                <p>
+                  Customers will be able to open a system, choose weekly, monthly, or yearly subscription time, then
+                  continue with normal billing, payment, and receipt steps from one place.
+                </p>
+                <button type="button" className="solid-button" onClick={() => navigate("/system-subscription")}>
+                  Open system subscription
+                </button>
+              </div>
+            </div>
+          </article>
+        )}
+      </section>
+
+      <section className="section-block">
+        <div className="section-headline">
           <p className="micro-label">portfolio</p>
           <h2>Latest portfolio samples</h2>
         </div>
@@ -228,7 +295,7 @@ function HomePage({ app }) {
                 <div
                   className="portfolio-home-image"
                   style={{
-                    backgroundImage: `url(${portfolioPreview?.image_data || serviceImages[service.category]})`,
+                    backgroundImage: `url(${portfolioPreview?.image_data || getServiceImage(service)})`,
                   }}
                 >
                   <span className="portfolio-image-badge">{service.name}</span>
@@ -245,9 +312,9 @@ function HomePage({ app }) {
             <p className="micro-label">about us</p>
             <h2>Infaan Web & Design builds business-ready digital systems from one place.</h2>
             <p>
-              We combine website development, web application delivery, logo and poster design, digital ads, and
-              maintenance support into one structured service flow so customers can choose a package, subscribe, pay,
-              and track work smoothly.
+              We combine website development, web application delivery, system development and subscription, logo and
+              poster design, digital ads, and maintenance support into one structured service flow so customers can
+              choose a package, subscribe, pay, and track work smoothly.
             </p>
             <p>
               The system is designed to help both customers and admin manage packages, portfolios, bookings, billing,
