@@ -351,16 +351,26 @@ function AdminDashboardPage({ app }) {
               {editingSystemId ? "Update system" : "Create system"}
             </button>
             {editingSystemId && (
-              <button
-                type="button"
-                className="outline-button"
-                onClick={() => {
-                  setSystemForm(app.emptySystem);
-                  setEditingSystemId(null);
-                }}
-              >
-                Cancel edit
-              </button>
+              <div className="hero-actions">
+                <button
+                  type="button"
+                  className="outline-button"
+                  onClick={() => {
+                    setSystemForm(app.emptySystem);
+                    setEditingSystemId(null);
+                  }}
+                >
+                  Cancel edit
+                </button>
+                <button
+                  type="button"
+                  className="header-button"
+                  onClick={() => deleteSubscriptionSystem(editingSystemId)}
+                  disabled={loading}
+                >
+                  Delete system
+                </button>
+              </div>
             )}
           </form>
         </div>
@@ -376,7 +386,7 @@ function AdminDashboardPage({ app }) {
           {portfolioItems.map((item) => (
             <article key={item.id} className="portfolio-product-card admin-portfolio-card">
               <button type="button" className="portfolio-heart-button" aria-label="Portfolio item">
-                ♡
+                â™¡
               </button>
               <div className="portfolio-product-image-wrap">
                 <img src={item.image_data} alt={item.name} className="portfolio-product-image" />
@@ -404,11 +414,11 @@ function AdminDashboardPage({ app }) {
                 </button>
                 <button
                   type="button"
-                  className="portfolio-cart-button"
+                  className="header-button"
                   onClick={() => deletePortfolio(item.id)}
                   aria-label="Delete portfolio"
                 >
-                  ×
+                  Ã—
                 </button>
               </div>
             </article>
@@ -456,11 +466,11 @@ function AdminDashboardPage({ app }) {
                 </button>
                 <button
                   type="button"
-                  className="portfolio-cart-button"
+                  className="header-button"
                   onClick={() => deleteSubscriptionSystem(system.id)}
-                  aria-label="Delete system"
+                  aria-label="Delete system subscription"
                 >
-                  Ã—
+                  Delete
                 </button>
               </div>
             </article>
