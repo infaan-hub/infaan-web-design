@@ -95,6 +95,7 @@ const emptySystem = {
   name: "",
   summary: "",
   details: "",
+  system_url: "",
   cover_image: "",
   gallery_images: ["", "", "", "", ""],
   is_active: true,
@@ -888,6 +889,7 @@ function App() {
       name: String(systemForm.name || "").trim(),
       summary: String(systemForm.summary || "").trim(),
       details: String(systemForm.details || "").trim(),
+      system_url: String(systemForm.system_url || "").trim(),
       cover_image: String(systemForm.cover_image || "").trim(),
       gallery_images: (systemForm.gallery_images || []).map((image) => String(image || "").trim()).filter(Boolean),
     };

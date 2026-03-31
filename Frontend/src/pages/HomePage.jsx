@@ -222,7 +222,8 @@ function HomePage({ app }) {
           <div className="package-grid">
             {subscriptionSystems.map((system) => {
               const preferredPackage = system.packages?.[0];
-              const monthlyPrice =
+              const preferredPrice =
+                preferredPackage?.prices?.find((price) => price.is_default) ||
                 preferredPackage?.prices?.find((price) => price.billing_period === "monthly") ||
                 preferredPackage?.prices?.[0];
               const availableTimes = (preferredPackage?.prices || [])
@@ -254,16 +255,17 @@ function HomePage({ app }) {
                   <div className="system-home-card-copy">
                     <div className="system-home-card-head">
                       <h3>{system.name}</h3>
-                      {monthlyPrice ? <strong>{formatPrice(monthlyPrice.amount, monthlyPrice.currency)}</strong> : null}
+                      {preferredPrice ? <strong>{formatPrice(preferredPrice.amount, preferredPrice.currency)}</strong> : null}
                     </div>
 
                     <p>{system.summary || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}</p>
+                    {system.system_url ? <p className="system-url-line">{system.system_url}</p> : null}
 
                     {availableTimes.length ? (
                       <div className="price-list">
                         {availableTimes.map((price) => (
                           <span key={`${system.id}-${price.id}`} className="price-chip">
-                            {price.billing_period}
+                            {`${price.billing_period} ${formatPrice(price.amount, price.currency)}`}
                           </span>
                         ))}
                       </div>

@@ -60,6 +60,11 @@ function SystemSubscriptionPage({ app }) {
                 <h3>{selectedSystem.name}</h3>
                 <p>{selectedSystem.summary}</p>
                 <p>{selectedSystem.details}</p>
+                {selectedSystem.system_url ? (
+                  <a className="outline-button system-url-button" href={selectedSystem.system_url} target="_blank" rel="noreferrer">
+                    Open system URL
+                  </a>
+                ) : null}
               </div>
             </div>
 
@@ -83,7 +88,10 @@ function SystemSubscriptionPage({ app }) {
 
           <div className="service-package-track">
             {(selectedSystem.packages || []).map((pkg) => {
-              const monthlyPrice = pkg.prices.find((price) => price.billing_period === "monthly") || pkg.prices[0];
+              const primaryPrice =
+                pkg.prices.find((price) => price.is_default) ||
+                pkg.prices.find((price) => price.billing_period === "monthly") ||
+                pkg.prices[0];
 
               return (
                 <div key={pkg.id} className={`package-card tone-${pkg.tier} catalog-package-card`}>
@@ -95,13 +103,21 @@ function SystemSubscriptionPage({ app }) {
 
                   <div className="catalog-package-price">
                     <strong>
-                      {monthlyPrice?.billing_period === "per_task"
+                      {primaryPrice?.billing_period === "per_task"
                         ? "Custom"
-                        : formatPrice(monthlyPrice?.amount || 0, monthlyPrice?.currency || "USD")}
+                        : formatPrice(primaryPrice?.amount || 0, primaryPrice?.currency || "USD")}
                     </strong>
                     <span>
-                      {monthlyPrice?.billing_period === "per_task" ? "per task" : `/${monthlyPrice?.billing_period}`}
+                      {primaryPrice?.billing_period === "per_task" ? "per task" : `/${primaryPrice?.billing_period}`}
                     </span>
+                  </div>
+
+                  <div className="price-list">
+                    {pkg.prices.map((price) => (
+                      <span key={`${pkg.id}-${price.id}`} className="price-chip">
+                        {`${price.billing_period} ${formatPrice(price.amount, price.currency)}`}
+                      </span>
+                    ))}
                   </div>
 
                   <ul className="catalog-feature-list">
@@ -225,6 +241,10 @@ function SystemSubscriptionPage({ app }) {
                   <div className="credential-card">
                     <span className="micro-label">time</span>
                     <strong>{subscription.package_details?.billing_period || "-"}</strong>
+                  </div>
+                  <div className="credential-card">
+                    <span className="micro-label">system URL</span>
+                    <strong>{subscription.system_details?.system_url || "-"}</strong>
                   </div>
                   <div className="credential-card">
                     <span className="micro-label">billing</span>

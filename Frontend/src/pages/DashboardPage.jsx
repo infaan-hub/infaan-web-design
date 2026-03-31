@@ -178,6 +178,7 @@ function DashboardPage({ app }) {
           <div className="service-visual-grid">
             {activeSystems.map((system) => {
               const pricePreview =
+                system.packages?.[0]?.prices?.find((price) => price.is_default) ||
                 system.packages?.[0]?.prices?.find((price) => price.billing_period === "monthly") ||
                 system.packages?.[0]?.prices?.[0];
 
@@ -207,6 +208,7 @@ function DashboardPage({ app }) {
                     <span className="system-subscription-pill">{system.service_name || "System subscription"}</span>
                     <h3>{system.name}</h3>
                     <p>{system.summary}</p>
+                    {system.system_url ? <p className="system-url-line">{system.system_url}</p> : null}
                     <strong className="system-subscription-link">
                       {pricePreview
                         ? `See /system-subscription • ${formatPrice(pricePreview.amount, pricePreview.currency)}`

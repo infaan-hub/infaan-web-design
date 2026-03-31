@@ -93,6 +93,7 @@ class SubscriptionSystem(TimeStampedModel):
     name = models.CharField(max_length=150)
     summary = models.CharField(max_length=255)
     details = models.TextField(blank=True)
+    system_url = models.URLField(blank=True)
     cover_image = models.TextField()
     gallery_images = models.JSONField(default=list, blank=True)
     is_active = models.BooleanField(default=True)

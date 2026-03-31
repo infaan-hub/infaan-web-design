@@ -1543,6 +1543,16 @@ body[data-theme="dark"] .home-hero {
   white-space: nowrap;
 }
 
+.system-url-line {
+  color: var(--muted);
+  word-break: break-word;
+  font-size: 0.9rem;
+}
+
+.system-url-button {
+  width: fit-content;
+}
+
 .visual-copy p,
 .package-service-head p,
 .package-card p,

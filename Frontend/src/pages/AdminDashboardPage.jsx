@@ -316,6 +316,7 @@ function AdminDashboardPage({ app }) {
             <input value={systemForm.name} onChange={(event) => updateField(setSystemForm, "name", event.target.value)} placeholder="System name" />
             <input value={systemForm.summary} onChange={(event) => updateField(setSystemForm, "summary", event.target.value)} placeholder="Front card summary" />
             <textarea value={systemForm.details} onChange={(event) => updateField(setSystemForm, "details", event.target.value)} placeholder="System details" />
+            <input value={systemForm.system_url} onChange={(event) => updateField(setSystemForm, "system_url", event.target.value)} placeholder="System URL" />
             <label className="portfolio-upload-field">
               <span>Front image</span>
               <input type="file" accept="image/*" onChange={handleSystemImageChange("cover_image")} />
@@ -431,6 +432,7 @@ function AdminDashboardPage({ app }) {
                 <h3>{system.name}</h3>
                 <p>{system.summary}</p>
                 <p>{system.service_name}</p>
+                <p>{system.system_url || "No system URL"}</p>
               </div>
               <div className="portfolio-product-footer">
                 <button
@@ -442,6 +444,7 @@ function AdminDashboardPage({ app }) {
                       name: system.name,
                       summary: system.summary,
                       details: system.details,
+                      system_url: system.system_url || "",
                       cover_image: system.cover_image,
                       gallery_images: [...(system.gallery_images || []), "", "", "", "", ""].slice(0, 5),
                       is_active: system.is_active,

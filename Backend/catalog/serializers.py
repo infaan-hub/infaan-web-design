@@ -195,12 +195,13 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
         system = obj.subscription_system
         return {
-          "id": system.id,
-          "name": system.name,
-          "summary": system.summary,
-          "cover_image": system.cover_image,
-          "gallery_images": system.gallery_images,
-          "is_active": system.is_active,
+            "id": system.id,
+            "name": system.name,
+            "summary": system.summary,
+            "system_url": system.system_url,
+            "cover_image": system.cover_image,
+            "gallery_images": system.gallery_images,
+            "is_active": system.is_active,
         }
 
     def validate_package_price(self, value):
