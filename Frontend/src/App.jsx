@@ -374,6 +374,11 @@ function App() {
   }, [token]);
 
   useEffect(() => {
+    if (!token) return;
+    loadCatalog().catch((requestError) => setError(requestError.message));
+  }, [token, currentUser?.role]);
+
+  useEffect(() => {
     if (currentUser?.role === "admin" && ["/admin-dashboard", "/admin/users", "/bookings-services"].includes(path)) {
       loadUsers().catch((requestError) => setError(requestError.message));
     }

@@ -57,6 +57,8 @@ class SubscriptionSystemViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         try:
             queryset = SubscriptionSystem.objects.select_related("service").prefetch_related("service__packages__prices")
+            if self.request.user.is_authenticated and self.request.user.role == CustomUser.Role.ADMIN:
+                return queryset.all()
             if self.request.method in permissions.SAFE_METHODS:
                 return queryset.filter(is_active=True)
             return queryset.all()
