@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import PackagePrice, Service, ServicePackage, Subscription
+from .models import PackagePrice, Service, ServicePackage, Subscription, SubscriptionSystem
 
 
 @admin.register(Service)
@@ -29,3 +29,10 @@ class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ("id", "user", "package_price", "status", "business_name", "created_at")
     list_filter = ("status", "package_price__billing_period")
     search_fields = ("user__username", "business_name", "contact_email")
+
+
+@admin.register(SubscriptionSystem)
+class SubscriptionSystemAdmin(admin.ModelAdmin):
+    list_display = ("id", "name", "service", "is_active")
+    list_filter = ("service", "is_active")
+    search_fields = ("name", "summary", "service__name")

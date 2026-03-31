@@ -3,13 +3,14 @@ from rest_framework import permissions, viewsets
 
 from accounts.models import CustomUser
 from accounts.views import IsAdminUserRole
-from .models import PackagePrice, PortfolioItem, Service, ServicePackage, Subscription
+from .models import PackagePrice, PortfolioItem, Service, ServicePackage, Subscription, SubscriptionSystem
 from .serializers import (
     PackagePriceSerializer,
     PortfolioItemSerializer,
     ServicePackageSerializer,
     ServiceSerializer,
     SubscriptionSerializer,
+    SubscriptionSystemSerializer,
 )
 
 
@@ -49,6 +50,20 @@ class PortfolioItemViewSet(viewsets.ModelViewSet):
             return PortfolioItem.objects.none()
 
 
+class SubscriptionSystemViewSet(viewsets.ModelViewSet):
+    serializer_class = SubscriptionSystemSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        try:
+            queryset = SubscriptionSystem.objects.select_related("service").prefetch_related("service__packages__prices")
+            if self.request.method in permissions.SAFE_METHODS:
+                return queryset.filter(is_active=True)
+            return queryset.all()
+        except (ProgrammingError, OperationalError):
+            return SubscriptionSystem.objects.none()
+
+
 class SubscriptionViewSet(viewsets.ModelViewSet):
     serializer_class = SubscriptionSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -56,7 +71,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         try:
             queryset = Subscription.objects.select_related(
-                "user", "package_price", "package_price__package", "package_price__package__service"
+                "user", "package_price", "package_price__package", "package_price__package__service", "subscription_system"
             )
             if self.request.user.role == CustomUser.Role.ADMIN:
                 return queryset.all()

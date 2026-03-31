@@ -90,6 +90,15 @@ const emptyPortfolio = {
   image_data: "",
   is_active: true,
 };
+const emptySystem = {
+  service: "",
+  name: "",
+  summary: "",
+  details: "",
+  cover_image: "",
+  gallery_images: ["", "", "", "", ""],
+  is_active: true,
+};
 
 function formatPrice(amount, currency = "USD") {
   if (amount === null || amount === undefined || amount === "") {
@@ -120,8 +129,10 @@ function App() {
   const [packages, setPackages] = useState([]);
   const [prices, setPrices] = useState([]);
   const [portfolioItems, setPortfolioItems] = useState([]);
+  const [subscriptionSystems, setSubscriptionSystems] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [selectedBookingId, setSelectedBookingId] = useState(localStorage.getItem("infaan_selected_booking") || "");
+  const [selectedSystemId, setSelectedSystemId] = useState(localStorage.getItem("infaan_selected_system") || "");
   const [selectedPortfolioServiceId, setSelectedPortfolioServiceId] = useState(
     localStorage.getItem("infaan_selected_portfolio_service") || ""
   );
@@ -142,6 +153,8 @@ function App() {
   const [editingPackageId, setEditingPackageId] = useState(null);
   const [portfolioForm, setPortfolioForm] = useState(emptyPortfolio);
   const [editingPortfolioId, setEditingPortfolioId] = useState(null);
+  const [systemForm, setSystemForm] = useState(emptySystem);
+  const [editingSystemId, setEditingSystemId] = useState(null);
   const [paymentForm, setPaymentForm] = useState(emptyPayment);
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
@@ -167,6 +180,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem("infaan_selected_booking", selectedBookingId || "");
   }, [selectedBookingId]);
+
+  useEffect(() => {
+    localStorage.setItem("infaan_selected_system", selectedSystemId || "");
+  }, [selectedSystemId]);
 
   useEffect(() => {
     localStorage.setItem("infaan_selected_portfolio_service", selectedPortfolioServiceId || "");
@@ -310,6 +327,13 @@ function App() {
     } catch {
       setPortfolioItems([]);
     }
+
+    try {
+      const systemData = await apiRequest("/subscription-systems/");
+      setSubscriptionSystems(systemData.results || systemData);
+    } catch {
+      setSubscriptionSystems([]);
+    }
   }
 
   async function loadProfileAndSubscriptions() {
@@ -413,6 +437,7 @@ function App() {
   const selectedPackage = packages.find((pkg) => String(pkg.id) === String(selectedPackageId));
   const selectedPrice = prices.find((price) => String(price.id) === String(selectedPriceId));
   const selectedService = services.find((service) => service.id === selectedPackage?.service) || null;
+  const selectedSystem = subscriptionSystems.find((system) => String(system.id) === String(selectedSystemId)) || null;
   const selectedBooking = subscriptions.find((booking) => String(booking.id) === String(selectedBookingId)) || null;
   const selectedPortfolioService =
     services.find((service) => String(service.id) === String(selectedPortfolioServiceId)) || null;
@@ -441,10 +466,11 @@ function App() {
     return packageObject.prices.find((price) => price.billing_period === "monthly") || packageObject.prices[0];
   }
 
-  function selectPackage(packageId) {
+  function selectPackage(packageId, systemId = "") {
     const packageMatch = packages.find((pkg) => String(pkg.id) === String(packageId));
     setSelectedPackageId(String(packageId));
     setSelectedPriceId(packageMatch ? String(getPreferredPrice(packageMatch)?.id || "") : "");
+    setSelectedSystemId(systemId ? String(systemId) : "");
     setPendingPayment(null);
     setBookingSent(false);
     setLastBooking(null);
@@ -462,12 +488,16 @@ function App() {
     navigate("/potfolio");
   }
 
-  function continueToPackageTime(packageId) {
+  function selectSystem(systemId) {
+    setSelectedSystemId(String(systemId || ""));
+  }
+
+  function continueToPackageTime(packageId, systemId = "") {
     if (!requireLogin("/package")) {
       return;
     }
     const packageMatch = packages.find((pkg) => String(pkg.id) === String(packageId));
-    selectPackage(packageId);
+    selectPackage(packageId, systemId);
     if (packageMatch?.tier === "extra") {
       const preferredPrice = getPreferredPrice(packageMatch);
       if (preferredPrice) {
@@ -847,6 +877,61 @@ function App() {
     }
   }
 
+  async function saveSubscriptionSystem() {
+    setLoading(true);
+    setError("");
+    setFeedback("");
+
+    const body = {
+      ...systemForm,
+      service: Number(systemForm.service),
+      name: String(systemForm.name || "").trim(),
+      summary: String(systemForm.summary || "").trim(),
+      details: String(systemForm.details || "").trim(),
+      cover_image: String(systemForm.cover_image || "").trim(),
+      gallery_images: (systemForm.gallery_images || []).map((image) => String(image || "").trim()).filter(Boolean),
+    };
+
+    try {
+      if (editingSystemId) {
+        await apiRequest(`/subscription-systems/${editingSystemId}/`, { method: "PUT", body: JSON.stringify(body) });
+        setFeedback("System subscription updated successfully.");
+      } else {
+        await apiRequest("/subscription-systems/", { method: "POST", body: JSON.stringify(body) });
+        setFeedback("System subscription created successfully.");
+      }
+      setSystemForm(emptySystem);
+      setEditingSystemId(null);
+      await loadCatalog();
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deleteSubscriptionSystem(systemId) {
+    setLoading(true);
+    setError("");
+    setFeedback("");
+    try {
+      await apiRequest(`/subscription-systems/${systemId}/`, { method: "DELETE" });
+      if (String(editingSystemId) === String(systemId)) {
+        setSystemForm(emptySystem);
+        setEditingSystemId(null);
+      }
+      if (String(selectedSystemId) === String(systemId)) {
+        setSelectedSystemId("");
+      }
+      setFeedback("System subscription deleted successfully.");
+      await loadCatalog();
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function submitBooking() {
     if (!currentUser) {
       navigate("/login");
@@ -878,6 +963,7 @@ function App() {
         body: JSON.stringify({
           ...subscriptionForm,
           package_price: Number(activePriceId),
+          subscription_system: selectedSystem ? Number(selectedSystem.id) : null,
           payment_status: "paid",
           payment_method: activePaymentMethod,
           payment_contact: paymentContact,
@@ -934,6 +1020,7 @@ function App() {
     clearAuthState();
     setSelectedPackageId("");
     setSelectedPriceId("");
+    setSelectedSystemId("");
     setPendingPayment(null);
     setBookingSent(false);
     setLastBooking(null);
@@ -1015,11 +1102,15 @@ function App() {
     packages,
     prices,
     portfolioItems,
+    subscriptionSystems,
     subscriptions,
     users,
     selectedPackage,
     selectedPrice: resolvedSelectedPrice,
     selectedService,
+    selectedSystem,
+    selectedSystemId,
+    setSelectedSystemId,
     selectedBooking,
     selectedBookingId,
     setSelectedBookingId,
@@ -1060,10 +1151,15 @@ function App() {
     setPortfolioForm,
     editingPortfolioId,
     setEditingPortfolioId,
+    systemForm,
+    setSystemForm,
+    editingSystemId,
+    setEditingSystemId,
     paymentForm,
     setPaymentForm,
     updateField,
     selectPackage,
+    selectSystem,
     continueToPackageTime,
     continueToBilling,
     confirmPayment,
@@ -1077,6 +1173,8 @@ function App() {
     deletePackage,
     savePortfolio,
     deletePortfolio,
+    saveSubscriptionSystem,
+    deleteSubscriptionSystem,
     submitBooking,
     openBooking,
     markBookingDone,
@@ -1095,6 +1193,7 @@ function App() {
     emptyService,
     emptyPackage,
     emptyPortfolio,
+    emptySystem,
     emptyPayment,
     formatPrice,
     getPreferredPrice,

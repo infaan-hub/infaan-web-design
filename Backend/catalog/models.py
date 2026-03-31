@@ -16,6 +16,7 @@ class Service(TimeStampedModel):
     class Category(models.TextChoices):
         LOGO_POSTER = "logo_poster", "Logo & Poster Design"
         WEBSITE = "website", "Website Developing and Design"
+        SYSTEM_SUBSCRIPTION = "system_subscription", "System Developing and Subscription Service"
         DIGITAL_ADS = "digital_ads", "Digital Ads"
         MAINTENANCE = "maintenance", "Maintenance & Fix Web System"
 
@@ -87,6 +88,22 @@ class PortfolioItem(TimeStampedModel):
         return f"{self.service.name} - {self.name}"
 
 
+class SubscriptionSystem(TimeStampedModel):
+    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name="subscription_systems")
+    name = models.CharField(max_length=150)
+    summary = models.CharField(max_length=255)
+    details = models.TextField(blank=True)
+    cover_image = models.TextField()
+    gallery_images = models.JSONField(default=list, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["service__name", "name"]
+
+    def __str__(self):
+        return f"{self.service.name} - {self.name}"
+
+
 class Subscription(TimeStampedModel):
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
@@ -103,6 +120,13 @@ class Subscription(TimeStampedModel):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="subscriptions")
     package_price = models.ForeignKey(PackagePrice, on_delete=models.PROTECT, related_name="subscriptions")
+    subscription_system = models.ForeignKey(
+        SubscriptionSystem,
+        on_delete=models.SET_NULL,
+        related_name="subscriptions",
+        null=True,
+        blank=True,
+    )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
     payment_method = models.CharField(max_length=30, blank=True)

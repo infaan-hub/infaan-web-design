@@ -221,7 +221,7 @@ function HomePage({ app }) {
               return (
                 <article
                   key={service.id}
-                  className="visual-card visual-card-action"
+                  className="visual-card visual-card-action system-subscription-card"
                   onClick={() => navigate("/system-subscription")}
                   role="button"
                   tabIndex={0}
@@ -232,13 +232,14 @@ function HomePage({ app }) {
                     }
                   }}
                 >
-                  <div className="visual-image" style={{ backgroundImage: `url(${getServiceImage(service)})` }} />
-                  <div className="visual-copy">
-                    <span>{formatServiceCategoryLabel(service.category)}</span>
+                  <div className="visual-image system-subscription-image" style={{ backgroundImage: `url(${getServiceImage(service)})` }} />
+                  <div className="visual-copy system-subscription-copy">
+                    <span className="system-subscription-pill">{formatServiceCategoryLabel(service.category)}</span>
                     <h3>{service.name}</h3>
                     <p>
                       {service.short_description || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}
                     </p>
+                    <strong className="system-subscription-link">View system and plans</strong>
                     {preferredPackage ? (
                       <button
                         type="button"

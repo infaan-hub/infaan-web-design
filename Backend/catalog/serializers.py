@@ -2,7 +2,7 @@ from django.utils import timezone
 from django.db import transaction
 from rest_framework import serializers
 
-from .models import PackagePrice, PortfolioItem, Service, ServicePackage, Subscription
+from .models import PackagePrice, PortfolioItem, Service, ServicePackage, Subscription, SubscriptionSystem
 
 
 class ServiceSerializer(serializers.ModelSerializer):
@@ -86,6 +86,30 @@ class ServicePackageSerializer(serializers.ModelSerializer):
         return instance
 
 
+class SubscriptionSystemSerializer(serializers.ModelSerializer):
+    service_name = serializers.CharField(source="service.name", read_only=True)
+    packages = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = SubscriptionSystem
+        fields = "__all__"
+
+    def get_packages(self, obj):
+        packages = obj.service.packages.filter(is_active=True).prefetch_related("prices")
+        return ServicePackageSerializer(packages, many=True).data
+
+    def validate_service(self, value):
+        if value.category != Service.Category.SYSTEM_SUBSCRIPTION:
+            raise serializers.ValidationError("System subscriptions must use the system subscription service category.")
+        return value
+
+    def validate_gallery_images(self, value):
+        gallery_images = [String for String in (value or []) if String]
+        if len(gallery_images) != 5:
+            raise serializers.ValidationError("Provide exactly 5 gallery images for the system view.")
+        return gallery_images
+
+
 class PortfolioItemSerializer(serializers.ModelSerializer):
     service_name = serializers.CharField(source="service.name", read_only=True)
     package_title = serializers.CharField(source="package.title", read_only=True)
@@ -99,6 +123,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField(read_only=True)
     package_details = serializers.SerializerMethodField(read_only=True)
     service_access = serializers.SerializerMethodField(read_only=True)
+    system_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Subscription
@@ -106,6 +131,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "package_price",
+            "subscription_system",
             "status",
             "payment_status",
             "payment_method",
@@ -126,6 +152,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             "user_details",
             "package_details",
             "service_access",
+            "system_details",
         )
         read_only_fields = ("user", "created_at", "updated_at")
 
@@ -162,10 +189,40 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             "grace_period_days": obj.grace_period_days,
         }
 
+    def get_system_details(self, obj):
+        if not obj.subscription_system_id:
+            return None
+
+        system = obj.subscription_system
+        return {
+          "id": system.id,
+          "name": system.name,
+          "summary": system.summary,
+          "cover_image": system.cover_image,
+          "gallery_images": system.gallery_images,
+          "is_active": system.is_active,
+        }
+
     def validate_package_price(self, value):
         if not value.package.is_active or not value.package.service.is_active:
             raise serializers.ValidationError("This package is not currently available.")
         return value
+
+    def validate(self, attrs):
+        package_price = attrs.get("package_price") or getattr(self.instance, "package_price", None)
+        subscription_system = attrs.get("subscription_system")
+        if subscription_system is None and self.instance is not None:
+            subscription_system = getattr(self.instance, "subscription_system", None)
+
+        if subscription_system:
+            if not subscription_system.is_active:
+                raise serializers.ValidationError({"subscription_system": "This system is not currently active."})
+            if package_price and subscription_system.service_id != package_price.package.service_id:
+                raise serializers.ValidationError(
+                    {"subscription_system": "Selected system must match the package service."}
+                )
+
+        return attrs
 
     def create(self, validated_data):
         request = self.context["request"]
