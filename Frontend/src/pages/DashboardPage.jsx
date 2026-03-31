@@ -178,6 +178,9 @@ function DashboardPage({ app }) {
           <div className="service-visual-grid">
             {activeSystems.map((system) => {
               const pricePreview =
+                (system.display_price !== null && system.display_price !== undefined && system.display_price !== ""
+                  ? { amount: system.display_price, currency: system.display_price_currency || "USD" }
+                  : null) ||
                 system.packages?.[0]?.prices?.find((price) => price.is_default) ||
                 system.packages?.[0]?.prices?.find((price) => price.billing_period === "monthly") ||
                 system.packages?.[0]?.prices?.[0];

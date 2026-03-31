@@ -94,6 +94,8 @@ class SubscriptionSystem(TimeStampedModel):
     summary = models.CharField(max_length=255)
     details = models.TextField(blank=True)
     system_url = models.URLField(blank=True)
+    display_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    display_price_currency = models.CharField(max_length=10, default="USD")
     cover_image = models.TextField()
     gallery_images = models.JSONField(default=list, blank=True)
     is_active = models.BooleanField(default=True)

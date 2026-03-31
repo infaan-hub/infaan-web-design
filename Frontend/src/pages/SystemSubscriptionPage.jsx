@@ -60,6 +60,9 @@ function SystemSubscriptionPage({ app }) {
                 <h3>{selectedSystem.name}</h3>
                 <p>{selectedSystem.summary}</p>
                 <p>{selectedSystem.details}</p>
+                {selectedSystem.display_price !== null && selectedSystem.display_price !== undefined && selectedSystem.display_price !== "" ? (
+                  <p>{formatPrice(selectedSystem.display_price, selectedSystem.display_price_currency || "USD")}</p>
+                ) : null}
                 {selectedSystem.system_url ? (
                   <a className="outline-button system-url-button" href={selectedSystem.system_url} target="_blank" rel="noreferrer">
                     Open system URL

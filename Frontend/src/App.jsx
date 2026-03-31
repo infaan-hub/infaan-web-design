@@ -96,6 +96,8 @@ const emptySystem = {
   summary: "",
   details: "",
   system_url: "",
+  display_price: "",
+  display_price_currency: "USD",
   cover_image: "",
   gallery_images: ["", "", "", "", ""],
   is_active: true,
@@ -895,6 +897,11 @@ function App() {
       summary: String(systemForm.summary || "").trim(),
       details: String(systemForm.details || "").trim(),
       system_url: String(systemForm.system_url || "").trim(),
+      display_price:
+        systemForm.display_price === "" || systemForm.display_price === null || systemForm.display_price === undefined
+          ? null
+          : String(systemForm.display_price).trim(),
+      display_price_currency: String(systemForm.display_price_currency || "USD").trim().toUpperCase(),
       cover_image: String(systemForm.cover_image || "").trim(),
       gallery_images: (systemForm.gallery_images || []).map((image) => String(image || "").trim()).filter(Boolean),
     };

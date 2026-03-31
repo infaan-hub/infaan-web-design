@@ -223,6 +223,9 @@ function HomePage({ app }) {
             {subscriptionSystems.map((system) => {
               const preferredPackage = system.packages?.[0];
               const preferredPrice =
+                (system.display_price !== null && system.display_price !== undefined && system.display_price !== ""
+                  ? { amount: system.display_price, currency: system.display_price_currency || "USD" }
+                  : null) ||
                 preferredPackage?.prices?.find((price) => price.is_default) ||
                 preferredPackage?.prices?.find((price) => price.billing_period === "monthly") ||
                 preferredPackage?.prices?.[0];

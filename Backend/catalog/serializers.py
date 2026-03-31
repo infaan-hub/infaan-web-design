@@ -130,6 +130,8 @@ class SubscriptionSystemSerializer(serializers.ModelSerializer):
         attrs = super().validate(attrs)
         if "system_url" in attrs:
             attrs["system_url"] = (attrs.get("system_url") or "").strip()
+        if "display_price_currency" in attrs:
+            attrs["display_price_currency"] = (attrs.get("display_price_currency") or "USD").upper()
         return attrs
 
 
@@ -222,6 +224,8 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             "name": system.name,
             "summary": system.summary,
             "system_url": system.system_url,
+            "display_price": str(system.display_price) if system.display_price is not None else None,
+            "display_price_currency": system.display_price_currency,
             "cover_image": system.cover_image,
             "gallery_images": system.gallery_images,
             "is_active": system.is_active,

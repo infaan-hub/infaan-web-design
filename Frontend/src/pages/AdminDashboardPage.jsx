@@ -328,6 +328,20 @@ function AdminDashboardPage({ app }) {
             <input value={systemForm.summary} onChange={(event) => updateField(setSystemForm, "summary", event.target.value)} placeholder="Front card summary" />
             <textarea value={systemForm.details} onChange={(event) => updateField(setSystemForm, "details", event.target.value)} placeholder="System details" />
             <input value={systemForm.system_url} onChange={(event) => updateField(setSystemForm, "system_url", event.target.value)} placeholder="System URL" />
+            <div className="payment-field-grid">
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={systemForm.display_price}
+                onChange={(event) => updateField(setSystemForm, "display_price", event.target.value)}
+                placeholder="System price"
+              />
+              <select value={systemForm.display_price_currency} onChange={(event) => updateField(setSystemForm, "display_price_currency", event.target.value)}>
+                <option value="USD">USD</option>
+                <option value="TZS">TZS</option>
+              </select>
+            </div>
             <label className="portfolio-upload-field">
               <span>Front image</span>
               <input type="file" accept="image/*" onChange={handleSystemImageChange("cover_image")} />
@@ -456,6 +470,11 @@ function AdminDashboardPage({ app }) {
                   <h3>{system.name}</h3>
                   <p className="system-admin-summary">{system.summary}</p>
                   <p className="system-admin-meta">{system.service_name}</p>
+                  <p className="system-admin-meta">
+                    {system.display_price !== null && system.display_price !== undefined && system.display_price !== ""
+                      ? formatPrice(system.display_price, system.display_price_currency || "USD")
+                      : "No display price"}
+                  </p>
                   <p className="system-admin-meta">{system.system_url || "No system URL"}</p>
                   {pricePreview.length ? (
                     <div className="price-list system-admin-price-list">
@@ -480,6 +499,8 @@ function AdminDashboardPage({ app }) {
                         summary: system.summary,
                         details: system.details,
                         system_url: system.system_url || "",
+                        display_price: system.display_price ?? "",
+                        display_price_currency: system.display_price_currency || "USD",
                         cover_image: system.cover_image,
                         gallery_images: [...(system.gallery_images || []), "", "", "", "", ""].slice(0, 5),
                         is_active: system.is_active,
