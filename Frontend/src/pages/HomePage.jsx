@@ -220,7 +220,7 @@ function HomePage({ app }) {
 
         {subscriptionSystems.length ? (
           <div className="package-grid">
-            {subscriptionSystems.slice(0, 4).map((system) => {
+            {subscriptionSystems.map((system) => {
               const preferredPackage = system.packages?.[0];
               const monthlyPrice =
                 preferredPackage?.prices?.find((price) => price.billing_period === "monthly") ||
@@ -272,18 +272,31 @@ function HomePage({ app }) {
                     <strong className="system-subscription-link">See /system-subscription</strong>
 
                     {preferredPackage ? (
-                      <button
-                        type="button"
-                        className="outline-button system-preview-button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          selectPackage(preferredPackage.id, system.id);
-                          selectSystem(system.id);
-                          requireLogin("/system-subscription");
-                        }}
-                      >
-                        View system
-                      </button>
+                      <div className="hero-actions">
+                        <button
+                          type="button"
+                          className="outline-button system-preview-button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            selectSystem(system.id);
+                            navigate("/system-subscription");
+                          }}
+                        >
+                          View system
+                        </button>
+                        <button
+                          type="button"
+                          className="solid-button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            selectPackage(preferredPackage.id, system.id);
+                            selectSystem(system.id);
+                            requireLogin("/system-subscription");
+                          }}
+                        >
+                          Subscribe
+                        </button>
+                      </div>
                     ) : null}
                   </div>
                 </article>
@@ -291,25 +304,10 @@ function HomePage({ app }) {
             })}
           </div>
         ) : (
-          <article className="service-catalog-block">
-            <div className="service-catalog-head">
-              <div
-                className="service-catalog-cover"
-                style={{ backgroundImage: `url(${getServiceImage("system_subscription")})` }}
-              />
-              <div className="service-catalog-copy">
-                <p className="micro-label">system subscription</p>
-                <h3>Hire ready systems by time</h3>
-                <p>
-                  Customers will be able to open a system, choose weekly, monthly, or yearly subscription time, then
-                  continue with normal billing, payment, and receipt steps from one place.
-                </p>
-                <button type="button" className="solid-button" onClick={() => navigate("/system-subscription")}>
-                  Open system subscription
-                </button>
-              </div>
-            </div>
-          </article>
+          <div className="form-card">
+            <h3>No system subscription posted yet</h3>
+            <p>When admin posts system subscriptions, all of them will appear here with image, name, price, and subscribe button.</p>
+          </div>
         )}
       </section>
 
