@@ -42,7 +42,17 @@ function GmailIcon() {
 }
 
 function HomePage({ app }) {
-  const { groupedPackages, groupedPortfolio, selectPackage, requireLogin, formatPrice, currentUser, navigate } = app;
+  const {
+    groupedPackages,
+    groupedPortfolio,
+    subscriptionSystems,
+    selectPackage,
+    selectSystem,
+    requireLogin,
+    formatPrice,
+    currentUser,
+    navigate,
+  } = app;
   const visibleServices = getOrderedServices(groupedPackages.filter((service) => service.packages?.length)).slice(0, 4);
   const visiblePortfolioServices = getOrderedServices(groupedPortfolio.filter((service) => service.portfolioItems?.length)).slice(0, 4);
   const systemServices = getSystemServices(groupedPackages);
@@ -213,40 +223,50 @@ function HomePage({ app }) {
           <h2>System subscription</h2>
         </div>
 
-        {systemServices.length ? (
+        {subscriptionSystems.length ? (
           <div className="service-visual-grid">
-            {systemServices.map((service) => {
-              const preferredPackage = service.packages[0];
+            {subscriptionSystems.slice(0, 4).map((system) => {
+              const preferredPackage = system.packages?.[0];
+              const monthlyPrice =
+                preferredPackage?.prices?.find((price) => price.billing_period === "monthly") ||
+                preferredPackage?.prices?.[0];
 
               return (
                 <article
-                  key={service.id}
+                  key={system.id}
                   className="visual-card visual-card-action system-subscription-card"
-                  onClick={() => navigate("/system-subscription")}
+                  onClick={() => {
+                    selectSystem(system.id);
+                    navigate("/system-subscription");
+                  }}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
+                      selectSystem(system.id);
                       navigate("/system-subscription");
                     }
                   }}
                 >
-                  <div className="visual-image system-subscription-image" style={{ backgroundImage: `url(${getServiceImage(service)})` }} />
+                  <div className="visual-image system-subscription-image" style={{ backgroundImage: `url(${system.cover_image})` }} />
                   <div className="visual-copy system-subscription-copy">
-                    <span className="system-subscription-pill">{formatServiceCategoryLabel(service.category)}</span>
-                    <h3>{service.name}</h3>
-                    <p>
-                      {service.short_description || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}
-                    </p>
-                    <strong className="system-subscription-link">View system and plans</strong>
+                    <span className="system-subscription-pill">{system.service_name || "System subscription"}</span>
+                    <h3>{system.name}</h3>
+                    <p>{system.summary || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}</p>
+                    <strong className="system-subscription-link">
+                      {monthlyPrice
+                        ? `See /system-subscription • ${formatPrice(monthlyPrice.amount, monthlyPrice.currency)}`
+                        : "See /system-subscription"}
+                    </strong>
                     {preferredPackage ? (
                       <button
                         type="button"
                         className="outline-button system-preview-button"
                         onClick={(event) => {
                           event.stopPropagation();
-                          selectPackage(preferredPackage.id);
+                          selectPackage(preferredPackage.id, system.id);
+                          selectSystem(system.id);
                           requireLogin("/system-subscription");
                         }}
                       >

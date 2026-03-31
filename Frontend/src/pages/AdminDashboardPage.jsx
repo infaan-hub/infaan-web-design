@@ -25,6 +25,13 @@ function AdminDashboardPage({ app }) {
     setEditingPortfolioId,
     savePortfolio,
     deletePortfolio,
+    subscriptionSystems,
+    systemForm,
+    setSystemForm,
+    editingSystemId,
+    setEditingSystemId,
+    saveSubscriptionSystem,
+    deleteSubscriptionSystem,
     loading,
     subscriptions,
     formatPrice,
@@ -45,6 +52,14 @@ function AdminDashboardPage({ app }) {
   const filteredPackages = app.packages.filter(
     (pkg) => String(pkg.service) === String(portfolioForm.service || "")
   );
+  const systemServices = services.filter((service) => service.category === "system_subscription");
+
+  function updateSystemGalleryImage(index, value) {
+    setSystemForm((previous) => ({
+      ...previous,
+      gallery_images: previous.gallery_images.map((image, imageIndex) => (imageIndex === index ? value : image)),
+    }));
+  }
 
   function handlePortfolioImageChange(event) {
     const file = event.target.files?.[0];
@@ -58,6 +73,27 @@ function AdminDashboardPage({ app }) {
       }));
     };
     reader.readAsDataURL(file);
+  }
+
+  function handleSystemImageChange(field, index = null) {
+    return (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (field === "cover_image") {
+          setSystemForm((previous) => ({
+            ...previous,
+            cover_image: String(reader.result || ""),
+          }));
+          return;
+        }
+
+        updateSystemGalleryImage(index, String(reader.result || ""));
+      };
+      reader.readAsDataURL(file);
+    };
   }
 
   return (
@@ -260,6 +296,72 @@ function AdminDashboardPage({ app }) {
               </button>
             )}
           </form>
+
+          <form
+            className="form-card"
+            onSubmit={(event) => {
+              event.preventDefault();
+              saveSubscriptionSystem();
+            }}
+          >
+            <h3>{editingSystemId ? "Edit system subscription" : "Post system subscription"}</h3>
+            <select value={systemForm.service} onChange={(event) => updateField(setSystemForm, "service", event.target.value)}>
+              <option value="">Select system service</option>
+              {systemServices.map((service) => (
+                <option key={service.id} value={service.id}>
+                  {service.name}
+                </option>
+              ))}
+            </select>
+            <input value={systemForm.name} onChange={(event) => updateField(setSystemForm, "name", event.target.value)} placeholder="System name" />
+            <input value={systemForm.summary} onChange={(event) => updateField(setSystemForm, "summary", event.target.value)} placeholder="Front card summary" />
+            <textarea value={systemForm.details} onChange={(event) => updateField(setSystemForm, "details", event.target.value)} placeholder="System details" />
+            <label className="portfolio-upload-field">
+              <span>Front image</span>
+              <input type="file" accept="image/*" onChange={handleSystemImageChange("cover_image")} />
+            </label>
+            {systemForm.cover_image ? (
+              <div className="portfolio-admin-preview">
+                <img src={systemForm.cover_image} alt="System cover preview" />
+              </div>
+            ) : null}
+            {(systemForm.gallery_images || []).map((image, index) => (
+              <div key={`gallery-${index + 1}`} className="form-layout">
+                <label className="portfolio-upload-field">
+                  <span>{`System view image ${index + 1}`}</span>
+                  <input type="file" accept="image/*" onChange={handleSystemImageChange("gallery_images", index)} />
+                </label>
+                {image ? (
+                  <div className="portfolio-admin-preview">
+                    <img src={image} alt={`System view ${index + 1}`} />
+                  </div>
+                ) : null}
+              </div>
+            ))}
+            <label className="check-row">
+              <input
+                type="checkbox"
+                checked={systemForm.is_active}
+                onChange={(event) => updateField(setSystemForm, "is_active", event.target.checked)}
+              />
+              Active system subscription
+            </label>
+            <button type="submit" className="solid-button" disabled={loading}>
+              {editingSystemId ? "Update system" : "Create system"}
+            </button>
+            {editingSystemId && (
+              <button
+                type="button"
+                className="outline-button"
+                onClick={() => {
+                  setSystemForm(app.emptySystem);
+                  setEditingSystemId(null);
+                }}
+              >
+                Cancel edit
+              </button>
+            )}
+          </form>
         </div>
 
         <div className="section-headline admin-booking-head">
@@ -306,6 +408,56 @@ function AdminDashboardPage({ app }) {
                   aria-label="Delete portfolio"
                 >
                   ×
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="section-headline admin-booking-head">
+          <div>
+            <p className="micro-label">system subscription</p>
+            <h2>System subscription catalog</h2>
+          </div>
+        </div>
+
+        <div className="package-grid">
+          {subscriptionSystems.map((system) => (
+            <article key={system.id} className="portfolio-product-card admin-portfolio-card">
+              <div className="portfolio-product-image-wrap">
+                <img src={system.cover_image} alt={system.name} className="portfolio-product-image" />
+              </div>
+              <div className="portfolio-product-content">
+                <h3>{system.name}</h3>
+                <p>{system.summary}</p>
+                <p>{system.service_name}</p>
+              </div>
+              <div className="portfolio-product-footer">
+                <button
+                  type="button"
+                  className="outline-button"
+                  onClick={() => {
+                    setSystemForm({
+                      service: String(system.service),
+                      name: system.name,
+                      summary: system.summary,
+                      details: system.details,
+                      cover_image: system.cover_image,
+                      gallery_images: [...(system.gallery_images || []), "", "", "", "", ""].slice(0, 5),
+                      is_active: system.is_active,
+                    });
+                    setEditingSystemId(system.id);
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  className="portfolio-cart-button"
+                  onClick={() => deleteSubscriptionSystem(system.id)}
+                  aria-label="Delete system"
+                >
+                  Ã—
                 </button>
               </div>
             </article>

@@ -26,6 +26,7 @@ function AdminSubscriptionPage({ app }) {
                   <div>
                     <strong>{subscription.user_details?.username || "-"}</strong>
                     <p>{subscription.package_details?.title || "-"}</p>
+                    {subscription.system_details ? <p>{subscription.system_details.name}</p> : null}
                   </div>
                   <span className={`status-pill status-${status}`}>{status.replace("_", " ")}</span>
                 </div>
@@ -34,6 +35,10 @@ function AdminSubscriptionPage({ app }) {
                   <div className="credential-card">
                     <span className="micro-label">service</span>
                     <strong>{subscription.package_details?.service || "-"}</strong>
+                  </div>
+                  <div className="credential-card">
+                    <span className="micro-label">system</span>
+                    <strong>{subscription.system_details?.name || "-"}</strong>
                   </div>
                   <div className="credential-card">
                     <span className="micro-label">amount</span>

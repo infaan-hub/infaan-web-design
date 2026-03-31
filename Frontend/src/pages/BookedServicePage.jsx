@@ -51,6 +51,10 @@ function BookedServicePage({ app }) {
                 <strong>{selectedBooking.user_details?.username}</strong>
               </div>
               <div className="credential-card">
+                <span className="micro-label">system</span>
+                <strong>{selectedBooking.system_details?.name || "Standard package"}</strong>
+              </div>
+              <div className="credential-card">
                 <span className="micro-label">phone number</span>
                 <strong>{selectedBooking.contact_phone}</strong>
               </div>

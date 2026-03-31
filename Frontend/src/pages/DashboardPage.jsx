@@ -7,8 +7,19 @@ function getStatusTone(status) {
 }
 
 function DashboardPage({ app }) {
-  const { groupedPackages, groupedPortfolio, formatPrice, continueToPackageTime, selectPackage, navigate, subscriptions } = app;
+  const {
+    groupedPackages,
+    groupedPortfolio,
+    subscriptionSystems,
+    formatPrice,
+    continueToPackageTime,
+    selectPackage,
+    selectSystem,
+    navigate,
+    subscriptions,
+  } = app;
   const visibleServices = getOrderedServices(groupedPackages.filter((service) => service.packages?.length)).slice(0, 4);
+  const activeSystems = (subscriptionSystems || []).slice(0, 4);
 
   return (
     <main className="main-content">
@@ -153,6 +164,65 @@ function DashboardPage({ app }) {
             );
           })}
         </div>
+      </section>
+
+      <section className="section-block">
+        <div className="section-headline">
+          <div>
+            <p className="micro-label">system subscription</p>
+            <h2>Hireable systems</h2>
+          </div>
+        </div>
+
+        {activeSystems.length ? (
+          <div className="service-visual-grid">
+            {activeSystems.map((system) => {
+              const pricePreview =
+                system.packages?.[0]?.prices?.find((price) => price.billing_period === "monthly") ||
+                system.packages?.[0]?.prices?.[0];
+
+              return (
+                <article
+                  key={system.id}
+                  className="visual-card visual-card-action system-subscription-card"
+                  onClick={() => {
+                    selectSystem(system.id);
+                    navigate("/system-subscription");
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      selectSystem(system.id);
+                      navigate("/system-subscription");
+                    }
+                  }}
+                >
+                  <div
+                    className="visual-image system-subscription-image"
+                    style={{ backgroundImage: `url(${system.cover_image})` }}
+                  />
+                  <div className="visual-copy system-subscription-copy">
+                    <span className="system-subscription-pill">{system.service_name || "System subscription"}</span>
+                    <h3>{system.name}</h3>
+                    <p>{system.summary}</p>
+                    <strong className="system-subscription-link">
+                      {pricePreview
+                        ? `See /system-subscription • ${formatPrice(pricePreview.amount, pricePreview.currency)}`
+                        : "See /system-subscription"}
+                    </strong>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="form-card">
+            <h3>No active systems yet</h3>
+            <p>When admin adds active systems with one cover image and five view images, they will appear here.</p>
+          </div>
+        )}
       </section>
     </main>
   );
