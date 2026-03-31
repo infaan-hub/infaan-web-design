@@ -1563,33 +1563,40 @@ body[data-theme="dark"] .home-hero {
 }
 
 .system-admin-card {
-  max-width: 100%;
+  width: 100%;
+  max-width: 320px;
   min-height: 100%;
-  padding: 16px;
-  border-radius: 28px;
-  border: 1px solid rgba(96, 122, 153, 0.32);
-  background:
-    radial-gradient(circle at top right, rgba(108, 177, 255, 0.22), transparent 35%),
-    linear-gradient(180deg, #183548 0%, #0f2231 100%);
-  box-shadow: 0 26px 52px rgba(7, 18, 28, 0.32);
+  padding: 12px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #171717;
+  color: #ffffff;
+  box-shadow: 0 28px 50px rgba(0, 0, 0, 0.22);
 }
 
 .system-admin-card .portfolio-product-image-wrap {
-  border-width: 4px;
-  border-color: rgba(255, 255, 255, 0.14);
+  border-width: 5px;
+  border-color: #2d2d2d;
+  background: #ffffff;
 }
 
 .system-admin-card .portfolio-product-content {
-  gap: 10px;
-  padding-inline: 2px;
+  gap: 8px;
+  padding-inline: 6px;
+}
+
+.system-admin-card .portfolio-product-content h3 {
+  font-size: 1.45rem;
+  line-height: 1;
+  color: #ffffff;
 }
 
 .system-admin-summary {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.86);
 }
 
 .system-admin-meta {
-  color: rgba(171, 204, 233, 0.9);
+  color: rgba(255, 255, 255, 0.72);
   word-break: break-word;
 }
 
@@ -1598,21 +1605,34 @@ body[data-theme="dark"] .home-hero {
 }
 
 .system-admin-price-list .price-chip {
-  background: rgba(255, 255, 255, 0.12);
+  background: #232323;
   color: #f8fbff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .system-admin-actions {
   align-items: stretch;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 12px;
+  padding-top: 4px;
 }
 
 .system-admin-button {
-  min-width: 120px;
-  min-height: 46px;
+  min-width: 0;
+  flex: 1 1 0;
+  min-height: 48px;
   border-radius: 14px;
+}
+
+.system-admin-actions .outline-button.system-admin-button {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: #ffffff;
+  color: #111111;
+}
+
+.system-admin-actions .header-button.system-admin-button {
+  background: #ffefe9;
+  color: #8f291f;
 }
 
 .visual-copy p,
