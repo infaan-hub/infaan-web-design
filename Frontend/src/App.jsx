@@ -424,6 +424,12 @@ function App() {
   }, [path, currentUser]);
 
   useEffect(() => {
+    if (currentUser?.role === "admin" && ["/admin-dashboard", "/admin-subscription", "/bookings-services", "/booking-history", "/system-control"].includes(path)) {
+      loadProfileAndSubscriptions().catch((requestError) => setError(requestError.message));
+    }
+  }, [path, currentUser]);
+
+  useEffect(() => {
     if (currentUser?.role === "admin" && ["/admin-dashboard", "/system-control", "/admin-subscription"].includes(path)) {
       loadSystemControl().catch((requestError) => setError(requestError.message));
     }
@@ -1149,8 +1155,10 @@ function App() {
       setFeedback("Booking sent successfully.");
       await loadProfileAndSubscriptions();
       navigate("/booking");
+      return hydratedBooking;
     } catch (requestError) {
       setError(requestError.message);
+      return null;
     } finally {
       setLoading(false);
     }

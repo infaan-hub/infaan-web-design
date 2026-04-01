@@ -206,28 +206,9 @@ function BookingPage({ app }) {
   const autoSubmitRef = useRef(false);
   const autoDownloadRef = useRef("");
 
-  const receiptBooking = useMemo(() => {
-    if (lastBooking) return lastBooking;
-    if (!pendingPayment || !selectedPackage || !selectedPrice) return null;
-    return {
-      id: buildPendingReceiptNumber(selectedPrice),
-      created_at: new Date().toISOString(),
-      package_details: {
-        title: pendingPayment?.package_title || selectedSystem?.name || selectedPackage.title,
-        amount: selectedPrice.amount,
-        currency: selectedPrice.currency,
-        billing_period: selectedPrice.billing_period,
-      },
-      system_details: selectedSystem
-        ? {
-            name: selectedSystem.name,
-          }
-        : null,
-    };
-  }, [lastBooking, pendingPayment, selectedPackage, selectedPrice, selectedSystem]);
-
+  const receiptBooking = useMemo(() => lastBooking || null, [lastBooking]);
   const issuedAt = receiptBooking?.created_at ? new Date(receiptBooking.created_at) : new Date();
-  const receiptNumber = lastBooking ? buildReceiptNumber(lastBooking) : buildPendingReceiptNumber(selectedPrice);
+  const receiptNumber = receiptBooking ? buildReceiptNumber(receiptBooking) : buildPendingReceiptNumber(selectedPrice);
   const customerName = currentUser?.first_name || currentUser?.username || "Customer";
   const packageName =
     receiptBooking?.system_details?.name ||
@@ -248,7 +229,11 @@ function BookingPage({ app }) {
       return;
     }
     autoSubmitRef.current = true;
-    submitBooking();
+    submitBooking().then((result) => {
+      if (!result) {
+        autoSubmitRef.current = false;
+      }
+    });
   }, [selectedPackage, selectedPrice, pendingPayment, bookingSent, lastBooking, loading, submitBooking]);
 
   useEffect(() => {
@@ -375,6 +360,38 @@ function BookingPage({ app }) {
                   View dashboard
                 </button>
               </div>
+            </div>
+          </div>
+        ) : pendingPayment && selectedPackage && selectedPrice ? (
+          <div className="form-card">
+            <h3>{loading ? "Processing your system subscription" : "Booking confirmation is still pending"}</h3>
+            <p>
+              {selectedPrice?.billing_period || "billing"} - {formatPrice(selectedPrice?.amount || "", selectedPrice?.currency || "USD")}
+            </p>
+            <p>
+              {loading
+                ? "We are still sending the paid subscription to the backend so admin can see it."
+                : "The payment receipt is not confirmed yet, so the admin dashboard and system control cannot show it until the booking is created successfully."}
+            </p>
+            <div className="hero-actions">
+              <button
+                type="button"
+                className="solid-button"
+                disabled={loading}
+                onClick={() => {
+                  autoSubmitRef.current = true;
+                  submitBooking().then((result) => {
+                    if (!result) {
+                      autoSubmitRef.current = false;
+                    }
+                  });
+                }}
+              >
+                {loading ? "Submitting..." : "Try sending booking again"}
+              </button>
+              <button type="button" className="outline-button" onClick={() => navigate("/billing")}>
+                Back to billing
+              </button>
             </div>
           </div>
         ) : (
