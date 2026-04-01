@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AppLayout from "./components/AppLayout";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
@@ -162,6 +162,7 @@ function App() {
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const catalogRequestIdRef = useRef(0);
 
   useEffect(() => {
     if (window.location.pathname === "/") {
@@ -315,6 +316,9 @@ function App() {
   }
 
   async function loadCatalog() {
+    const requestId = catalogRequestIdRef.current + 1;
+    catalogRequestIdRef.current = requestId;
+
     const servicesRequest = apiRequest("/services/");
     const packagesRequest = apiRequest("/packages/");
     const pricesRequest = apiRequest("/prices/");
@@ -323,21 +327,26 @@ function App() {
 
     portfolioRequest
       .then((portfolioData) => {
+        if (catalogRequestIdRef.current !== requestId) return;
         setPortfolioItems(portfolioData.results || portfolioData);
       })
       .catch(() => {
+        if (catalogRequestIdRef.current !== requestId) return;
         setPortfolioItems([]);
       });
 
     systemsRequest
       .then((systemData) => {
+        if (catalogRequestIdRef.current !== requestId) return;
         setSubscriptionSystems(systemData.results || systemData);
       })
       .catch(() => {
+        if (catalogRequestIdRef.current !== requestId) return;
         setSubscriptionSystems([]);
       });
 
     const [serviceData, packageData, priceData] = await Promise.all([servicesRequest, packagesRequest, pricesRequest]);
+    if (catalogRequestIdRef.current !== requestId) return;
     setServices(serviceData.results || serviceData);
     setPackages(packageData.results || packageData);
     setPrices(priceData.results || priceData);
