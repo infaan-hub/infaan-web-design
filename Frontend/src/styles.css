@@ -1564,40 +1564,80 @@ body[data-theme="dark"] .home-hero {
 
 .system-admin-card {
   width: 100%;
-  max-width: 320px;
+  max-width: none;
   min-height: 100%;
-  padding: 12px;
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: #171717;
-  color: #ffffff;
-  box-shadow: 0 28px 50px rgba(0, 0, 0, 0.22);
+  padding: 14px;
+  gap: 14px;
+  border-radius: 28px;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  background:
+    radial-gradient(circle at top right, rgba(79, 172, 254, 0.16), transparent 36%),
+    linear-gradient(180deg, #ffffff 0%, #f4f8fc 100%);
+  color: #142033;
+  box-shadow: 0 22px 48px rgba(31, 56, 88, 0.14);
 }
 
 .system-admin-card .portfolio-product-image-wrap {
   border-width: 5px;
-  border-color: #2d2d2d;
+  border-color: rgba(255, 255, 255, 0.72);
   background: #ffffff;
 }
 
 .system-admin-card .portfolio-product-content {
-  gap: 8px;
-  padding-inline: 6px;
+  gap: 12px;
+  padding-inline: 4px;
 }
 
 .system-admin-card .portfolio-product-content h3 {
-  font-size: 1.45rem;
-  line-height: 1;
-  color: #ffffff;
+  font-size: clamp(1.2rem, 1.6vw, 1.5rem);
+  line-height: 1.05;
+  color: #142033;
+}
+
+.system-admin-topline {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.system-admin-display-price {
+  color: #0f4fb7;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1rem;
+  line-height: 1.1;
 }
 
 .system-admin-summary {
-  color: rgba(255, 255, 255, 0.86);
+  color: #475569;
 }
 
 .system-admin-meta {
-  color: rgba(255, 255, 255, 0.72);
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  color: #475569;
   word-break: break-word;
+}
+
+.system-admin-meta span {
+  color: #64748b;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.system-admin-meta strong {
+  color: #142033;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.system-admin-detail-list {
+  display: grid;
+  gap: 10px;
 }
 
 .system-admin-price-list {
@@ -1605,9 +1645,9 @@ body[data-theme="dark"] .home-hero {
 }
 
 .system-admin-price-list .price-chip {
-  background: #232323;
-  color: #f8fbff;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 79, 183, 0.07);
+  color: #173056;
+  border: 1px solid rgba(15, 79, 183, 0.12);
 }
 
 .system-admin-actions {
@@ -1625,7 +1665,7 @@ body[data-theme="dark"] .home-hero {
 }
 
 .system-admin-actions .outline-button.system-admin-button {
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(15, 79, 183, 0.18);
   background: #ffffff;
   color: #111111;
 }

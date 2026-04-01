@@ -460,6 +460,10 @@ function AdminDashboardPage({ app }) {
         <div className="package-grid">
           {subscriptionSystems.map((system) => {
             const pricePreview = getSystemPricePreview(system);
+            const displayPrice =
+              system.display_price !== null && system.display_price !== undefined && system.display_price !== ""
+                ? formatPrice(system.display_price, system.display_price_currency || "USD")
+                : "No display price";
 
             return (
               <article key={system.id} className="portfolio-product-card admin-portfolio-card system-admin-card">
@@ -467,15 +471,24 @@ function AdminDashboardPage({ app }) {
                   <img src={system.cover_image} alt={system.name} className="portfolio-product-image" />
                 </div>
                 <div className="portfolio-product-content">
+                  <div className="system-admin-topline">
+                    <span className={`status-pill ${system.is_active ? "status-active" : "status-cancelled"}`}>
+                      {system.is_active ? "active" : "inactive"}
+                    </span>
+                    <strong className="system-admin-display-price">{displayPrice}</strong>
+                  </div>
                   <h3>{system.name}</h3>
                   <p className="system-admin-summary">{system.summary}</p>
-                  <p className="system-admin-meta">{system.service_name}</p>
-                  <p className="system-admin-meta">
-                    {system.display_price !== null && system.display_price !== undefined && system.display_price !== ""
-                      ? formatPrice(system.display_price, system.display_price_currency || "USD")
-                      : "No display price"}
-                  </p>
-                  <p className="system-admin-meta">{system.system_url || "No system URL"}</p>
+                  <div className="system-admin-detail-list">
+                    <p className="system-admin-meta">
+                      <span>Service</span>
+                      <strong>{system.service_name || "-"}</strong>
+                    </p>
+                    <p className="system-admin-meta">
+                      <span>System URL</span>
+                      <strong>{system.system_url || "No system URL"}</strong>
+                    </p>
+                  </div>
                   {pricePreview.length ? (
                     <div className="price-list system-admin-price-list">
                       {pricePreview.map((price) => (

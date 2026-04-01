@@ -315,26 +315,31 @@ function App() {
   }
 
   async function loadCatalog() {
-    const [serviceData, packageData, priceData] = await Promise.all([
+    const [serviceData, packageData, priceData, portfolioResult, systemResult] = await Promise.allSettled([
       apiRequest("/services/"),
       apiRequest("/packages/"),
       apiRequest("/prices/"),
+      apiRequest("/portfolio-items/"),
+      apiRequest("/subscription-systems/"),
     ]);
-    setServices(serviceData.results || serviceData);
-    setPackages(packageData.results || packageData);
-    setPrices(priceData.results || priceData);
 
-    try {
-      const portfolioData = await apiRequest("/portfolio-items/");
-      setPortfolioItems(portfolioData.results || portfolioData);
-    } catch {
+    if (serviceData.status !== "fulfilled" || packageData.status !== "fulfilled" || priceData.status !== "fulfilled") {
+      throw new Error("Unable to load catalog right now.");
+    }
+
+    setServices(serviceData.value.results || serviceData.value);
+    setPackages(packageData.value.results || packageData.value);
+    setPrices(priceData.value.results || priceData.value);
+
+    if (portfolioResult.status === "fulfilled") {
+      setPortfolioItems(portfolioResult.value.results || portfolioResult.value);
+    } else {
       setPortfolioItems([]);
     }
 
-    try {
-      const systemData = await apiRequest("/subscription-systems/");
-      setSubscriptionSystems(systemData.results || systemData);
-    } catch {
+    if (systemResult.status === "fulfilled") {
+      setSubscriptionSystems(systemResult.value.results || systemResult.value);
+    } else {
       setSubscriptionSystems([]);
     }
   }
