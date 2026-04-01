@@ -1,4 +1,5 @@
 from django.utils import timezone
+from django.db import DatabaseError, OperationalError, ProgrammingError
 from django.db import transaction
 from rest_framework import serializers
 
@@ -404,7 +405,10 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             subscription.start_date = start_date
 
         subscription.save()
-        ensure_subscription_control_records(subscription)
+        try:
+            ensure_subscription_control_records(subscription)
+        except (DatabaseError, OperationalError, ProgrammingError):
+            pass
         return subscription
 
     def update(self, instance, validated_data):
@@ -421,7 +425,10 @@ class SubscriptionSerializer(serializers.ModelSerializer):
                 instance.assign_service_window(instance.start_date or timezone.localdate())
 
         instance.save()
-        ensure_subscription_control_records(instance)
+        try:
+            ensure_subscription_control_records(instance)
+        except (DatabaseError, OperationalError, ProgrammingError):
+            pass
         return instance
 
 

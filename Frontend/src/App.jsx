@@ -1158,6 +1158,13 @@ function App() {
       return hydratedBooking;
     } catch (requestError) {
       setError(requestError.message);
+      setPendingPayment(null);
+      setBookingSent(false);
+      setLastBooking(null);
+      if (typeof window !== "undefined") {
+        window.alert("Payment failed to save to admin. Please try again later.");
+      }
+      navigate("/home");
       return null;
     } finally {
       setLoading(false);

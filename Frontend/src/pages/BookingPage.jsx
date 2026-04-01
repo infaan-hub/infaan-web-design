@@ -231,7 +231,7 @@ function BookingPage({ app }) {
     autoSubmitRef.current = true;
     submitBooking().then((result) => {
       if (!result) {
-        autoSubmitRef.current = false;
+        autoSubmitRef.current = true;
       }
     });
   }, [selectedPackage, selectedPrice, pendingPayment, bookingSent, lastBooking, loading, submitBooking]);
@@ -364,35 +364,11 @@ function BookingPage({ app }) {
           </div>
         ) : pendingPayment && selectedPackage && selectedPrice ? (
           <div className="form-card">
-            <h3>{loading ? "Processing your system subscription" : "Booking confirmation is still pending"}</h3>
+            <h3>Processing your payment</h3>
             <p>
               {selectedPrice?.billing_period || "billing"} - {formatPrice(selectedPrice?.amount || "", selectedPrice?.currency || "USD")}
             </p>
-            <p>
-              {loading
-                ? "We are still sending the paid subscription to the backend so admin can see it."
-                : "The payment receipt is not confirmed yet, so the admin dashboard and system control cannot show it until the booking is created successfully."}
-            </p>
-            <div className="hero-actions">
-              <button
-                type="button"
-                className="solid-button"
-                disabled={loading}
-                onClick={() => {
-                  autoSubmitRef.current = true;
-                  submitBooking().then((result) => {
-                    if (!result) {
-                      autoSubmitRef.current = false;
-                    }
-                  });
-                }}
-              >
-                {loading ? "Submitting..." : "Try sending booking again"}
-              </button>
-              <button type="button" className="outline-button" onClick={() => navigate("/billing")}>
-                Back to billing
-              </button>
-            </div>
+            <p>We are confirming your payment and preparing the receipt.</p>
           </div>
         ) : (
           <div className="form-card">
