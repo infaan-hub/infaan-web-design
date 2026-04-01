@@ -483,6 +483,26 @@ body[data-theme="dark"] .pricing-plan-card {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
+body[data-theme="dark"] .pricing-card-silver {
+  background: linear-gradient(180deg, rgba(110, 122, 136, 0.28), rgba(34, 37, 44, 0.96));
+  border-color: rgba(190, 202, 214, 0.18);
+}
+
+body[data-theme="dark"] .pricing-card-gold {
+  background: linear-gradient(180deg, rgba(191, 148, 39, 0.3), rgba(34, 37, 44, 0.96));
+  border-color: rgba(233, 200, 108, 0.2);
+}
+
+body[data-theme="dark"] .pricing-card-premium {
+  background: linear-gradient(180deg, rgba(170, 56, 56, 0.34), rgba(34, 37, 44, 0.96));
+  border-color: rgba(239, 131, 131, 0.2);
+}
+
+body[data-theme="dark"] .pricing-card-extra {
+  background: linear-gradient(180deg, rgba(122, 160, 105, 0.3), rgba(34, 37, 44, 0.96));
+  border-color: rgba(184, 220, 154, 0.2);
+}
+
 body[data-theme="dark"] .pricing-plan-top,
 body[data-theme="dark"] .billing-form-card,
 body[data-theme="dark"] .billing-summary-card,
@@ -494,9 +514,40 @@ body[data-theme="dark"] .auth-shell {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
+body[data-theme="dark"] .pricing-tone-silver {
+  background: linear-gradient(180deg, #8d99a8 0%, #5d6774 100%);
+}
+
+body[data-theme="dark"] .pricing-tone-gold {
+  background: linear-gradient(180deg, #d7b252 0%, #9f7618 100%);
+}
+
+body[data-theme="dark"] .pricing-tone-premium {
+  background: linear-gradient(180deg, #e46d6d 0%, #992b2b 100%);
+}
+
+body[data-theme="dark"] .pricing-tone-extra {
+  background: linear-gradient(180deg, #b7d18d 0%, #6f924f 100%);
+}
+
 body[data-theme="dark"] .pricing-mini-pill {
   background: rgba(255, 255, 255, 0.08);
   color: #f1f3f7;
+}
+
+body[data-theme="dark"] .pricing-plan-top h4,
+body[data-theme="dark"] .pricing-amount strong {
+  color: #ffffff;
+}
+
+body[data-theme="dark"] .pricing-amount span {
+  color: #e8eef8;
+}
+
+body[data-theme="dark"] .price-chip {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 body[data-theme="dark"] .payment-step span {
@@ -2033,6 +2084,30 @@ body[data-theme="dark"] .home-hero {
   box-shadow: 0 20px 45px rgba(64, 46, 29, 0.08);
 }
 
+.pricing-card-silver {
+  background: linear-gradient(180deg, rgba(233, 240, 246, 0.95), rgba(255, 255, 255, 0.92));
+  border-color: rgba(150, 165, 178, 0.35);
+  box-shadow: 0 20px 45px rgba(130, 146, 162, 0.18);
+}
+
+.pricing-card-gold {
+  background: linear-gradient(180deg, rgba(245, 231, 190, 0.96), rgba(255, 250, 236, 0.92));
+  border-color: rgba(198, 164, 70, 0.34);
+  box-shadow: 0 20px 45px rgba(184, 146, 46, 0.18);
+}
+
+.pricing-card-premium {
+  background: linear-gradient(180deg, rgba(250, 214, 214, 0.96), rgba(255, 241, 241, 0.92));
+  border-color: rgba(198, 73, 73, 0.3);
+  box-shadow: 0 20px 45px rgba(174, 56, 56, 0.16);
+}
+
+.pricing-card-extra {
+  background: linear-gradient(180deg, rgba(221, 238, 224, 0.96), rgba(245, 252, 245, 0.92));
+  border-color: rgba(122, 160, 105, 0.3);
+  box-shadow: 0 20px 45px rgba(103, 145, 89, 0.16);
+}
+
 .duration-card {
   width: 100%;
   padding: 10px;
@@ -2051,19 +2126,19 @@ body[data-theme="dark"] .home-hero {
 }
 
 .pricing-tone-silver {
-  background: linear-gradient(180deg, #f3f3f3 0%, #e8e8e8 100%);
+  background: linear-gradient(180deg, #f3f3f3 0%, #d9dee4 100%);
 }
 
 .pricing-tone-gold {
-  background: linear-gradient(180deg, #d8e8f6 0%, #c9ddf0 100%);
+  background: linear-gradient(180deg, #f4deb0 0%, #e7c56e 100%);
 }
 
 .pricing-tone-premium {
-  background: linear-gradient(180deg, #ececec 0%, #dedede 100%);
+  background: linear-gradient(180deg, #f08b8b 0%, #cd4d4d 100%);
 }
 
 .pricing-tone-extra {
-  background: linear-gradient(180deg, #edf0f2 0%, #e0e5e8 100%);
+  background: linear-gradient(180deg, #d6e8b9 0%, #a9c97d 100%);
 }
 
 .pricing-mini-pill {

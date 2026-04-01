@@ -3,6 +3,13 @@ import { formatServiceCategoryLabel, getOrderedServices, getServiceImage } from 
 const heroImage =
   "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80";
 
+const packageTierOrder = {
+  silver: 0,
+  gold: 1,
+  premium: 2,
+  extra: 3,
+};
+
 function WhatsAppIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -249,8 +256,10 @@ function HomePage({ app }) {
               </div>
 
               <div className="package-grid">
-                {service.packages.map((pkg) => (
-                  <div key={pkg.id} className="pricing-plan-card">
+                {[...service.packages]
+                  .sort((left, right) => (packageTierOrder[left.tier] ?? 999) - (packageTierOrder[right.tier] ?? 999))
+                  .map((pkg) => (
+                  <div key={pkg.id} className={`pricing-plan-card pricing-card-${pkg.tier}`}>
                     {(() => {
                       const headlinePrices = pkg.prices.filter((price) =>
                         pkg.prices[0]?.billing_period === "per_task"
