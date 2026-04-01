@@ -12,6 +12,8 @@ function DashboardPage({ app }) {
     groupedPortfolio,
     subscriptionSystems,
     formatPrice,
+    selectPackage,
+    continueToPackageTime,
     beginSystemSubscription,
     selectSystem,
     navigate,

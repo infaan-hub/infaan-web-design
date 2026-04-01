@@ -112,10 +112,83 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        instance = serializer.instance
+        package_price_id = request.data.get("package_price")
+        subscription_system_id = request.data.get("subscription_system")
+        payment_status = request.data.get("payment_status", Subscription.PaymentStatus.PENDING)
+        payment_method = request.data.get("payment_method", "")
+        payment_contact = request.data.get("payment_contact", "")
+        payment_amount = request.data.get("payment_amount")
+        payment_currency = request.data.get("payment_currency", "USD")
+        business_name = (request.data.get("business_name") or "").strip()
+        contact_email = (request.data.get("contact_email") or "").strip()
+        contact_phone = (request.data.get("contact_phone") or "").strip()
+        notes = request.data.get("notes", "")
+        start_date = request.data.get("start_date") or timezone.localdate()
+        auto_renew = str(request.data.get("auto_renew", "false")).lower() in {"1", "true", "yes", "on"}
+        grace_period_days = request.data.get("grace_period_days", 3)
+
+        if not package_price_id:
+            return Response({"detail": "package_price is required."}, status=status.HTTP_400_BAD_REQUEST)
+        if not business_name or not contact_email or not contact_phone:
+            return Response(
+                {"detail": "business_name, contact_email, and contact_phone are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            package_price = PackagePrice.objects.select_related("package", "package__service").get(pk=package_price_id)
+        except PackagePrice.DoesNotExist:
+            return Response({"detail": "Selected package price was not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not package_price.package.is_active or not package_price.package.service.is_active:
+            return Response({"detail": "This package is not currently available."}, status=status.HTTP_400_BAD_REQUEST)
+
+        subscription_system = None
+        if subscription_system_id not in (None, "", "null"):
+            try:
+                subscription_system = SubscriptionSystem.objects.only("id", "service_id", "is_active").get(pk=subscription_system_id)
+            except SubscriptionSystem.DoesNotExist:
+                return Response({"detail": "Selected system subscription was not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not subscription_system.is_active:
+                return Response({"detail": "This system is not currently active."}, status=status.HTTP_400_BAD_REQUEST)
+            if subscription_system.service_id != package_price.package.service_id:
+                return Response(
+                    {"detail": "Selected system must match the package service."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        subscription = Subscription(
+            user=request.user,
+            package_price=package_price,
+            subscription_system=subscription_system,
+            payment_status=payment_status,
+            payment_method=payment_method,
+            payment_contact=payment_contact,
+            payment_amount=payment_amount or None,
+            payment_currency=payment_currency or "USD",
+            business_name=business_name,
+            contact_email=contact_email,
+            contact_phone=contact_phone,
+            notes=notes,
+            auto_renew=auto_renew,
+            grace_period_days=grace_period_days or 3,
+        )
+
+        if payment_status == Subscription.PaymentStatus.PAID:
+            subscription.status = Subscription.Status.ACTIVE
+            subscription.assign_service_window(start_date)
+        else:
+            subscription.status = Subscription.Status.PENDING
+            subscription.start_date = start_date
+
+        subscription.save()
+        instance = subscription
+
+        try:
+            ensure_subscription_control_records(instance)
+        except (DatabaseError, OperationalError, ProgrammingError, ObjectDoesNotExist, AttributeError):
+            pass
 
         try:
             data = self.get_serializer(instance).data
