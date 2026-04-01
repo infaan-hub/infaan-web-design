@@ -488,7 +488,7 @@ function App() {
     () =>
       services.map((service) => ({
         ...service,
-        packages: packages.filter((pkg) => pkg.service === service.id),
+        packages: packages.filter((pkg) => pkg.service === service.id && pkg.is_active),
       })),
     [services, packages]
   );
@@ -497,7 +497,7 @@ function App() {
     [portfolioItems]
   );
 
-  const selectedPackage = packages.find((pkg) => String(pkg.id) === String(selectedPackageId));
+  const selectedPackage = packages.find((pkg) => String(pkg.id) === String(selectedPackageId) && pkg.is_active);
   const selectedPrice = prices.find((price) => String(price.id) === String(selectedPriceId));
   const selectedService = services.find((service) => service.id === selectedPackage?.service) || null;
   const selectedSystem = subscriptionSystems.find((system) => String(system.id) === String(selectedSystemId)) || null;

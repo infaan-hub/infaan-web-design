@@ -1,4 +1,5 @@
 from django.db import DatabaseError, OperationalError, ProgrammingError, transaction
+from django.db.models.deletion import ProtectedError
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -80,14 +81,21 @@ class ServicePackageViewSet(viewsets.ModelViewSet):
             subscriptions__isnull=False
         ).exists()
 
+    @staticmethod
+    def _soft_delete_package(instance):
+        if instance.is_active:
+            instance.is_active = False
+            instance.save(update_fields=["is_active", "updated_at"])
+
     def perform_destroy(self, instance):
-        with transaction.atomic():
-            if self._package_has_historical_references(instance):
-                if instance.is_active:
-                    instance.is_active = False
-                    instance.save(update_fields=["is_active", "updated_at"])
-                return
-            instance.delete()
+        try:
+            with transaction.atomic():
+                if self._package_has_historical_references(instance):
+                    self._soft_delete_package(instance)
+                    return
+                instance.delete()
+        except ProtectedError:
+            self._soft_delete_package(instance)
 
 
 class PackagePriceViewSet(viewsets.ModelViewSet):
