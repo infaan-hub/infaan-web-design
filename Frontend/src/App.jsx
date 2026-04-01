@@ -940,6 +940,12 @@ function App() {
     setError("");
     setFeedback("");
     const selectedPackageService = services.find((service) => String(service.id) === String(packageForm.service));
+    if (!selectedPackageService) {
+      setError("Select a valid service before saving the package.");
+      setLoading(false);
+      return;
+    }
+
     const packageEndpoint = selectedPackageService?.category === "logo_poster" ? "/logo-poster-packages/" : "/packages/";
     const allowedBillingPeriods =
       selectedPackageService?.category === "logo_poster" ? new Set(["per_task"]) : null;
@@ -975,6 +981,17 @@ function App() {
       }
       return rows;
     });
+
+    if (!pricesPayload.length) {
+      const message =
+        selectedPackageService.category === "logo_poster"
+          ? "Logo & Poster packages require at least one per-task price."
+          : "Add at least one package price before saving.";
+      setError(message);
+      setLoading(false);
+      return;
+    }
+
     const body = {
       ...packageForm,
       service: Number(packageForm.service),
