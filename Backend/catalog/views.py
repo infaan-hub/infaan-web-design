@@ -59,6 +59,37 @@ class ServicePackageViewSet(viewsets.ModelViewSet):
     serializer_class = ServicePackageSerializer
     permission_classes = [IsAdminOrReadOnly]
 
+    def get_queryset(self):
+        try:
+            queryset = ServicePackage.objects.select_related("service").prefetch_related("prices")
+            if self.request.user.is_authenticated and self.request.user.role == CustomUser.Role.ADMIN:
+                return queryset.all()
+            if self.request.method in permissions.SAFE_METHODS:
+                return queryset.filter(is_active=True, service__is_active=True)
+            return queryset.all()
+        except (ProgrammingError, OperationalError):
+            return ServicePackage.objects.none()
+
+    @staticmethod
+    def _package_has_historical_references(instance):
+        return instance.prices.filter(
+            package_subscription_orders__isnull=False
+        ).exists() or instance.prices.filter(
+            system_subscription_orders__isnull=False
+        ).exists() or instance.prices.filter(
+            subscriptions__isnull=False
+        ).exists()
+
+    def perform_destroy(self, instance):
+        with transaction.atomic():
+            if self._package_has_historical_references(instance):
+                if instance.is_active:
+                    instance.is_active = False
+                    instance.save(update_fields=["is_active", "updated_at"])
+                instance.portfolio_items.update(is_active=False)
+                return
+            instance.delete()
+
 
 class PackagePriceViewSet(viewsets.ModelViewSet):
     queryset = PackagePrice.objects.select_related("package", "package__service").all()

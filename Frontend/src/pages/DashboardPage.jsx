@@ -108,7 +108,7 @@ function DashboardPage({ app }) {
                     <div className="service-package-track">
                       {service.packages.map((pkg) => {
                         const displayPrices = getPackageDisplayPrices(pkg);
-                        const primaryPrice = displayPrices.find((price) => price.currency === "USD") || displayPrices[0];
+                        const primaryPrice = displayPrices.find((price) => price.currency === "TZS") || displayPrices[0];
 
                         return (
                           <div key={pkg.id} className="pricing-plan-card">

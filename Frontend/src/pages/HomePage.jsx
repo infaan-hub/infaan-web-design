@@ -278,7 +278,7 @@ function HomePage({ app }) {
                   <div key={pkg.id} className={`pricing-plan-card pricing-card-${pkg.tier}`}>
                     {(() => {
                       const headlinePrices = getPackageDisplayPrices(pkg);
-                      const primaryPrice = headlinePrices.find((price) => price.currency === "USD") || headlinePrices[0];
+                      const primaryPrice = headlinePrices.find((price) => price.currency === "TZS") || headlinePrices[0];
 
                       return (
                         <div className={`pricing-plan-top pricing-tone-${pkg.tier}`}>
