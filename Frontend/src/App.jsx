@@ -315,33 +315,32 @@ function App() {
   }
 
   async function loadCatalog() {
-    const [serviceData, packageData, priceData, portfolioResult, systemResult] = await Promise.allSettled([
-      apiRequest("/services/"),
-      apiRequest("/packages/"),
-      apiRequest("/prices/"),
-      apiRequest("/portfolio-items/"),
-      apiRequest("/subscription-systems/"),
-    ]);
+    const servicesRequest = apiRequest("/services/");
+    const packagesRequest = apiRequest("/packages/");
+    const pricesRequest = apiRequest("/prices/");
+    const portfolioRequest = apiRequest("/portfolio-items/");
+    const systemsRequest = apiRequest("/subscription-systems/");
 
-    if (serviceData.status !== "fulfilled" || packageData.status !== "fulfilled" || priceData.status !== "fulfilled") {
-      throw new Error("Unable to load catalog right now.");
-    }
+    portfolioRequest
+      .then((portfolioData) => {
+        setPortfolioItems(portfolioData.results || portfolioData);
+      })
+      .catch(() => {
+        setPortfolioItems([]);
+      });
 
-    setServices(serviceData.value.results || serviceData.value);
-    setPackages(packageData.value.results || packageData.value);
-    setPrices(priceData.value.results || priceData.value);
+    systemsRequest
+      .then((systemData) => {
+        setSubscriptionSystems(systemData.results || systemData);
+      })
+      .catch(() => {
+        setSubscriptionSystems([]);
+      });
 
-    if (portfolioResult.status === "fulfilled") {
-      setPortfolioItems(portfolioResult.value.results || portfolioResult.value);
-    } else {
-      setPortfolioItems([]);
-    }
-
-    if (systemResult.status === "fulfilled") {
-      setSubscriptionSystems(systemResult.value.results || systemResult.value);
-    } else {
-      setSubscriptionSystems([]);
-    }
+    const [serviceData, packageData, priceData] = await Promise.all([servicesRequest, packagesRequest, pricesRequest]);
+    setServices(serviceData.results || serviceData);
+    setPackages(packageData.results || packageData);
+    setPrices(priceData.results || priceData);
   }
 
   async function loadProfileAndSubscriptions() {
@@ -381,7 +380,7 @@ function App() {
   }, [token]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || currentUser?.role !== "admin") return;
     loadCatalog().catch((requestError) => setError(requestError.message));
   }, [token, currentUser?.role]);
 
