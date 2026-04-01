@@ -12,7 +12,7 @@ function DashboardPage({ app }) {
     groupedPortfolio,
     subscriptionSystems,
     formatPrice,
-    continueToPackageTime,
+    beginSystemSubscription,
     selectSystem,
     navigate,
     subscriptions,
@@ -202,11 +202,7 @@ function DashboardPage({ app }) {
                     <button
                       type="button"
                       className="system-showcase-button"
-                      onClick={() => {
-                        if (!preferredPackage) return;
-                        selectSystem(system.id);
-                        continueToPackageTime(preferredPackage.id, system.id);
-                      }}
+                      onClick={() => beginSystemSubscription(system.id)}
                       disabled={!preferredPackage}
                     >
                       Subscribe

@@ -41,12 +41,9 @@ function HomePage({ app }) {
     groupedPackages,
     groupedPortfolio,
     subscriptionSystems,
-    selectPackage,
     selectSystem,
-    continueToPackageTime,
-    requireLogin,
+    beginSystemSubscription,
     formatPrice,
-    currentUser,
     navigate,
   } = app;
 
@@ -249,16 +246,7 @@ function HomePage({ app }) {
                     <button
                       type="button"
                       className="system-showcase-button"
-                      onClick={() => {
-                        if (!preferredPackage) return;
-                        selectPackage(preferredPackage.id, system.id);
-                        selectSystem(system.id);
-                        if (!currentUser) {
-                          requireLogin("/system-subscription");
-                          return;
-                        }
-                        continueToPackageTime(preferredPackage.id, system.id);
-                      }}
+                      onClick={() => beginSystemSubscription(system.id)}
                       disabled={!preferredPackage}
                     >
                       Subscribe

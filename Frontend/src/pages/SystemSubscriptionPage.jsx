@@ -3,12 +3,9 @@ function SystemSubscriptionPage({ app }) {
     subscriptionSystems,
     subscriptions,
     selectedSystem,
-    selectedPackage,
-    selectedPrice,
     formatPrice,
     selectSystem,
-    selectPackage,
-    continueToPackageTime,
+    beginSystemSubscription,
     navigate,
   } = app;
 
@@ -21,8 +18,8 @@ function SystemSubscriptionPage({ app }) {
           <p className="micro-label">system subscription</p>
           <h2>Browse systems, inspect previews, and subscribe with normal billing flow.</h2>
           <p>
-            Each system card opens into a detailed view with one front image, five system preview images, package
-            options, time selection, billing, receipt, and subscription access control just like the other services.
+            Each system card opens into a detailed view with one front image, five system preview images, a dedicated
+            monthly or yearly subscription step, billing, receipt, and subscription access control.
           </p>
         </div>
         <div className="package-browser-summary">
@@ -84,92 +81,42 @@ function SystemSubscriptionPage({ app }) {
 
           <div className="section-headline">
             <div>
-              <p className="micro-label">subscription package</p>
-              <h2>Select package and time</h2>
+              <p className="micro-label">subscription flow</p>
+              <h2>Choose time, then continue to billing</h2>
             </div>
           </div>
 
-          <div className="service-package-track">
-            {(selectedSystem.packages || []).map((pkg) => {
-              const primaryPrice =
-                pkg.prices.find((price) => price.is_default) ||
-                pkg.prices.find((price) => price.billing_period === "monthly") ||
-                pkg.prices[0];
-
-              return (
-                <div key={pkg.id} className={`package-card tone-${pkg.tier} catalog-package-card`}>
-                  <div className="catalog-package-top">
-                    <span className="tier-pill">{pkg.tier}</span>
-                    <h4>{pkg.title}</h4>
-                    <p>{pkg.description}</p>
-                  </div>
-
-                  <div className="catalog-package-price">
-                    <strong>
-                      {primaryPrice?.billing_period === "per_task"
-                        ? "Custom"
-                        : formatPrice(primaryPrice?.amount || 0, primaryPrice?.currency || "USD")}
-                    </strong>
-                    <span>
-                      {primaryPrice?.billing_period === "per_task" ? "per task" : `/${primaryPrice?.billing_period}`}
-                    </span>
-                  </div>
-
-                  <div className="price-list">
-                    {pkg.prices.map((price) => (
-                      <span key={`${pkg.id}-${price.id}`} className="price-chip">
-                        {`${price.billing_period} ${formatPrice(price.amount, price.currency)}`}
-                      </span>
-                    ))}
-                  </div>
-
-                  <ul className="catalog-feature-list">
-                    {pkg.features.map((feature) => (
-                      <li key={feature}>{feature}</li>
-                    ))}
-                  </ul>
-
-                  <div className="hero-actions">
-                    <button
-                      type="button"
-                      className="solid-button"
-                      onClick={() => continueToPackageTime(pkg.id, selectedSystem.id)}
-                    >
-                      Subscribe
-                    </button>
-                    <button
-                      type="button"
-                      className="outline-button"
-                      onClick={() => selectPackage(pkg.id, selectedSystem.id)}
-                    >
-                      View package
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="subscription-detail-grid">
+            <div className="credential-card">
+              <span className="micro-label">available plans</span>
+              <strong>Monthly and yearly</strong>
+            </div>
+            <div className="credential-card">
+              <span className="micro-label">yearly billing</span>
+              <strong>12x monthly system price</strong>
+            </div>
+            <div className="credential-card">
+              <span className="micro-label">billing flow</span>
+              <strong>/system-subscription-time to /billing</strong>
+            </div>
+            <div className="credential-card">
+              <span className="micro-label">starting price</span>
+              <strong>
+                {selectedSystem.display_price !== null && selectedSystem.display_price !== undefined && selectedSystem.display_price !== ""
+                  ? formatPrice(selectedSystem.display_price, selectedSystem.display_price_currency || "USD")
+                  : "Available on next step"}
+              </strong>
+            </div>
           </div>
 
-          {(selectedPackage || selectedPrice) && selectedSystem ? (
-            <div className="subscription-detail-grid">
-              <div className="credential-card">
-                <span className="micro-label">selected system</span>
-                <strong>{selectedSystem.name}</strong>
-              </div>
-              <div className="credential-card">
-                <span className="micro-label">selected package</span>
-                <strong>{selectedPackage?.title || "-"}</strong>
-              </div>
-              <div className="credential-card">
-                <span className="micro-label">time</span>
-                <strong>{selectedPrice?.billing_period || "choose package time"}</strong>
-              </div>
-              <div className="credential-card">
-                <span className="micro-label">billing</span>
-                <strong>{formatPrice(selectedPrice?.amount || 0, selectedPrice?.currency || "USD")}</strong>
-              </div>
-            </div>
-          ) : null}
+          <div className="hero-actions">
+            <button type="button" className="solid-button" onClick={() => beginSystemSubscription(selectedSystem.id)}>
+              Subscribe
+            </button>
+            <button type="button" className="outline-button" onClick={() => navigate("/system-subscription-time")}>
+              View time options
+            </button>
+          </div>
         </section>
       ) : null}
 

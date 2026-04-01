@@ -8,6 +8,7 @@ function BillingPage({ app }) {
     navigate,
     selectedPackage,
     selectedPrice,
+    selectedSystem,
     formatPrice,
     confirmPayment,
   } = app;
@@ -33,8 +34,8 @@ function BillingPage({ app }) {
         <div className="package-grid billing-grid">
           <div className="pricing-plan-card billing-summary-card">
             <div className={`pricing-plan-top pricing-tone-${selectedPackage?.tier || "silver"}`}>
-              <span className="pricing-mini-pill">{selectedPackage?.tier || "package"}</span>
-              <h4>{selectedPackage?.title || "Selected package"}</h4>
+              <span className="pricing-mini-pill">{selectedSystem ? "system" : selectedPackage?.tier || "package"}</span>
+              <h4>{selectedSystem?.name || selectedPackage?.title || "Selected package"}</h4>
               <div className="pricing-amount">
                 {selectedPrice?.billing_period === "per_task" ? (
                   <>
@@ -48,8 +49,12 @@ function BillingPage({ app }) {
                   </>
                 )}
               </div>
-              <p>{selectedPackage?.description || "Choose a package and billing time to continue."}</p>
-              <button type="button" className="pricing-cta" onClick={() => navigate("/package-time")}>
+              <p>{selectedSystem?.summary || selectedPackage?.description || "Choose a package and billing time to continue."}</p>
+              <button
+                type="button"
+                className="pricing-cta"
+                onClick={() => navigate(selectedSystem ? "/system-subscription-time" : "/package-time")}
+              >
                 Change package time
               </button>
             </div>

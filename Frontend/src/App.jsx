@@ -21,10 +21,11 @@ import ProfilePage from "./pages/ProfilePage";
 import RegisterPage from "./pages/RegisterPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import SystemSubscriptionPage from "./pages/SystemSubscriptionPage";
+import SystemSubscriptionTimePage from "./pages/SystemSubscriptionTimePage";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://infaan-web-design.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
-const CUSTOMER_PROTECTED_PATHS = ["/dashboard", "/profile", "/subscription", "/package", "/package-time", "/billing", "/booking", "/billing-history"];
+const CUSTOMER_PROTECTED_PATHS = ["/dashboard", "/profile", "/subscription", "/package", "/package-time", "/system-subscription-time", "/billing", "/booking", "/billing-history"];
 const ADMIN_PROTECTED_PATHS = ["/admin-dashboard", "/admin/users", "/admin-subscription", "/bookings-services", "/booked-service", "/booking-history"];
 
 const emptySubscription = {
@@ -142,6 +143,9 @@ function App() {
   const [users, setUsers] = useState([]);
   const [selectedPackageId, setSelectedPackageId] = useState(localStorage.getItem("infaan_selected_package") || "");
   const [selectedPriceId, setSelectedPriceId] = useState(localStorage.getItem("infaan_selected_price") || "");
+  const [systemSubscriptionPlan, setSystemSubscriptionPlan] = useState(
+    JSON.parse(localStorage.getItem("infaan_system_subscription_plan") || "null")
+  );
   const [pendingPayment, setPendingPayment] = useState(JSON.parse(localStorage.getItem("infaan_payment") || "null"));
   const [bookingSent, setBookingSent] = useState(false);
   const [lastBooking, setLastBooking] = useState(JSON.parse(localStorage.getItem("infaan_last_booking") || "null"));
@@ -180,6 +184,14 @@ function App() {
   useEffect(() => {
     localStorage.setItem("infaan_selected_price", selectedPriceId || "");
   }, [selectedPriceId]);
+
+  useEffect(() => {
+    if (systemSubscriptionPlan) {
+      localStorage.setItem("infaan_system_subscription_plan", JSON.stringify(systemSubscriptionPlan));
+    } else {
+      localStorage.removeItem("infaan_system_subscription_plan");
+    }
+  }, [systemSubscriptionPlan]);
 
   useEffect(() => {
     localStorage.setItem("infaan_selected_booking", selectedBookingId || "");
@@ -462,7 +474,13 @@ function App() {
   const selectedBooking = subscriptions.find((booking) => String(booking.id) === String(selectedBookingId)) || null;
   const selectedPortfolioService =
     services.find((service) => String(service.id) === String(selectedPortfolioServiceId)) || null;
-  const resolvedSelectedPrice = selectedPrice || getPreferredPrice(selectedPackage);
+  const activeSystemPlan =
+    systemSubscriptionPlan &&
+    String(systemSubscriptionPlan.package_id || "") === String(selectedPackageId || "") &&
+    String(systemSubscriptionPlan.system_id || "") === String(selectedSystemId || "")
+      ? systemSubscriptionPlan
+      : null;
+  const resolvedSelectedPrice = activeSystemPlan || selectedPrice || getPreferredPrice(selectedPackage);
 
   function requireLogin(nextPath) {
     if (!currentUser) {
@@ -487,8 +505,57 @@ function App() {
     return packageObject.prices.find((price) => price.billing_period === "monthly") || packageObject.prices[0];
   }
 
+  function clearSystemSubscriptionPlan() {
+    setSystemSubscriptionPlan(null);
+  }
+
+  function getSystemBasePackage(systemObject) {
+    return systemObject?.packages?.[0] || null;
+  }
+
+  function getSystemBasePrice(systemObject, billingPeriod) {
+    const basePackage = getSystemBasePackage(systemObject);
+    if (!basePackage?.prices?.length) return null;
+    return (
+      basePackage.prices.find((price) => price.billing_period === billingPeriod) ||
+      (billingPeriod === "monthly" ? getPreferredPrice(basePackage) : null)
+    );
+  }
+
+  function getSystemMonthlyAmount(systemObject) {
+    if (systemObject?.display_price !== null && systemObject?.display_price !== undefined && systemObject?.display_price !== "") {
+      return Number(systemObject.display_price);
+    }
+    const monthlyPrice = getSystemBasePrice(systemObject, "monthly");
+    return Number(monthlyPrice?.amount || 0);
+  }
+
+  function getSystemPlanPreview(systemObject, billingPeriod) {
+    const basePackage = getSystemBasePackage(systemObject);
+    const basePrice = getSystemBasePrice(systemObject, billingPeriod);
+    const monthlyAmount = getSystemMonthlyAmount(systemObject);
+    const currency = systemObject?.display_price_currency || basePrice?.currency || "USD";
+    const amount = billingPeriod === "yearly" ? monthlyAmount * 12 : monthlyAmount;
+    if (!basePackage || !basePrice || !amount) return null;
+    return {
+      id: basePrice.id,
+      base_price_id: basePrice.id,
+      package_id: String(basePackage.id),
+      system_id: String(systemObject.id),
+      billing_period: billingPeriod,
+      amount,
+      currency,
+      title: `${systemObject.name} subscription`,
+      description:
+        billingPeriod === "yearly"
+          ? "Yearly system subscription billed as 12 monthly cycles."
+          : "Monthly system subscription access.",
+    };
+  }
+
   function selectPackage(packageId, systemId = "") {
     const packageMatch = packages.find((pkg) => String(pkg.id) === String(packageId));
+    clearSystemSubscriptionPlan();
     setSelectedPackageId(String(packageId));
     setSelectedPriceId(packageMatch ? String(getPreferredPrice(packageMatch)?.id || "") : "");
     setSelectedSystemId(systemId ? String(systemId) : "");
@@ -510,7 +577,47 @@ function App() {
   }
 
   function selectSystem(systemId) {
+    if (String(systemId || "") !== String(selectedSystemId || "")) {
+      clearSystemSubscriptionPlan();
+    }
     setSelectedSystemId(String(systemId || ""));
+  }
+
+  function beginSystemSubscription(systemId) {
+    const systemMatch = subscriptionSystems.find((system) => String(system.id) === String(systemId));
+    const basePackage = getSystemBasePackage(systemMatch);
+    if (!systemMatch || !basePackage) {
+      setError("This system subscription is not ready yet.");
+      return false;
+    }
+    if (!requireLogin("/system-subscription")) {
+      return false;
+    }
+    selectPackage(basePackage.id, systemId);
+    setSelectedPriceId("");
+    setSelectedSystemId(String(systemId));
+    clearSystemSubscriptionPlan();
+    navigate("/system-subscription-time");
+    return true;
+  }
+
+  function selectSystemSubscriptionPlan(billingPeriod) {
+    if (!selectedSystem) {
+      setError("Select a system first.");
+      navigate("/system-subscription");
+      return false;
+    }
+    const basePackage = getSystemBasePackage(selectedSystem);
+    const plan = getSystemPlanPreview(selectedSystem, billingPeriod);
+    if (!basePackage || !plan) {
+      setError("This billing option is not available for the selected system.");
+      return false;
+    }
+    setSelectedPackageId(String(basePackage.id));
+    setSelectedPriceId(String(plan.base_price_id));
+    setSystemSubscriptionPlan(plan);
+    navigate("/billing");
+    return true;
   }
 
   function continueToPackageTime(packageId, systemId = "") {
@@ -533,7 +640,7 @@ function App() {
   function continueToBilling() {
     if (!selectedPackage) {
       setError("Select a package first.");
-      navigate("/package");
+      navigate(selectedSystem ? "/system-subscription" : "/package");
       return false;
     }
     if (selectedPackage.tier === "extra") {
@@ -545,7 +652,7 @@ function App() {
       return true;
     }
     if (!selectedPriceId && !resolvedSelectedPrice) {
-      setError("Select weekly, monthly, or yearly package time first.");
+      setError(selectedSystem ? "Select monthly or yearly system subscription time first." : "Select weekly, monthly, or yearly package time first.");
       return false;
     }
     if (!selectedPriceId && resolvedSelectedPrice?.id) {
@@ -558,13 +665,13 @@ function App() {
   function confirmPayment() {
     if (!selectedPackage) {
       setError("Select a package first.");
-      navigate("/package");
+      navigate(selectedSystem ? "/system-subscription" : "/package");
       return false;
     }
 
     if (!selectedPriceId && !resolvedSelectedPrice) {
       setError("Select package time first.");
-      navigate("/package-time");
+      navigate(selectedSystem ? "/system-subscription-time" : "/package-time");
       return false;
     }
     const activePrice = selectedPrice || resolvedSelectedPrice;
@@ -599,7 +706,7 @@ function App() {
       subtotal: activePrice?.amount || 0,
       currency: activePrice?.currency || "USD",
       billing_period: activePrice?.billing_period || "",
-      package_title: selectedPackage.title,
+      package_title: selectedSystem ? selectedSystem.name : selectedPackage.title,
     });
     setBookingSent(false);
     setLastBooking(null);
@@ -1048,6 +1155,7 @@ function App() {
     setSelectedPackageId("");
     setSelectedPriceId("");
     setSelectedSystemId("");
+    clearSystemSubscriptionPlan();
     setPendingPayment(null);
     setBookingSent(false);
     setLastBooking(null);
@@ -1134,6 +1242,7 @@ function App() {
     users,
     selectedPackage,
     selectedPrice: resolvedSelectedPrice,
+    systemSubscriptionPlan: activeSystemPlan,
     selectedService,
     selectedSystem,
     selectedSystemId,
@@ -1189,6 +1298,9 @@ function App() {
     selectSystem,
     continueToPackageTime,
     continueToBilling,
+    beginSystemSubscription,
+    selectSystemSubscriptionPlan,
+    getSystemPlanPreview,
     confirmPayment,
     submitAuth,
     submitAdminUser,
@@ -1236,6 +1348,7 @@ function App() {
     "/profile": <ProfilePage app={app} />,
     "/subscription": <SubscriptionPage app={app} />,
     "/system-subscription": <SystemSubscriptionPage app={app} />,
+    "/system-subscription-time": <SystemSubscriptionTimePage app={app} />,
     "/package": <PackagePage app={app} />,
     "/package-time": <PackageTimePage app={app} />,
     "/billing": <BillingPage app={app} />,
