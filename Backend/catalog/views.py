@@ -1,6 +1,7 @@
 from django.db import DatabaseError, OperationalError, ProgrammingError, transaction
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from datetime import timedelta
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
@@ -114,7 +115,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         package_price_id = request.data.get("package_price")
         subscription_system_id = request.data.get("subscription_system")
-        payment_status = request.data.get("payment_status", Subscription.PaymentStatus.PENDING)
+        payment_status = (request.data.get("payment_status", Subscription.PaymentStatus.PENDING) or Subscription.PaymentStatus.PENDING).lower()
         payment_method = request.data.get("payment_method", "")
         payment_contact = request.data.get("payment_contact", "")
         payment_amount = request.data.get("payment_amount")
@@ -123,9 +124,24 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
         contact_email = (request.data.get("contact_email") or "").strip()
         contact_phone = (request.data.get("contact_phone") or "").strip()
         notes = request.data.get("notes", "")
-        start_date = request.data.get("start_date") or timezone.localdate()
+        raw_start_date = request.data.get("start_date")
         auto_renew = str(request.data.get("auto_renew", "false")).lower() in {"1", "true", "yes", "on"}
-        grace_period_days = request.data.get("grace_period_days", 3)
+        raw_grace_period_days = request.data.get("grace_period_days", 3)
+
+        if raw_start_date:
+            start_date = parse_date(str(raw_start_date))
+            if start_date is None:
+                return Response({"detail": "start_date must be a valid YYYY-MM-DD date."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            start_date = timezone.localdate()
+
+        try:
+            grace_period_days = int(raw_grace_period_days)
+        except (TypeError, ValueError):
+            return Response({"detail": "grace_period_days must be a whole number."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if payment_status not in {Subscription.PaymentStatus.PAID, Subscription.PaymentStatus.PENDING}:
+            return Response({"detail": "payment_status must be pending or paid."}, status=status.HTTP_400_BAD_REQUEST)
 
         if not package_price_id:
             return Response({"detail": "package_price is required."}, status=status.HTTP_400_BAD_REQUEST)
@@ -172,7 +188,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
             contact_phone=contact_phone,
             notes=notes,
             auto_renew=auto_renew,
-            grace_period_days=grace_period_days or 3,
+            grace_period_days=grace_period_days if grace_period_days >= 0 else 3,
         )
 
         if payment_status == Subscription.PaymentStatus.PAID:

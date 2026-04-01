@@ -75,27 +75,37 @@ function BillingPage({ app }) {
 
             <div className="billing-form-fields">
               <input
+                id="business_name"
+                name="business_name"
                 value={subscriptionForm.business_name}
                 onChange={(event) => updateField(setSubscriptionForm, "business_name", event.target.value)}
                 placeholder="Business name"
               />
               <input
+                id="contact_email"
+                name="contact_email"
                 type="email"
                 value={subscriptionForm.contact_email}
                 onChange={(event) => updateField(setSubscriptionForm, "contact_email", event.target.value)}
                 placeholder="Contact email"
               />
               <input
+                id="contact_phone"
+                name="contact_phone"
                 value={subscriptionForm.contact_phone}
                 onChange={(event) => updateField(setSubscriptionForm, "contact_phone", event.target.value)}
                 placeholder="Contact phone"
               />
               <input
+                id="start_date"
+                name="start_date"
                 type="date"
                 value={subscriptionForm.start_date}
                 onChange={(event) => updateField(setSubscriptionForm, "start_date", event.target.value)}
               />
               <textarea
+                id="notes"
+                name="notes"
                 value={subscriptionForm.notes}
                 onChange={(event) => updateField(setSubscriptionForm, "notes", event.target.value)}
                 placeholder="Project notes"
@@ -153,6 +163,8 @@ function BillingPage({ app }) {
                 <label className="payment-field">
                   <span>Phone number</span>
                   <input
+                    id="mixx_phone_number"
+                    name="mixx_phone_number"
                     value={paymentForm.phone_number}
                     onChange={(event) => updateField(setPaymentForm, "phone_number", event.target.value)}
                     placeholder="Phone number to send money"
@@ -164,6 +176,8 @@ function BillingPage({ app }) {
                     <label className="payment-field">
                       <span>Cardholder name</span>
                       <input
+                        id="card_name"
+                        name="card_name"
                         value={paymentForm.card_name}
                         onChange={(event) => updateField(setPaymentForm, "card_name", event.target.value)}
                         placeholder="Full name on card"
@@ -172,6 +186,8 @@ function BillingPage({ app }) {
                     <label className="payment-field">
                       <span>Card number</span>
                       <input
+                        id="card_number"
+                        name="card_number"
                         value={paymentForm.card_number}
                         onChange={(event) => updateField(setPaymentForm, "card_number", event.target.value)}
                         placeholder="0000 0000 0000 0000"
@@ -182,6 +198,8 @@ function BillingPage({ app }) {
                     <label className="payment-field">
                       <span>Expiry date</span>
                       <input
+                        id="expiry_date"
+                        name="expiry_date"
                         value={paymentForm.expiry_date}
                         onChange={(event) => updateField(setPaymentForm, "expiry_date", event.target.value)}
                         placeholder="MM/YY"
@@ -189,7 +207,13 @@ function BillingPage({ app }) {
                     </label>
                     <label className="payment-field">
                       <span>CVV</span>
-                      <input value={paymentForm.cvv} onChange={(event) => updateField(setPaymentForm, "cvv", event.target.value)} placeholder="CVV" />
+                      <input
+                        id="cvv"
+                        name="cvv"
+                        value={paymentForm.cvv}
+                        onChange={(event) => updateField(setPaymentForm, "cvv", event.target.value)}
+                        placeholder="CVV"
+                      />
                     </label>
                   </div>
                 </>
