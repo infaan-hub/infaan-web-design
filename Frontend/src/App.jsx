@@ -5,6 +5,7 @@ import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminRegisterPage from "./pages/AdminRegisterPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import AdminSubscriptionPage from "./pages/AdminSubscriptionPage";
+import AdminSystemControlPage from "./pages/AdminSystemControlPage";
 import BillingPage from "./pages/BillingPage";
 import BookingPage from "./pages/BookingPage";
 import BookedServicePage from "./pages/BookedServicePage";
@@ -26,7 +27,7 @@ import SystemSubscriptionTimePage from "./pages/SystemSubscriptionTimePage";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://infaan-web-design.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 const CUSTOMER_PROTECTED_PATHS = ["/dashboard", "/profile", "/subscription", "/package", "/package-time", "/system-subscription-time", "/billing", "/booking", "/billing-history"];
-const ADMIN_PROTECTED_PATHS = ["/admin-dashboard", "/admin/users", "/admin-subscription", "/bookings-services", "/booked-service", "/booking-history"];
+const ADMIN_PROTECTED_PATHS = ["/admin-dashboard", "/admin/users", "/admin-subscription", "/system-control", "/bookings-services", "/booked-service", "/booking-history"];
 
 const emptySubscription = {
   business_name: "",
@@ -135,6 +136,8 @@ function App() {
   const [portfolioItems, setPortfolioItems] = useState([]);
   const [subscriptionSystems, setSubscriptionSystems] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
+  const [tenants, setTenants] = useState([]);
+  const [tenantServices, setTenantServices] = useState([]);
   const [selectedBookingId, setSelectedBookingId] = useState(localStorage.getItem("infaan_selected_booking") || "");
   const [selectedSystemId, setSelectedSystemId] = useState(localStorage.getItem("infaan_selected_system") || "");
   const [selectedPortfolioServiceId, setSelectedPortfolioServiceId] = useState(
@@ -258,6 +261,8 @@ function App() {
     localStorage.removeItem("infaan_user");
     setCurrentUser(null);
     setSubscriptions([]);
+    setTenants([]);
+    setTenantServices([]);
     setUsers([]);
   }
 
@@ -380,6 +385,12 @@ function App() {
     setUsers(data.results || data);
   }
 
+  async function loadSystemControl() {
+    const [tenantData, tenantServiceData] = await Promise.all([apiRequest("/tenants/"), apiRequest("/tenant-services/")]);
+    setTenants(tenantData.results || tenantData || []);
+    setTenantServices(tenantServiceData.results || tenantServiceData || []);
+  }
+
   useEffect(() => {
     loadCatalog().catch((requestError) => setError(requestError.message));
   }, []);
@@ -406,8 +417,14 @@ function App() {
   }, [token, currentUser?.role]);
 
   useEffect(() => {
-    if (currentUser?.role === "admin" && ["/admin-dashboard", "/admin/users", "/bookings-services"].includes(path)) {
+    if (currentUser?.role === "admin" && ["/admin-dashboard", "/admin/users", "/bookings-services", "/system-control"].includes(path)) {
       loadUsers().catch((requestError) => setError(requestError.message));
+    }
+  }, [path, currentUser]);
+
+  useEffect(() => {
+    if (currentUser?.role === "admin" && ["/admin-dashboard", "/system-control", "/admin-subscription"].includes(path)) {
+      loadSystemControl().catch((requestError) => setError(requestError.message));
     }
   }, [path, currentUser]);
 
@@ -1195,7 +1212,34 @@ function App() {
   }
 
   async function updateSubscription(bookingId, updates, successMessage = "Subscription updated successfully.") {
-    return updateBooking(bookingId, updates, successMessage);
+    const updated = await updateBooking(bookingId, updates, successMessage);
+    if (updated && currentUser?.role === "admin") {
+      loadSystemControl().catch(() => {});
+    }
+    return updated;
+  }
+
+  async function updateTenantService(serviceId, updates, successMessage = "Connected service updated successfully.") {
+    setLoading(true);
+    setError("");
+    setFeedback("");
+    try {
+      const updatedService = await apiRequest(`/tenant-services/${serviceId}/`, {
+        method: "PATCH",
+        body: JSON.stringify(updates),
+      });
+      setTenantServices((previous) =>
+        previous.map((item) => (String(item.id) === String(serviceId) ? updatedService : item))
+      );
+      setFeedback(successMessage);
+      await loadSystemControl();
+      return updatedService;
+    } catch (requestError) {
+      setError(requestError.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
   }
 
   function markBookingDone() {
@@ -1239,6 +1283,8 @@ function App() {
     portfolioItems,
     subscriptionSystems,
     subscriptions,
+    tenants,
+    tenantServices,
     users,
     selectedPackage,
     selectedPrice: resolvedSelectedPrice,
@@ -1326,6 +1372,8 @@ function App() {
     setFeedback,
     setError,
     loadUsers,
+    loadSystemControl,
+    updateTenantService,
     emptyLogin,
     emptyRegister,
     emptyAdminUser,
@@ -1361,6 +1409,7 @@ function App() {
     "/admin-dashboard": <AdminDashboardPage app={app} />,
     "/admin/users": <AdminUsersPage app={app} />,
     "/admin-subscription": <AdminSubscriptionPage app={app} />,
+    "/system-control": <AdminSystemControlPage app={app} />,
     "/bookings-services": <BookingsServicesPage app={app} />,
   };
 

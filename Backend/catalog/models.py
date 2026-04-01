@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta
+from secrets import token_hex
 
 
 class TimeStampedModel(models.Model):
@@ -105,6 +106,118 @@ class SubscriptionSystem(TimeStampedModel):
 
     def __str__(self):
         return f"{self.service.name} - {self.name}"
+
+
+class Tenant(TimeStampedModel):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        ACTIVE = "active", "Active"
+        INACTIVE = "inactive", "Inactive"
+        SUSPENDED = "suspended", "Suspended"
+
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="tenants")
+    business_name = models.CharField(max_length=150)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+
+    class Meta:
+        ordering = ["business_name", "id"]
+
+    def __str__(self):
+        return self.business_name
+
+
+class TenantService(TimeStampedModel):
+    class ServiceType(models.TextChoices):
+        DJANGO_SYSTEM = "django_system", "Django System"
+        WORDPRESS_SITE = "wordpress_site", "WordPress Site"
+        CUSTOM_SITE = "custom_site", "Custom Site"
+        OTHER = "other", "Other"
+
+    class ConnectionStatus(models.TextChoices):
+        PENDING = "pending", "Pending"
+        ACTIVE = "active", "Active"
+        INACTIVE = "inactive", "Inactive"
+
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="services")
+    subscription = models.OneToOneField("Subscription", on_delete=models.CASCADE, related_name="tenant_service")
+    subscription_system = models.ForeignKey(
+        SubscriptionSystem, on_delete=models.SET_NULL, related_name="tenant_services", null=True, blank=True
+    )
+    name = models.CharField(max_length=150)
+    service_type = models.CharField(max_length=30, choices=ServiceType.choices, default=ServiceType.DJANGO_SYSTEM)
+    domain = models.CharField(max_length=255, blank=True)
+    public_url = models.URLField(blank=True)
+    admin_url = models.URLField(blank=True)
+    license_key = models.CharField(max_length=64, unique=True)
+    api_key = models.CharField(max_length=64, unique=True)
+    api_secret = models.CharField(max_length=64)
+    connection_status = models.CharField(max_length=20, choices=ConnectionStatus.choices, default=ConnectionStatus.PENDING)
+    is_enabled = models.BooleanField(default=True)
+    last_heartbeat_at = models.DateTimeField(null=True, blank=True)
+    connected_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["tenant__business_name", "name"]
+
+    def __str__(self):
+        return f"{self.tenant.business_name} - {self.name}"
+
+    @staticmethod
+    def build_license_key():
+        return f"LIC-{token_hex(8).upper()}"
+
+    @staticmethod
+    def build_api_key():
+        return f"API-{token_hex(10).upper()}"
+
+    @staticmethod
+    def build_api_secret():
+        return token_hex(24)
+
+    @classmethod
+    def issue_credentials(cls):
+        return {
+            "license_key": cls.build_license_key(),
+            "api_key": cls.build_api_key(),
+            "api_secret": cls.build_api_secret(),
+        }
+
+    def is_subscription_active(self):
+        if not self.subscription_id:
+            return False
+        if self.subscription.payment_status != Subscription.PaymentStatus.PAID:
+            return False
+        if self.tenant.status != Tenant.Status.ACTIVE:
+            return False
+        return self.subscription.can_access_service() and self.connection_status == self.ConnectionStatus.ACTIVE and self.is_enabled
+
+
+class TenantServiceAdmin(TimeStampedModel):
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="service_admins")
+    service = models.ForeignKey(TenantService, on_delete=models.CASCADE, related_name="admins")
+    user_identifier = models.CharField(max_length=150)
+    role = models.CharField(max_length=60, default="admin")
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["service__name", "user_identifier"]
+        unique_together = ("service", "user_identifier")
+
+    def __str__(self):
+        return f"{self.service.name} - {self.user_identifier}"
+
+
+class TenantServiceFeatureAccess(TimeStampedModel):
+    service = models.ForeignKey(TenantService, on_delete=models.CASCADE, related_name="feature_access")
+    feature_code = models.CharField(max_length=120)
+    enabled = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["service__name", "feature_code"]
+        unique_together = ("service", "feature_code")
+
+    def __str__(self):
+        return f"{self.service.name} - {self.feature_code}"
 
 
 class Subscription(TimeStampedModel):

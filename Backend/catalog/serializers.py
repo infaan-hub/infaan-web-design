@@ -2,7 +2,111 @@ from django.utils import timezone
 from django.db import transaction
 from rest_framework import serializers
 
-from .models import PackagePrice, PortfolioItem, Service, ServicePackage, Subscription, SubscriptionSystem
+from .models import (
+    PackagePrice,
+    PortfolioItem,
+    Service,
+    ServicePackage,
+    Subscription,
+    SubscriptionSystem,
+    Tenant,
+    TenantService,
+    TenantServiceAdmin,
+    TenantServiceFeatureAccess,
+)
+
+
+def build_feature_codes(package):
+    feature_codes = []
+    for feature in package.features or []:
+        code = "-".join(str(feature).lower().split())
+        if code:
+            feature_codes.append(code[:120])
+    return feature_codes
+
+
+def ensure_subscription_control_records(subscription):
+    if not subscription.subscription_system_id or subscription.payment_status != Subscription.PaymentStatus.PAID:
+        return None
+
+    tenant, _ = Tenant.objects.get_or_create(
+        owner=subscription.user,
+        business_name=subscription.business_name,
+        defaults={"status": Tenant.Status.ACTIVE},
+    )
+
+    if tenant.status != Tenant.Status.ACTIVE:
+        tenant.status = Tenant.Status.ACTIVE
+        tenant.save(update_fields=["status", "updated_at"])
+
+    credentials = TenantService.issue_credentials()
+    service_defaults = {
+        "subscription_system": subscription.subscription_system,
+        "name": subscription.subscription_system.name,
+        "service_type": TenantService.ServiceType.DJANGO_SYSTEM,
+        "public_url": subscription.subscription_system.system_url or "",
+        "admin_url": "",
+        "license_key": credentials["license_key"],
+        "api_key": credentials["api_key"],
+        "api_secret": credentials["api_secret"],
+        "connection_status": TenantService.ConnectionStatus.PENDING,
+        "is_enabled": True,
+    }
+    tenant_service, created = TenantService.objects.get_or_create(
+        subscription=subscription,
+        defaults={"tenant": tenant, **service_defaults},
+    )
+
+    updated_fields = []
+    if tenant_service.tenant_id != tenant.id:
+        tenant_service.tenant = tenant
+        updated_fields.append("tenant")
+    if tenant_service.subscription_system_id != subscription.subscription_system_id:
+        tenant_service.subscription_system = subscription.subscription_system
+        updated_fields.append("subscription_system")
+    if tenant_service.name != subscription.subscription_system.name:
+        tenant_service.name = subscription.subscription_system.name
+        updated_fields.append("name")
+    if not tenant_service.public_url and subscription.subscription_system.system_url:
+        tenant_service.public_url = subscription.subscription_system.system_url
+        updated_fields.append("public_url")
+    if subscription.get_effective_status() in {Subscription.Status.ACTIVE, Subscription.Status.GRACE_PERIOD}:
+        desired_enabled = True
+        desired_tenant_status = Tenant.Status.ACTIVE
+    else:
+        desired_enabled = False
+        desired_tenant_status = Tenant.Status.INACTIVE
+    if tenant_service.is_enabled != desired_enabled:
+        tenant_service.is_enabled = desired_enabled
+        updated_fields.append("is_enabled")
+    if tenant.status != desired_tenant_status:
+        tenant.status = desired_tenant_status
+        tenant.save(update_fields=["status", "updated_at"])
+    if updated_fields:
+        tenant_service.save(update_fields=[*updated_fields, "updated_at"])
+
+    package = subscription.package_price.package
+    feature_codes = build_feature_codes(package)
+    existing_features = {item.feature_code: item for item in tenant_service.feature_access.all()}
+    for feature_code in feature_codes:
+        if feature_code in existing_features:
+            if not existing_features[feature_code].enabled:
+                existing_features[feature_code].enabled = True
+                existing_features[feature_code].save(update_fields=["enabled", "updated_at"])
+        else:
+            TenantServiceFeatureAccess.objects.create(service=tenant_service, feature_code=feature_code, enabled=True)
+    for feature_code, feature in existing_features.items():
+        if feature_code not in feature_codes and feature.enabled:
+            feature.enabled = False
+            feature.save(update_fields=["enabled", "updated_at"])
+
+    TenantServiceAdmin.objects.get_or_create(
+        tenant=tenant,
+        service=tenant_service,
+        user_identifier=subscription.user.email or subscription.user.username,
+        defaults={"role": "tenant_admin", "is_active": True},
+    )
+    return tenant_service
 
 
 class ServiceSerializer(serializers.ModelSerializer):
@@ -149,6 +253,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     package_details = serializers.SerializerMethodField(read_only=True)
     service_access = serializers.SerializerMethodField(read_only=True)
     system_details = serializers.SerializerMethodField(read_only=True)
+    control_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Subscription
@@ -178,6 +283,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             "package_details",
             "service_access",
             "system_details",
+            "control_details",
         )
         read_only_fields = ("user", "created_at", "updated_at")
 
@@ -231,6 +337,24 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             "is_active": system.is_active,
         }
 
+    def get_control_details(self, obj):
+        tenant_service = getattr(obj, "tenant_service", None)
+        if not tenant_service:
+            return None
+        return {
+            "tenant_id": tenant_service.tenant_id,
+            "tenant_name": tenant_service.tenant.business_name,
+            "service_id": tenant_service.id,
+            "service_name": tenant_service.name,
+            "license_key": tenant_service.license_key,
+            "api_key": tenant_service.api_key,
+            "api_secret": tenant_service.api_secret,
+            "connection_status": tenant_service.connection_status,
+            "admin_url": tenant_service.admin_url,
+            "public_url": tenant_service.public_url,
+            "is_enabled": tenant_service.is_enabled,
+        }
+
     def validate_package_price(self, value):
         if not value.package.is_active or not value.package.service.is_active:
             raise serializers.ValidationError("This package is not currently available.")
@@ -266,6 +390,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             subscription.start_date = start_date
 
         subscription.save()
+        ensure_subscription_control_records(subscription)
         return subscription
 
     def update(self, instance, validated_data):
@@ -282,4 +407,76 @@ class SubscriptionSerializer(serializers.ModelSerializer):
                 instance.assign_service_window(instance.start_date or timezone.localdate())
 
         instance.save()
+        ensure_subscription_control_records(instance)
         return instance
+
+
+class TenantServiceFeatureAccessSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TenantServiceFeatureAccess
+        fields = ("id", "feature_code", "enabled")
+
+
+class TenantServiceAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TenantServiceAdmin
+        fields = ("id", "user_identifier", "role", "is_active")
+
+
+class TenantServiceSerializer(serializers.ModelSerializer):
+    tenant_name = serializers.CharField(source="tenant.business_name", read_only=True)
+    subscription_status = serializers.CharField(source="subscription.status", read_only=True)
+    subscription_payment_status = serializers.CharField(source="subscription.payment_status", read_only=True)
+    subscription_end_date = serializers.DateField(source="subscription.end_date", read_only=True)
+    feature_access = TenantServiceFeatureAccessSerializer(many=True, read_only=True)
+    admins = TenantServiceAdminSerializer(many=True, read_only=True)
+    computed_active = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = TenantService
+        fields = (
+            "id",
+            "tenant",
+            "tenant_name",
+            "subscription",
+            "subscription_system",
+            "name",
+            "service_type",
+            "domain",
+            "public_url",
+            "admin_url",
+            "license_key",
+            "api_key",
+            "api_secret",
+            "connection_status",
+            "is_enabled",
+            "last_heartbeat_at",
+            "connected_at",
+            "subscription_status",
+            "subscription_payment_status",
+            "subscription_end_date",
+            "computed_active",
+            "feature_access",
+            "admins",
+        )
+        read_only_fields = ("license_key", "api_key", "api_secret", "last_heartbeat_at", "connected_at")
+
+    def get_computed_active(self, obj):
+        return obj.is_subscription_active()
+
+
+class TenantSerializer(serializers.ModelSerializer):
+    services = TenantServiceSerializer(many=True, read_only=True)
+    owner_details = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Tenant
+        fields = ("id", "business_name", "status", "owner", "owner_details", "services")
+        read_only_fields = ("owner",)
+
+    def get_owner_details(self, obj):
+        return {
+            "id": obj.owner_id,
+            "username": obj.owner.username,
+            "email": obj.owner.email,
+        }

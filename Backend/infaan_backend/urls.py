@@ -5,12 +5,20 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.views import AdminRegisterView, GoogleLoginView, LoginView, RegisterView, UserViewSet, profile
 from catalog.views import (
+    AdminAccessView,
+    FeatureAccessView,
+    HeartbeatView,
     PortfolioItemViewSet,
     PackagePriceViewSet,
     ServicePackageViewSet,
     ServiceViewSet,
     SubscriptionSystemViewSet,
     SubscriptionViewSet,
+    SubscriptionStatusView,
+    TenantServiceAdminViewSet,
+    TenantServiceViewSet,
+    TenantViewSet,
+    LicenseValidateView,
 )
 
 router = DefaultRouter()
@@ -21,6 +29,9 @@ router.register("prices", PackagePriceViewSet, basename="price")
 router.register("portfolio-items", PortfolioItemViewSet, basename="portfolio-item")
 router.register("subscription-systems", SubscriptionSystemViewSet, basename="subscription-system")
 router.register("subscriptions", SubscriptionViewSet, basename="subscription")
+router.register("tenants", TenantViewSet, basename="tenant")
+router.register("tenant-services", TenantServiceViewSet, basename="tenant-service")
+router.register("tenant-service-admins", TenantServiceAdminViewSet, basename="tenant-service-admin")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -30,5 +41,10 @@ urlpatterns = [
     path("api/auth/google/", GoogleLoginView.as_view(), name="google-login"),
     path("api/auth/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
     path("api/auth/me/", profile, name="profile"),
+    path("api/license/validate/", LicenseValidateView.as_view(), name="license-validate"),
+    path("api/subscription/status/", SubscriptionStatusView.as_view(), name="subscription-status"),
+    path("api/features/", FeatureAccessView.as_view(), name="feature-access"),
+    path("api/admin-access/", AdminAccessView.as_view(), name="admin-access"),
+    path("api/heartbeat/", HeartbeatView.as_view(), name="heartbeat"),
     path("api/", include(router.urls)),
 ]

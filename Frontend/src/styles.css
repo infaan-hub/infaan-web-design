@@ -1757,6 +1757,29 @@ body[data-theme="dark"] .home-hero {
   box-shadow: none;
 }
 
+.system-control-card {
+  display: grid;
+  gap: 18px;
+}
+
+.system-control-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.system-control-keys,
+.system-control-features {
+  display: grid;
+  gap: 12px;
+}
+
+.system-control-admins {
+  display: grid;
+  gap: 10px;
+}
+
 .system-detail-shell {
   display: grid;
   gap: 18px;

@@ -24,6 +24,7 @@ function buildSidebarGroups(app) {
     { href: "/admin-dashboard", label: "Admin Dashboard", sign: "\u25C8", hint: "manage" },
     { href: "/admin/users", label: "Users", sign: "\u263A", hint: "accounts" },
     { href: "/admin-subscription", label: "Subscriptions", sign: "\u25CE", hint: "plans" },
+    { href: "/system-control", label: "System Control", sign: "\u2699", hint: "tenant" },
     { href: "/bookings-services", label: "Bookings", sign: "\u25A4", hint: "orders" },
     { href: "/booked-service", label: "Booked Service", sign: "\u25C9", hint: "detail" },
     { href: "/booking-history", label: "History", sign: "\u27F2", hint: "done" },
