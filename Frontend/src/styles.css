@@ -11,7 +11,7 @@
 }
 
 body[data-theme="dark"] {
-  --bg: #001d39;
+  --bg: #000000;
   --paper: rgba(8, 31, 58, 0.9);
   --paper-strong: #082645;
   --ink: #edf6fa;
@@ -42,10 +42,7 @@ body {
 }
 
 body[data-theme="dark"] {
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.03), transparent 48%),
-    radial-gradient(circle at top right, rgba(80, 135, 181, 0.16), transparent 30%),
-    linear-gradient(180deg, #05284d 0%, var(--bg) 100%);
+  background: #000000;
 }
 
 ::selection {
