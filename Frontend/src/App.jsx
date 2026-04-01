@@ -940,6 +940,7 @@ function App() {
     setError("");
     setFeedback("");
     const selectedPackageService = services.find((service) => String(service.id) === String(packageForm.service));
+    const packageEndpoint = selectedPackageService?.category === "logo_poster" ? "/logo-poster-packages/" : "/packages/";
     const allowedBillingPeriods =
       selectedPackageService?.category === "logo_poster" ? new Set(["per_task"]) : null;
     const pricesPayload = (packageForm.prices || []).flatMap((price) => {
@@ -982,10 +983,10 @@ function App() {
     };
     try {
       if (editingPackageId) {
-        await apiRequest(`/packages/${editingPackageId}/`, { method: "PUT", body: JSON.stringify(body) });
+        await apiRequest(`${packageEndpoint}${editingPackageId}/`, { method: "PUT", body: JSON.stringify(body) });
         setFeedback("Package updated successfully.");
       } else {
-        await apiRequest("/packages/", { method: "POST", body: JSON.stringify(body) });
+        await apiRequest(packageEndpoint, { method: "POST", body: JSON.stringify(body) });
         setFeedback("Package created successfully.");
       }
       setPackageForm(emptyPackage);
@@ -998,12 +999,13 @@ function App() {
     }
   }
 
-  async function deletePackage(packageId) {
+  async function deletePackage(packageId, serviceCategory = "") {
     setLoading(true);
     setError("");
     setFeedback("");
+    const packageEndpoint = serviceCategory === "logo_poster" ? "/logo-poster-packages/" : "/packages/";
     try {
-      await apiRequest(`/packages/${packageId}/`, { method: "DELETE" });
+      await apiRequest(`${packageEndpoint}${packageId}/`, { method: "DELETE" });
       setFeedback("Package deleted successfully.");
       await loadCatalog();
     } catch (requestError) {

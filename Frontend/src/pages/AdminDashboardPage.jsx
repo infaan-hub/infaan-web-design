@@ -634,7 +634,7 @@ function AdminDashboardPage({ app }) {
                   >
                     Edit
                   </button>
-                  <button type="button" className="header-button" onClick={() => deletePackage(pkg.id)}>
+                  <button type="button" className="header-button" onClick={() => deletePackage(pkg.id, service.category)}>
                     Delete
                   </button>
                 </div>

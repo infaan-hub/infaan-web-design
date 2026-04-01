@@ -8,6 +8,7 @@ from catalog.views import (
     AdminAccessView,
     FeatureAccessView,
     HeartbeatView,
+    LogoPosterPackageViewSet,
     PackageSubscriptionCheckoutView,
     PackageSubscriptionOrderViewSet,
     PortfolioItemViewSet,
@@ -29,6 +30,7 @@ router = DefaultRouter()
 router.register("users", UserViewSet, basename="user")
 router.register("services", ServiceViewSet, basename="service")
 router.register("packages", ServicePackageViewSet, basename="package")
+router.register("logo-poster-packages", LogoPosterPackageViewSet, basename="logo-poster-package")
 router.register("prices", PackagePriceViewSet, basename="price")
 router.register("portfolio-items", PortfolioItemViewSet, basename="portfolio-item")
 router.register("subscription-systems", SubscriptionSystemViewSet, basename="subscription-system")

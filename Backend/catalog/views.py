@@ -61,6 +61,27 @@ class ServicePackageViewSet(viewsets.ModelViewSet):
     serializer_class = ServicePackageSerializer
     permission_classes = [IsAdminOrReadOnly]
 
+    def get_serializer_class(self):
+        if self.action in {"create", "update", "partial_update"}:
+            service_id = self.request.data.get("service")
+            if service_id:
+                try:
+                    service = Service.objects.only("id", "category").get(id=service_id)
+                    if service.category == Service.Category.LOGO_POSTER:
+                        return LogoPosterPackageSerializer
+                except (Service.DoesNotExist, TypeError, ValueError):
+                    return ServicePackageSerializer
+
+            instance = getattr(self, "get_object", None)
+            if callable(instance) and self.kwargs.get("pk"):
+                try:
+                    package = self.get_object()
+                    if package.service.category == Service.Category.LOGO_POSTER:
+                        return LogoPosterPackageSerializer
+                except Exception:
+                    return ServicePackageSerializer
+        return super().get_serializer_class()
+
     def get_queryset(self):
         try:
             queryset = ServicePackage.objects.select_related("service").prefetch_related("prices")
