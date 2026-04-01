@@ -127,6 +127,84 @@ function HomePage({ app }) {
       </section>
 
       <section className="section-block">
+        <div className="section-headline">
+          <p className="micro-label">system subscription</p>
+          <h2>System subscription</h2>
+        </div>
+
+        {subscriptionSystems.length ? (
+          <div className="system-showcase-grid">
+            {subscriptionSystems.map((system) => {
+              const preferredPackage =
+                system.packages?.find((pkg) => (pkg.prices || []).some((price) => ["monthly", "yearly"].includes(price.billing_period))) ||
+                system.packages?.find((pkg) => pkg.tier !== "extra") ||
+                system.packages?.[0];
+              const preferredPrice =
+                (system.display_price !== null && system.display_price !== undefined && system.display_price !== ""
+                  ? { amount: system.display_price, currency: system.display_price_currency || "USD" }
+                  : null) ||
+                preferredPackage?.prices?.find((price) => price.is_default) ||
+                preferredPackage?.prices?.find((price) => price.billing_period === "monthly") ||
+                preferredPackage?.prices?.[0];
+
+              return (
+                <article key={system.id} className="system-showcase-card">
+                  <div className="system-showcase-media" style={{ backgroundImage: `url(${system.cover_image})` }}>
+                    <div className="system-showcase-overlay" />
+                    <div className="system-showcase-content">
+                      <span className="system-showcase-pill">{system.service_name || "System subscription"}</span>
+                      <div className="system-showcase-copy">
+                        <h3>{system.name}</h3>
+                        <p>{system.summary || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}</p>
+                      </div>
+                      {preferredPrice ? <strong className="system-showcase-price">{formatPrice(preferredPrice.amount, preferredPrice.currency)}</strong> : null}
+                    </div>
+                  </div>
+
+                  <div className="system-showcase-actions">
+                    <button
+                      type="button"
+                      className="system-showcase-button"
+                      onClick={() => beginSystemSubscription(system.id)}
+                      disabled={!preferredPackage}
+                    >
+                      Subscribe
+                    </button>
+                    <button
+                      type="button"
+                      className="system-showcase-button"
+                      onClick={() => {
+                        selectSystem(system.id);
+                        navigate("/system-subscription");
+                      }}
+                    >
+                      View Features
+                    </button>
+                    <button
+                      type="button"
+                      className="system-showcase-button"
+                      onClick={() => {
+                        if (!system.system_url) return;
+                        window.open(system.system_url, "_blank", "noopener,noreferrer");
+                      }}
+                      disabled={!system.system_url}
+                    >
+                      Open
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="form-card">
+            <h3>No system subscription posted yet</h3>
+            <p>When admin posts system subscriptions, all of them will appear here with image, name, price, and subscribe button.</p>
+          </div>
+        )}
+      </section>
+
+      <section className="section-block">
         <div className="pricing-heading">
           <p className="micro-label">pricing plans</p>
           <h2>Pricing plans</h2>
@@ -211,84 +289,6 @@ function HomePage({ app }) {
             </article>
           ))}
         </div>
-      </section>
-
-      <section className="section-block">
-        <div className="section-headline">
-          <p className="micro-label">system subscription</p>
-          <h2>System subscription</h2>
-        </div>
-
-        {subscriptionSystems.length ? (
-          <div className="system-showcase-grid">
-            {subscriptionSystems.map((system) => {
-              const preferredPackage =
-                system.packages?.find((pkg) => (pkg.prices || []).some((price) => ["monthly", "yearly"].includes(price.billing_period))) ||
-                system.packages?.find((pkg) => pkg.tier !== "extra") ||
-                system.packages?.[0];
-              const preferredPrice =
-                (system.display_price !== null && system.display_price !== undefined && system.display_price !== ""
-                  ? { amount: system.display_price, currency: system.display_price_currency || "USD" }
-                  : null) ||
-                preferredPackage?.prices?.find((price) => price.is_default) ||
-                preferredPackage?.prices?.find((price) => price.billing_period === "monthly") ||
-                preferredPackage?.prices?.[0];
-
-              return (
-                <article key={system.id} className="system-showcase-card">
-                  <div className="system-showcase-media" style={{ backgroundImage: `url(${system.cover_image})` }}>
-                    <div className="system-showcase-overlay" />
-                    <div className="system-showcase-content">
-                      <span className="system-showcase-pill">{system.service_name || "System subscription"}</span>
-                      <div className="system-showcase-copy">
-                        <h3>{system.name}</h3>
-                        <p>{system.summary || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}</p>
-                      </div>
-                      {preferredPrice ? <strong className="system-showcase-price">{formatPrice(preferredPrice.amount, preferredPrice.currency)}</strong> : null}
-                    </div>
-                  </div>
-
-                  <div className="system-showcase-actions">
-                    <button
-                      type="button"
-                      className="system-showcase-button"
-                      onClick={() => beginSystemSubscription(system.id)}
-                      disabled={!preferredPackage}
-                    >
-                      Subscribe
-                    </button>
-                    <button
-                      type="button"
-                      className="system-showcase-button"
-                      onClick={() => {
-                        selectSystem(system.id);
-                        navigate("/system-subscription");
-                      }}
-                    >
-                      View Features
-                    </button>
-                    <button
-                      type="button"
-                      className="system-showcase-button"
-                      onClick={() => {
-                        if (!system.system_url) return;
-                        window.open(system.system_url, "_blank", "noopener,noreferrer");
-                      }}
-                      disabled={!system.system_url}
-                    >
-                      Open
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="form-card">
-            <h3>No system subscription posted yet</h3>
-            <p>When admin posts system subscriptions, all of them will appear here with image, name, price, and subscribe button.</p>
-          </div>
-        )}
       </section>
 
       <section className="section-block">
