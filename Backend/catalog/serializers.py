@@ -264,6 +264,22 @@ class PortfolioItemSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
+    subscription_system = serializers.PrimaryKeyRelatedField(
+        queryset=SubscriptionSystem.objects.only(
+            "id",
+            "service_id",
+            "name",
+            "summary",
+            "system_url",
+            "display_price",
+            "display_price_currency",
+            "cover_image",
+            "gallery_images",
+            "is_active",
+        ),
+        required=False,
+        allow_null=True,
+    )
     user_details = serializers.SerializerMethodField(read_only=True)
     package_details = serializers.SerializerMethodField(read_only=True)
     service_access = serializers.SerializerMethodField(read_only=True)
