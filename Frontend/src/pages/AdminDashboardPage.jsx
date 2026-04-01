@@ -49,9 +49,6 @@ function AdminDashboardPage({ app }) {
     }));
   }
 
-  const filteredPackages = app.packages.filter(
-    (pkg) => String(pkg.service) === String(portfolioForm.service || "")
-  );
   const systemServices = services.filter((service) => service.category === "system_subscription");
   const selectedPackageService = services.find((service) => String(service.id) === String(packageForm.service));
   const packageUsesFixedPrice = selectedPackageService?.category === "logo_poster";
@@ -273,22 +270,6 @@ function AdminDashboardPage({ app }) {
               onChange={(event) => updateField(setPortfolioForm, "name", event.target.value)}
               placeholder="Portfolio name"
             />
-            <select value={portfolioForm.service} onChange={(event) => updateField(setPortfolioForm, "service", event.target.value)}>
-              <option value="">Select service</option>
-              {services.map((service) => (
-                <option key={service.id} value={service.id}>
-                  {service.name}
-                </option>
-              ))}
-            </select>
-            <select value={portfolioForm.package} onChange={(event) => updateField(setPortfolioForm, "package", event.target.value)}>
-              <option value="">Select package</option>
-              {filteredPackages.map((pkg) => (
-                <option key={pkg.id} value={pkg.id}>
-                  {pkg.title}
-                </option>
-              ))}
-            </select>
             <label className="portfolio-upload-field">
               <span>Portfolio image</span>
               <input type="file" accept="image/*" onChange={handlePortfolioImageChange} />
@@ -298,6 +279,14 @@ function AdminDashboardPage({ app }) {
                 <img src={portfolioForm.image_data} alt="Portfolio preview" />
               </div>
             ) : null}
+            <label className="check-row">
+              <input
+                type="checkbox"
+                checked={portfolioForm.is_active}
+                onChange={(event) => updateField(setPortfolioForm, "is_active", event.target.checked)}
+              />
+              Active portfolio
+            </label>
             <button type="submit" className="solid-button" disabled={loading}>
               {editingPortfolioId ? "Update portfolio" : "Create portfolio"}
             </button>
@@ -426,7 +415,7 @@ function AdminDashboardPage({ app }) {
               </div>
               <div className="portfolio-product-content">
                 <h3>{item.name}</h3>
-                <p>{item.package_title}</p>
+                <p>{item.is_active ? "active" : "inactive"}</p>
               </div>
               <div className="portfolio-product-footer">
                 <button
@@ -435,8 +424,6 @@ function AdminDashboardPage({ app }) {
                   onClick={() => {
                     setPortfolioForm({
                       name: item.name,
-                      service: String(item.service),
-                      package: String(item.package),
                       image_data: item.image_data,
                       is_active: item.is_active,
                     });

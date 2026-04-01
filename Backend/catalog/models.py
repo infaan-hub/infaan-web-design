@@ -76,17 +76,17 @@ class PackagePrice(TimeStampedModel):
 
 
 class PortfolioItem(TimeStampedModel):
-    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name="portfolio_items")
-    package = models.ForeignKey(ServicePackage, on_delete=models.CASCADE, related_name="portfolio_items")
+    service = models.ForeignKey(Service, on_delete=models.SET_NULL, related_name="portfolio_items", null=True, blank=True)
+    package = models.ForeignKey(ServicePackage, on_delete=models.SET_NULL, related_name="portfolio_items", null=True, blank=True)
     name = models.CharField(max_length=150)
     image_data = models.TextField()
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ["service__name", "name"]
+        ordering = ["name"]
 
     def __str__(self):
-        return f"{self.service.name} - {self.name}"
+        return self.name
 
 
 class SubscriptionSystem(TimeStampedModel):

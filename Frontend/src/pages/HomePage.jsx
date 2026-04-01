@@ -74,7 +74,7 @@ function HomePage({ app }) {
   } = app;
 
   const visibleServices = getOrderedServices(groupedPackages.filter((service) => service.packages?.length)).slice(0, 4);
-  const visiblePortfolioServices = getOrderedServices(groupedPortfolio.filter((service) => service.portfolioItems?.length)).slice(0, 4);
+  const visiblePortfolioItems = (groupedPortfolio || []).slice(0, 4);
 
   return (
     <main className="main-content">
@@ -234,22 +234,18 @@ function HomePage({ app }) {
         </div>
 
         <div className="package-grid">
-          {visiblePortfolioServices.map((service) => {
-            const portfolioPreview = service.portfolioItems[0];
-
-            return (
-              <article key={service.id} className="portfolio-home-card">
+          {visiblePortfolioItems.map((item) => (
+              <article key={item.id} className="portfolio-home-card">
                 <div
                   className="portfolio-home-image"
                   style={{
-                    backgroundImage: `url(${portfolioPreview?.image_data || getServiceImage(service)})`,
+                    backgroundImage: `url(${item.image_data})`,
                   }}
                 >
-                  <span className="portfolio-image-badge">{service.name}</span>
+                  <span className="portfolio-image-badge">{item.name}</span>
                 </div>
               </article>
-            );
-          })}
+          ))}
         </div>
       </section>
 

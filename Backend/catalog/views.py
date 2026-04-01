@@ -86,7 +86,6 @@ class ServicePackageViewSet(viewsets.ModelViewSet):
                 if instance.is_active:
                     instance.is_active = False
                     instance.save(update_fields=["is_active", "updated_at"])
-                instance.portfolio_items.update(is_active=False)
                 return
             instance.delete()
 
@@ -107,7 +106,7 @@ class PortfolioItemViewSet(viewsets.ModelViewSet):
             if self.request.user.is_authenticated and self.request.user.role == CustomUser.Role.ADMIN:
                 return queryset.all()
             if self.request.method in permissions.SAFE_METHODS:
-                return queryset.filter(is_active=True, service__is_active=True, package__is_active=True)
+                return queryset.filter(is_active=True)
             return queryset.all()
         except (ProgrammingError, OperationalError):
             return PortfolioItem.objects.none()

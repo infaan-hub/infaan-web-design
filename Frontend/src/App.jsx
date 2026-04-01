@@ -87,8 +87,6 @@ const emptyPayment = {
 };
 const emptyPortfolio = {
   name: "",
-  service: "",
-  package: "",
   image_data: "",
   is_active: true,
 };
@@ -495,12 +493,8 @@ function App() {
     [services, packages]
   );
   const groupedPortfolio = useMemo(
-    () =>
-      services.map((service) => ({
-        ...service,
-        portfolioItems: portfolioItems.filter((item) => item.service === service.id && item.is_active),
-      })),
-    [services, portfolioItems]
+    () => portfolioItems.filter((item) => item.is_active),
+    [portfolioItems]
   );
 
   const selectedPackage = packages.find((pkg) => String(pkg.id) === String(selectedPackageId));
@@ -1026,8 +1020,10 @@ function App() {
 
     const body = {
       ...portfolioForm,
-      service: Number(portfolioForm.service),
-      package: Number(portfolioForm.package),
+      name: String(portfolioForm.name || "").trim(),
+      image_data: String(portfolioForm.image_data || "").trim(),
+      service: null,
+      package: null,
     };
 
     try {

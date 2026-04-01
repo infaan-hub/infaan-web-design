@@ -386,6 +386,10 @@ class PortfolioItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = PortfolioItem
         fields = "__all__"
+        extra_kwargs = {
+            "service": {"required": False, "allow_null": True},
+            "package": {"required": False, "allow_null": True},
+        }
 
 
 class BaseCheckoutSerializer(serializers.Serializer):

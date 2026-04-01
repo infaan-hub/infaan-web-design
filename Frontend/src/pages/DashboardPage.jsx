@@ -32,11 +32,11 @@ function DashboardPage({ app }) {
     continueToPackageTime,
     beginSystemSubscription,
     selectSystem,
-    navigate,
     subscriptions,
   } = app;
   const visibleServices = getOrderedServices(groupedPackages.filter((service) => service.packages?.length)).slice(0, 4);
   const activeSystems = (subscriptionSystems || []).slice(0, 4);
+  const visiblePortfolioItems = (groupedPortfolio || []).slice(0, 4);
 
   return (
     <main className="main-content">
@@ -71,17 +71,37 @@ function DashboardPage({ app }) {
       <section className="section-block">
         <div className="section-headline">
           <div>
+            <p className="micro-label">portfolio</p>
+            <h2>Portfolio</h2>
+          </div>
+        </div>
+
+        <div className="package-grid">
+          {visiblePortfolioItems.map((item) => (
+            <article key={item.id} className="portfolio-home-card">
+              <div
+                className="portfolio-home-image"
+                style={{
+                  backgroundImage: `url(${item.image_data})`,
+                }}
+              >
+                <span className="portfolio-image-badge">{item.name}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="section-block">
+        <div className="section-headline">
+          <div>
             <p className="micro-label">customer dashboard</p>
             <h2>Services, pricing plans, and portfolio</h2>
           </div>
         </div>
 
         <div className="dashboard-service-stack">
-          {visibleServices.map((service) => {
-            const portfolioGroup = groupedPortfolio.find((item) => item.id === service.id);
-            const portfolioPreview = portfolioGroup?.portfolioItems?.[0];
-
-            return (
+          {visibleServices.map((service) => (
               <article key={service.id} className="service-catalog-block dashboard-service-card">
                 <div className="service-catalog-head">
                   <div
@@ -160,36 +180,9 @@ function DashboardPage({ app }) {
                       })}
                     </div>
                   </div>
-
-                  <div className="section-card dashboard-under-card">
-                    <div className="section-headline">
-                      <div>
-                        <p className="micro-label">portfolio</p>
-                        <h2>Portfolio</h2>
-                      </div>
-                    </div>
-
-                    <div className="dashboard-portfolio-preview">
-                      <article className="portfolio-home-card">
-                        <div
-                          className="portfolio-home-image"
-                          style={{
-                            backgroundImage: `url(${portfolioPreview?.image_data || getServiceImage(service)})`,
-                          }}
-                        >
-                          <span className="portfolio-image-badge">{service.name}</span>
-                        </div>
-                      </article>
-
-                      <button type="button" className="outline-button" onClick={() => navigate("/potfolio")}>
-                        View portfolio
-                      </button>
-                    </div>
-                  </div>
                 </div>
               </article>
-            );
-          })}
+          ))}
         </div>
       </section>
 
