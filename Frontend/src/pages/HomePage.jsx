@@ -10,6 +10,22 @@ const packageTierOrder = {
   extra: 3,
 };
 
+function getPackageDisplayPrices(pkg) {
+  const preferredBillingPeriod =
+    pkg.prices[0]?.billing_period === "per_task"
+      ? "per_task"
+      : pkg.prices.some((price) => price.billing_period === "monthly")
+        ? "monthly"
+        : pkg.prices[0]?.billing_period;
+
+  return [...(pkg.prices || [])]
+    .filter((price) => price.billing_period === preferredBillingPeriod)
+    .sort((left, right) => {
+      const currencyOrder = { USD: 0, TZS: 1 };
+      return (currencyOrder[left.currency] ?? 999) - (currencyOrder[right.currency] ?? 999);
+    });
+}
+
 function WhatsAppIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -261,35 +277,27 @@ function HomePage({ app }) {
                   .map((pkg) => (
                   <div key={pkg.id} className={`pricing-plan-card pricing-card-${pkg.tier}`}>
                     {(() => {
-                      const headlinePrices = pkg.prices.filter((price) =>
-                        pkg.prices[0]?.billing_period === "per_task"
-                          ? price.billing_period === "per_task"
-                          : price.billing_period === "monthly"
-                      );
+                      const headlinePrices = getPackageDisplayPrices(pkg);
+                      const primaryPrice = headlinePrices.find((price) => price.currency === "USD") || headlinePrices[0];
 
                       return (
                         <div className={`pricing-plan-top pricing-tone-${pkg.tier}`}>
                           <span className="pricing-mini-pill">{pkg.tier}</span>
                           <h4>{pkg.title}</h4>
                           <div className="pricing-amount">
-                            {pkg.prices[0]?.billing_period === "per_task" ? (
+                            {primaryPrice?.billing_period === "per_task" ? (
                               <>
-                                <strong>Custom</strong>
+                                <strong>{formatPrice(primaryPrice?.amount || 0, primaryPrice?.currency || "USD")}</strong>
                                 <span>per task</span>
                               </>
                             ) : (
                               <>
-                                <strong>
-                                  {formatPrice(
-                                    pkg.prices.find((price) => price.billing_period === "monthly")?.amount || pkg.prices[0]?.amount,
-                                    pkg.prices.find((price) => price.billing_period === "monthly")?.currency || pkg.prices[0]?.currency || "USD"
-                                  )}
-                                </strong>
+                                <strong>{formatPrice(primaryPrice?.amount || 0, primaryPrice?.currency || "USD")}</strong>
                                 <span>/month</span>
                               </>
                             )}
                           </div>
-                          {headlinePrices.length > 1 ? (
+                          {headlinePrices.length ? (
                             <div className="price-list">
                               {headlinePrices.map((price) => (
                                 <span key={`${pkg.id}-${price.id}`} className="price-chip">

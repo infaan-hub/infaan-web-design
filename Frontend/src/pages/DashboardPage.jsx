@@ -6,6 +6,22 @@ function getStatusTone(status) {
   return "expired";
 }
 
+function getPackageDisplayPrices(pkg) {
+  const preferredBillingPeriod =
+    pkg.prices[0]?.billing_period === "per_task"
+      ? "per_task"
+      : pkg.prices.some((price) => price.billing_period === "monthly")
+        ? "monthly"
+        : pkg.prices[0]?.billing_period;
+
+  return [...(pkg.prices || [])]
+    .filter((price) => price.billing_period === preferredBillingPeriod)
+    .sort((left, right) => {
+      const currencyOrder = { USD: 0, TZS: 1 };
+      return (currencyOrder[left.currency] ?? 999) - (currencyOrder[right.currency] ?? 999);
+    });
+}
+
 function DashboardPage({ app }) {
   const {
     groupedPackages,
@@ -91,7 +107,8 @@ function DashboardPage({ app }) {
 
                     <div className="service-package-track">
                       {service.packages.map((pkg) => {
-                        const preferredPrice = app.getPreferredPrice(pkg);
+                        const displayPrices = getPackageDisplayPrices(pkg);
+                        const primaryPrice = displayPrices.find((price) => price.currency === "USD") || displayPrices[0];
 
                         return (
                           <div key={pkg.id} className="pricing-plan-card">
@@ -99,18 +116,27 @@ function DashboardPage({ app }) {
                               <span className="pricing-mini-pill">{pkg.tier}</span>
                               <h4>{pkg.title}</h4>
                               <div className="pricing-amount">
-                                {preferredPrice?.billing_period === "per_task" ? (
+                                {primaryPrice?.billing_period === "per_task" ? (
                                   <>
-                                    <strong>{formatPrice(preferredPrice?.amount || 0, preferredPrice?.currency || "USD")}</strong>
-                                    <span>fixed</span>
+                                    <strong>{formatPrice(primaryPrice?.amount || 0, primaryPrice?.currency || "USD")}</strong>
+                                    <span>per task</span>
                                   </>
                                 ) : (
                                   <>
-                                    <strong>{formatPrice(preferredPrice?.amount || 0, preferredPrice?.currency || "USD")}</strong>
-                                    <span>/{preferredPrice?.billing_period || "month"}</span>
+                                    <strong>{formatPrice(primaryPrice?.amount || 0, primaryPrice?.currency || "USD")}</strong>
+                                    <span>/month</span>
                                   </>
                                 )}
                               </div>
+                              {displayPrices.length ? (
+                                <div className="price-list">
+                                  {displayPrices.map((price) => (
+                                    <span key={`${pkg.id}-${price.id}`} className="price-chip">
+                                      {formatPrice(price.amount, price.currency)}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : null}
                               <p>{pkg.description}</p>
                               <button
                                 type="button"
