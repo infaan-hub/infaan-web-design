@@ -248,6 +248,29 @@ class ServicePackageSerializer(serializers.ModelSerializer):
             seen.add(key)
         return value
 
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        service = attrs.get("service") or getattr(self.instance, "service", None)
+        prices = attrs.get("prices")
+        if prices is None and self.instance is not None:
+            prices = [
+                {
+                    "billing_period": price.billing_period,
+                    "currency": price.currency,
+                    "amount": price.amount,
+                    "is_default": price.is_default,
+                }
+                for price in self.instance.prices.all()
+            ]
+
+        if service and prices is not None and service.category == Service.Category.LOGO_POSTER:
+            invalid_prices = [price for price in prices if price.get("billing_period") != PackagePrice.BillingPeriod.PER_TASK]
+            if invalid_prices:
+                raise serializers.ValidationError(
+                    {"prices": "Logo & poster design packages use only one fixed per_task price."}
+                )
+        return attrs
+
     def create(self, validated_data):
         prices_data = validated_data.pop("prices", [])
         package = ServicePackage.objects.create(**validated_data)

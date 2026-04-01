@@ -533,10 +533,17 @@ function App() {
 
   function getPreferredPrice(packageObject) {
     if (!packageObject?.prices?.length) return null;
-    if (packageObject.tier === "extra") {
+    const packageService = services.find((service) => String(service.id) === String(packageObject.service));
+    if (packageObject.tier === "extra" || packageService?.category === "logo_poster") {
       return packageObject.prices.find((price) => price.billing_period === "per_task") || packageObject.prices[0];
     }
     return packageObject.prices.find((price) => price.billing_period === "monthly") || packageObject.prices[0];
+  }
+
+  function isFixedPricePackage(packageObject) {
+    if (!packageObject) return false;
+    const packageService = services.find((service) => String(service.id) === String(packageObject.service));
+    return packageObject.tier === "extra" || packageService?.category === "logo_poster";
   }
 
   function clearSystemSubscriptionPlan() {
@@ -668,7 +675,7 @@ function App() {
     }
     const packageMatch = packages.find((pkg) => String(pkg.id) === String(packageId));
     selectPackage(packageId, systemId);
-    if (packageMatch?.tier === "extra") {
+    if (isFixedPricePackage(packageMatch)) {
       const preferredPrice = getPreferredPrice(packageMatch);
       if (preferredPrice) {
         setSelectedPriceId(String(preferredPrice.id));
@@ -685,7 +692,7 @@ function App() {
       navigate(selectedSystem ? "/system-subscription" : "/package");
       return false;
     }
-    if (selectedPackage.tier === "extra") {
+    if (isFixedPricePackage(selectedPackage)) {
       const preferredPrice = getPreferredPrice(selectedPackage);
       if (preferredPrice) {
         setSelectedPriceId(String(preferredPrice.id));
@@ -936,7 +943,13 @@ function App() {
     setLoading(true);
     setError("");
     setFeedback("");
+    const selectedPackageService = services.find((service) => String(service.id) === String(packageForm.service));
+    const allowedBillingPeriods =
+      selectedPackageService?.category === "logo_poster" ? new Set(["per_task"]) : null;
     const pricesPayload = (packageForm.prices || []).flatMap((price) => {
+      if (allowedBillingPeriods && !allowedBillingPeriods.has(price.billing_period)) {
+        return [];
+      }
       const rows = [];
       const normalizedUsdAmount =
         price.usd_amount === "" || price.usd_amount === null || price.usd_amount === undefined
@@ -1425,6 +1438,7 @@ function App() {
     emptyPayment,
     formatPrice,
     getPreferredPrice,
+    isFixedPricePackage,
   };
 
   const routes = {

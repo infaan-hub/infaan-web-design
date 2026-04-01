@@ -53,6 +53,8 @@ function AdminDashboardPage({ app }) {
     (pkg) => String(pkg.service) === String(portfolioForm.service || "")
   );
   const systemServices = services.filter((service) => service.category === "system_subscription");
+  const selectedPackageService = services.find((service) => String(service.id) === String(packageForm.service));
+  const packageUsesFixedPrice = selectedPackageService?.category === "logo_poster";
 
   function updateSystemGalleryImage(index, value) {
     setSystemForm((previous) => ({
@@ -214,27 +216,32 @@ function AdminDashboardPage({ app }) {
             <input value={packageForm.payment_notes} onChange={(event) => updateField(setPackageForm, "payment_notes", event.target.value)} placeholder="Payment notes" />
             <div className="admin-price-editor">
               <p className="micro-label">package prices</p>
-              {billingPeriods.map((period, index) => (
-                <div key={period} className="admin-price-row">
-                  <strong>{period.replace("_", " ")}</strong>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={packageForm.prices[index]?.usd_amount || ""}
-                    onChange={(event) => updatePackagePrice(index, "usd_amount", event.target.value)}
-                    placeholder="USD amount"
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={packageForm.prices[index]?.tzs_amount || ""}
-                    onChange={(event) => updatePackagePrice(index, "tzs_amount", event.target.value)}
-                    placeholder="TZS amount"
-                  />
-                </div>
-              ))}
+              {billingPeriods
+                .filter((period) => (packageUsesFixedPrice ? period === "per_task" : true))
+                .map((period) => {
+                  const actualIndex = billingPeriods.indexOf(period);
+                  return (
+                    <div key={period} className="admin-price-row">
+                      <strong>{period.replace("_", " ")}</strong>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={packageForm.prices[actualIndex]?.usd_amount || ""}
+                        onChange={(event) => updatePackagePrice(actualIndex, "usd_amount", event.target.value)}
+                        placeholder="USD amount"
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={packageForm.prices[actualIndex]?.tzs_amount || ""}
+                        onChange={(event) => updatePackagePrice(actualIndex, "tzs_amount", event.target.value)}
+                        placeholder="TZS amount"
+                      />
+                    </div>
+                  );
+                })}
             </div>
             <button type="submit" className="solid-button" disabled={loading}>
               {editingPackageId ? "Update package" : "Create package"}

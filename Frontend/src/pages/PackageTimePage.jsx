@@ -1,5 +1,6 @@
 function PackageTimePage({ app }) {
-  const { selectedPackage, selectedPriceId, setSelectedPriceId, navigate, formatPrice, continueToBilling, getPreferredPrice } = app;
+  const { selectedPackage, selectedPriceId, setSelectedPriceId, navigate, formatPrice, continueToBilling, getPreferredPrice, isFixedPricePackage } = app;
+  const usesFixedPrice = isFixedPricePackage(selectedPackage);
 
   return (
     <main className="main-content">
@@ -17,16 +18,16 @@ function PackageTimePage({ app }) {
           <div className="package-stack">
             <div className="pricing-heading">
               <p className="micro-label">package time</p>
-              <h2>{selectedPackage.tier === "extra" ? "Fixed package price" : "Select billing duration"}</h2>
+              <h2>{usesFixedPrice ? "Fixed package price" : "Select billing duration"}</h2>
               <span>
-                {selectedPackage.tier === "extra"
-                  ? "This extra package uses one fixed price and does not require weekly, monthly, or yearly selection."
+                {usesFixedPrice
+                  ? "This package uses one fixed price and does not require weekly, monthly, or yearly selection."
                   : "Choose weekly, monthly, or yearly billing according to your selected package."}
               </span>
             </div>
 
             <div className="package-grid">
-              {(selectedPackage.tier === "extra" ? [getPreferredPrice(selectedPackage)].filter(Boolean) : selectedPackage.prices).map((price) => (
+              {(usesFixedPrice ? [getPreferredPrice(selectedPackage)].filter(Boolean) : selectedPackage.prices).map((price) => (
                 <button
                   key={price.id}
                   type="button"

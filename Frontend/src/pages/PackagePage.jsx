@@ -1,7 +1,7 @@
 import { formatServiceCategoryLabel, getServiceImage } from "../lib/serviceCatalog";
 
 function PackagePage({ app }) {
-  const { selectedPackage, selectedService, groupedPackages, navigate, continueToPackageTime, formatPrice } = app;
+  const { selectedPackage, selectedService, groupedPackages, navigate, continueToPackageTime, formatPrice, isFixedPricePackage } = app;
   const visibleServices = groupedPackages.filter((service) => service.packages?.length);
 
   return (
@@ -85,7 +85,7 @@ function PackagePage({ app }) {
 
             <div className="hero-actions">
               <button type="button" className="solid-button" onClick={() => continueToPackageTime(selectedPackage.id)}>
-                {selectedPackage.tier === "extra" ? "Continue to billing" : "Continue to package time"}
+                {isFixedPricePackage(selectedPackage) ? "Continue to billing" : "Continue to package time"}
               </button>
               <button type="button" className="outline-button" onClick={() => navigate("/package")}>
                 Back to catalog
@@ -151,7 +151,7 @@ function PackagePage({ app }) {
 
                       <div className="hero-actions">
                         <button type="button" className="solid-button" onClick={() => continueToPackageTime(pkg.id)}>
-                          {pkg.tier === "extra" ? "Use fixed price" : "Select package"}
+                          {isFixedPricePackage(pkg) ? "Use fixed price" : "Select package"}
                         </button>
                         <button type="button" className="outline-button" onClick={() => app.selectPackage(pkg.id)}>
                           View details
