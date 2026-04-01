@@ -407,7 +407,7 @@ function AdminDashboardPage({ app }) {
           </div>
         </div>
 
-        <div className="package-grid">
+        <div className="admin-catalog-grid">
           {portfolioItems.map((item) => (
             <article key={item.id} className="portfolio-product-card admin-portfolio-card">
               <button type="button" className="portfolio-heart-button" aria-label="Portfolio item">
@@ -435,7 +435,7 @@ function AdminDashboardPage({ app }) {
                     setEditingPortfolioId(item.id);
                   }}
                 >
-                  Edit
+                  Update
                 </button>
                 <button
                   type="button"
@@ -457,7 +457,7 @@ function AdminDashboardPage({ app }) {
           </div>
         </div>
 
-        <div className="package-grid">
+        <div className="admin-catalog-grid">
           {subscriptionSystems.map((system) => {
             const pricePreview = getSystemPricePreview(system);
             const displayPrice =
@@ -521,7 +521,7 @@ function AdminDashboardPage({ app }) {
                       setEditingSystemId(system.id);
                     }}
                   >
-                    Edit
+                    Update
                   </button>
                   <button
                     type="button"

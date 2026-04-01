@@ -958,6 +958,160 @@ body[data-theme="dark"] .home-hero {
   height: 44px;
 }
 
+.admin-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  align-items: stretch;
+}
+
+.admin-catalog-grid .admin-portfolio-card,
+.admin-catalog-grid .system-admin-card {
+  width: 100%;
+  max-width: none;
+  min-height: 100%;
+  grid-template-rows: auto 1fr auto;
+  gap: 16px;
+  padding: 14px;
+  border-radius: 30px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, #ffffff 0%, #f7f7f6 100%);
+  color: #0f172a;
+  box-shadow:
+    0 24px 50px rgba(18, 25, 38, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.admin-catalog-grid .system-admin-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f6fafc 100%);
+}
+
+.admin-catalog-grid .admin-portfolio-card .portfolio-heart-button {
+  display: none;
+}
+
+.admin-catalog-grid .admin-portfolio-card .portfolio-product-image-wrap,
+.admin-catalog-grid .system-admin-card .portfolio-product-image-wrap {
+  overflow: hidden;
+  border: 0;
+  border-radius: 26px;
+  background: #0c1f27;
+  box-shadow:
+    inset 0 1px 3px rgba(255, 255, 255, 0.3),
+    0 16px 24px rgba(10, 17, 29, 0.2);
+}
+
+.admin-catalog-grid .admin-portfolio-card .portfolio-product-image,
+.admin-catalog-grid .system-admin-card .portfolio-product-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 0.65;
+  object-fit: cover;
+}
+
+.admin-catalog-grid .admin-portfolio-card .portfolio-product-content,
+.admin-catalog-grid .system-admin-card .portfolio-product-content {
+  display: grid;
+  gap: 8px;
+  padding: 0 6px;
+}
+
+.admin-catalog-grid .admin-portfolio-card .portfolio-product-content::before,
+.admin-catalog-grid .system-admin-card .portfolio-product-content::before {
+  color: #a1a1aa;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-catalog-grid .admin-portfolio-card .portfolio-product-content::before {
+  content: "Portfolio";
+}
+
+.admin-catalog-grid .system-admin-card .portfolio-product-content::before {
+  content: "System subscription";
+}
+
+.admin-catalog-grid .admin-portfolio-card .portfolio-product-content h3,
+.admin-catalog-grid .system-admin-card .portfolio-product-content h3 {
+  margin: 0;
+  color: #0f172a;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.28rem;
+  line-height: 1.05;
+}
+
+.admin-catalog-grid .admin-portfolio-card .portfolio-product-content p,
+.admin-catalog-grid .system-admin-card .portfolio-product-content p {
+  margin: 0;
+  color: #71717a;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.admin-catalog-grid .system-admin-card .system-admin-topline {
+  display: block;
+  order: 3;
+}
+
+.admin-catalog-grid .system-admin-card .system-admin-topline .status-pill {
+  display: none;
+}
+
+.admin-catalog-grid .system-admin-card .system-admin-display-price {
+  color: #0f172a;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1rem;
+  line-height: 1.1;
+}
+
+.admin-catalog-grid .system-admin-card .system-admin-detail-list,
+.admin-catalog-grid .system-admin-card .system-admin-price-list {
+  display: none;
+}
+
+.admin-catalog-grid .admin-portfolio-card .portfolio-product-footer,
+.admin-catalog-grid .system-admin-card .portfolio-product-footer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0;
+}
+
+.admin-catalog-grid .admin-portfolio-card .outline-button,
+.admin-catalog-grid .admin-portfolio-card .header-button,
+.admin-catalog-grid .system-admin-card .outline-button,
+.admin-catalog-grid .system-admin-card .header-button {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 14px;
+  justify-content: center;
+}
+
+.admin-catalog-grid .admin-portfolio-card .outline-button,
+.admin-catalog-grid .system-admin-card .outline-button {
+  border-color: rgba(15, 23, 42, 0.1);
+  background: #ffffff;
+  color: #111827;
+}
+
+.admin-catalog-grid .admin-portfolio-card .header-button,
+.admin-catalog-grid .system-admin-card .header-button {
+  background: #fff1ec;
+  color: #a33a22;
+}
+
+.admin-catalog-grid .admin-portfolio-card [aria-label="Delete portfolio"] {
+  font-size: 0;
+}
+
+.admin-catalog-grid .admin-portfolio-card [aria-label="Delete portfolio"]::before {
+  content: "Delete";
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
 .portfolio-view-card {
   padding: 10px;
   gap: 0;
@@ -2746,6 +2900,16 @@ button:disabled {
     padding: 18px;
   }
 
+  .admin-catalog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-catalog-grid .admin-portfolio-card,
+  .admin-catalog-grid .system-admin-card {
+    width: min(100%, 320px);
+    margin-inline: auto;
+  }
+
   .visual-card,
   .package-card,
   .pricing-plan-card,
@@ -2824,5 +2988,11 @@ button:disabled {
 
   .auth-form-side {
     padding: 24px;
+  }
+}
+
+@media (min-width: 721px) and (max-width: 1080px) {
+  .admin-catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
