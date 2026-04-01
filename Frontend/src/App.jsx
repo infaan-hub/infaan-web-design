@@ -373,9 +373,10 @@ function App() {
   async function loadProfileAndSubscriptions() {
     if (!token) return;
 
-    const [profileData, subscriptionData, systemOrderData] = await Promise.all([
+    const [profileData, subscriptionData, packageOrderData, systemOrderData] = await Promise.all([
       apiRequest("/auth/me/"),
       apiRequest("/subscriptions/"),
+      apiRequest("/package-subscription-orders/"),
       apiRequest("/system-subscription-orders/"),
     ]);
     if (profileData?.id) {
@@ -383,9 +384,10 @@ function App() {
       localStorage.setItem("infaan_user", JSON.stringify(profileData));
     }
     const standardSubscriptions = subscriptionData.results || subscriptionData || [];
+    const packageOrders = packageOrderData.results || packageOrderData || [];
     const systemOrders = systemOrderData.results || systemOrderData || [];
     setSubscriptions(
-      [...standardSubscriptions, ...systemOrders].sort(
+      [...standardSubscriptions, ...packageOrders, ...systemOrders].sort(
         (left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0)
       )
     );
@@ -1170,7 +1172,9 @@ function App() {
       });
       let hydratedBooking = createdBooking;
       if (selectedSystem) {
-        hydratedBooking = await apiRequest(`/subscriptions/${createdBooking.id}/`);
+        hydratedBooking = await apiRequest(`/system-subscription-orders/${createdBooking.id}/`);
+      } else {
+        hydratedBooking = await apiRequest(`/package-subscription-orders/${createdBooking.id}/`);
       }
       setBookingSent(true);
       setLastBooking(hydratedBooking);
@@ -1240,12 +1244,23 @@ function App() {
     navigate("/booked-service");
   }
 
+  function getBookingApiPath(bookingId) {
+    const booking = subscriptions.find((item) => String(item.id) === String(bookingId));
+    if (booking?.record_type === "system_subscription") {
+      return `/system-subscription-orders/${bookingId}/`;
+    }
+    if (booking?.record_type === "package_subscription") {
+      return `/package-subscription-orders/${bookingId}/`;
+    }
+    return `/subscriptions/${bookingId}/`;
+  }
+
   async function updateBooking(bookingId, updates, successMessage) {
     setLoading(true);
     setError("");
     setFeedback("");
     try {
-      const updatedBooking = await apiRequest(`/subscriptions/${bookingId}/`, {
+      const updatedBooking = await apiRequest(getBookingApiPath(bookingId), {
         method: "PATCH",
         body: JSON.stringify(updates),
       });

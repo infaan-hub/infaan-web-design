@@ -6,6 +6,7 @@ from rest_framework import serializers
 
 from .models import (
     PackagePrice,
+    PackageSubscriptionOrder,
     PortfolioItem,
     Service,
     ServicePackage,
@@ -539,6 +540,83 @@ class SystemSubscriptionOrderSerializer(serializers.ModelSerializer):
             "public_url": tenant_service.public_url,
             "is_enabled": tenant_service.is_enabled,
         }
+
+
+class PackageSubscriptionOrderSerializer(serializers.ModelSerializer):
+    user_details = serializers.SerializerMethodField(read_only=True)
+    package_details = serializers.SerializerMethodField(read_only=True)
+    service_access = serializers.SerializerMethodField(read_only=True)
+    system_details = serializers.SerializerMethodField(read_only=True)
+    control_details = serializers.SerializerMethodField(read_only=True)
+    record_type = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = PackageSubscriptionOrder
+        fields = (
+            "id",
+            "user",
+            "package_price",
+            "status",
+            "payment_status",
+            "payment_method",
+            "payment_contact",
+            "payment_amount",
+            "payment_currency",
+            "business_name",
+            "contact_email",
+            "contact_phone",
+            "notes",
+            "start_date",
+            "end_date",
+            "next_billing_date",
+            "auto_renew",
+            "grace_period_days",
+            "created_at",
+            "updated_at",
+            "user_details",
+            "package_details",
+            "service_access",
+            "system_details",
+            "control_details",
+            "record_type",
+        )
+
+    def get_record_type(self, obj):
+        return "package_subscription"
+
+    def get_user_details(self, obj):
+        return {"id": obj.user_id, "username": obj.user.username, "email": obj.user.email, "role": obj.user.role}
+
+    def get_package_details(self, obj):
+        price = obj.package_price
+        package = price.package
+        return {
+            "service": package.service.name,
+            "tier": package.tier,
+            "title": package.title,
+            "features": package.features,
+            "payment_notes": package.payment_notes,
+            "billing_period": price.billing_period,
+            "amount": str(price.amount),
+            "currency": price.currency,
+        }
+
+    def get_service_access(self, obj):
+        effective_status = obj.get_effective_status()
+        return {
+            "status": effective_status,
+            "can_access": obj.can_access_service(),
+            "start_date": obj.start_date,
+            "end_date": obj.end_date,
+            "next_billing_date": obj.next_billing_date,
+            "grace_period_days": obj.grace_period_days,
+        }
+
+    def get_system_details(self, obj):
+        return None
+
+    def get_control_details(self, obj):
+        return None
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):

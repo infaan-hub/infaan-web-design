@@ -9,6 +9,7 @@ from catalog.views import (
     FeatureAccessView,
     HeartbeatView,
     PackageSubscriptionCheckoutView,
+    PackageSubscriptionOrderViewSet,
     PortfolioItemViewSet,
     PackagePriceViewSet,
     ServicePackageViewSet,
@@ -32,6 +33,7 @@ router.register("prices", PackagePriceViewSet, basename="price")
 router.register("portfolio-items", PortfolioItemViewSet, basename="portfolio-item")
 router.register("subscription-systems", SubscriptionSystemViewSet, basename="subscription-system")
 router.register("subscriptions", SubscriptionViewSet, basename="subscription")
+router.register("package-subscription-orders", PackageSubscriptionOrderViewSet, basename="package-subscription-order")
 router.register("system-subscription-orders", SystemSubscriptionOrderViewSet, basename="system-subscription-order")
 router.register("tenants", TenantViewSet, basename="tenant")
 router.register("tenant-services", TenantServiceViewSet, basename="tenant-service")

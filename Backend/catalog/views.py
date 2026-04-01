@@ -11,6 +11,7 @@ from accounts.models import CustomUser
 from accounts.views import IsAdminUserRole
 from .models import (
     PackagePrice,
+    PackageSubscriptionOrder,
     PortfolioItem,
     Service,
     ServicePackage,
@@ -25,6 +26,7 @@ from .serializers import (
     ensure_subscription_control_records,
     ensure_system_order_control_records,
     PackagePriceSerializer,
+    PackageSubscriptionOrderSerializer,
     PortfolioItemSerializer,
     ServiceCheckoutSerializer,
     ServicePackageSerializer,
@@ -230,12 +232,57 @@ class PackageSubscriptionCheckoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        return create_checkout_response(
-            request,
-            ServiceCheckoutSerializer,
-            allow_system_provision=False,
-            response_serializer=lambda instance: SubscriptionSerializer(instance),
+        serializer = ServiceCheckoutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated = serializer.validated_data
+        start_date = validated.get("start_date") or timezone.localdate()
+        order = PackageSubscriptionOrder(
+            user=request.user,
+            package_price=validated["package_price"],
+            payment_status=validated.get("payment_status", PackageSubscriptionOrder.PaymentStatus.PENDING),
+            payment_method=validated.get("payment_method", ""),
+            payment_contact=validated.get("payment_contact", ""),
+            payment_amount=validated.get("payment_amount"),
+            payment_currency=validated.get("payment_currency") or "USD",
+            business_name=validated["business_name"].strip(),
+            contact_email=validated["contact_email"].strip(),
+            contact_phone=validated["contact_phone"].strip(),
+            notes=validated.get("notes", ""),
+            auto_renew=validated.get("auto_renew", False),
+            grace_period_days=validated.get("grace_period_days", 3),
         )
+        if order.payment_status == PackageSubscriptionOrder.PaymentStatus.PAID:
+            order.status = PackageSubscriptionOrder.Status.ACTIVE
+            order.assign_service_window(start_date)
+        else:
+            order.status = PackageSubscriptionOrder.Status.PENDING
+            order.start_date = start_date
+        order.save()
+        return Response(
+            build_subscription_response_data(order, lambda instance: PackageSubscriptionOrderSerializer(instance)),
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class PackageSubscriptionOrderViewSet(viewsets.ModelViewSet):
+    serializer_class = PackageSubscriptionOrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        try:
+            queryset = PackageSubscriptionOrder.objects.select_related(
+                "user", "package_price", "package_price__package", "package_price__package__service"
+            )
+            if self.request.user.role == CustomUser.Role.ADMIN:
+                return queryset.all()
+            return queryset.filter(user=self.request.user)
+        except (ProgrammingError, OperationalError):
+            return PackageSubscriptionOrder.objects.none()
+
+    def get_permissions(self):
+        if self.action in ("update", "partial_update", "destroy"):
+            return [permissions.IsAuthenticated(), IsAdminUserRole()]
+        return super().get_permissions()
 
 
 class SystemSubscriptionOrderViewSet(viewsets.ModelViewSet):
