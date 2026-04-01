@@ -248,6 +248,23 @@ class ServicePackageSerializer(serializers.ModelSerializer):
             or price.system_subscription_orders.exists()
         )
 
+    @staticmethod
+    def _normalize_prices(service, prices):
+        normalized = {}
+        for price in prices or []:
+            billing_period = price.get("billing_period")
+            currency = (price.get("currency") or "USD").upper()
+            if not billing_period:
+                continue
+            if service and service.category == Service.Category.LOGO_POSTER and billing_period != PackagePrice.BillingPeriod.PER_TASK:
+                continue
+            normalized[(billing_period, currency)] = {
+                **price,
+                "billing_period": billing_period,
+                "currency": currency,
+            }
+        return list(normalized.values())
+
     def validate_prices(self, value):
         seen = set()
         for price in value:
@@ -272,12 +289,8 @@ class ServicePackageSerializer(serializers.ModelSerializer):
                 for price in self.instance.prices.all()
             ]
 
-        if service and prices is not None and service.category == Service.Category.LOGO_POSTER:
-            invalid_prices = [price for price in prices if price.get("billing_period") != PackagePrice.BillingPeriod.PER_TASK]
-            if invalid_prices:
-                raise serializers.ValidationError(
-                    {"prices": "Logo & poster design packages use only one fixed per_task price."}
-                )
+        if prices is not None:
+            attrs["prices"] = self._normalize_prices(service, prices)
         return attrs
 
     def create(self, validated_data):
