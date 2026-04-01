@@ -103,7 +103,12 @@ class PortfolioItemViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         try:
-            return PortfolioItem.objects.select_related("service", "package").all()
+            queryset = PortfolioItem.objects.select_related("service", "package")
+            if self.request.user.is_authenticated and self.request.user.role == CustomUser.Role.ADMIN:
+                return queryset.all()
+            if self.request.method in permissions.SAFE_METHODS:
+                return queryset.filter(is_active=True, service__is_active=True, package__is_active=True)
+            return queryset.all()
         except (ProgrammingError, OperationalError):
             return PortfolioItem.objects.none()
 
