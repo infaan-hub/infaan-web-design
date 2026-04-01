@@ -1,4 +1,5 @@
-from django.db import OperationalError, ProgrammingError, transaction
+from django.db import DatabaseError, OperationalError, ProgrammingError, transaction
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework import permissions, status, viewsets
@@ -109,6 +110,42 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
         if self.action in ("update", "partial_update", "destroy"):
             return [permissions.IsAuthenticated(), IsAdminUserRole()]
         return super().get_permissions()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        instance = serializer.instance
+
+        try:
+            data = self.get_serializer(instance).data
+        except (DatabaseError, OperationalError, ProgrammingError, ObjectDoesNotExist, AttributeError):
+            data = {
+                "id": instance.id,
+                "user": instance.user_id,
+                "package_price": instance.package_price_id,
+                "subscription_system": instance.subscription_system_id,
+                "status": instance.status,
+                "payment_status": instance.payment_status,
+                "payment_method": instance.payment_method,
+                "payment_contact": instance.payment_contact,
+                "payment_amount": str(instance.payment_amount) if instance.payment_amount is not None else None,
+                "payment_currency": instance.payment_currency,
+                "business_name": instance.business_name,
+                "contact_email": instance.contact_email,
+                "contact_phone": instance.contact_phone,
+                "notes": instance.notes,
+                "start_date": instance.start_date,
+                "end_date": instance.end_date,
+                "next_billing_date": instance.next_billing_date,
+                "auto_renew": instance.auto_renew,
+                "grace_period_days": instance.grace_period_days,
+                "created_at": instance.created_at,
+                "updated_at": instance.updated_at,
+            }
+
+        headers = self.get_success_headers(data)
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class TenantViewSet(viewsets.ReadOnlyModelViewSet):
