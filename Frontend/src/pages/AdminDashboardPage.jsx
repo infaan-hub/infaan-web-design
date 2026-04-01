@@ -457,85 +457,92 @@ function AdminDashboardPage({ app }) {
           </div>
         </div>
 
-        <div className="admin-catalog-grid">
-          {subscriptionSystems.map((system) => {
-            const pricePreview = getSystemPricePreview(system);
-            const displayPrice =
-              system.display_price !== null && system.display_price !== undefined && system.display_price !== ""
-                ? formatPrice(system.display_price, system.display_price_currency || "USD")
-                : "No display price";
+        {subscriptionSystems.length ? (
+          <div className="admin-catalog-grid">
+            {subscriptionSystems.map((system) => {
+              const pricePreview = getSystemPricePreview(system);
+              const displayPrice =
+                system.display_price !== null && system.display_price !== undefined && system.display_price !== ""
+                  ? formatPrice(system.display_price, system.display_price_currency || "USD")
+                  : "No display price";
 
-            return (
-              <article key={system.id} className="portfolio-product-card admin-portfolio-card system-admin-card">
-                <div className="portfolio-product-image-wrap">
-                  <img src={system.cover_image} alt={system.name} className="portfolio-product-image" />
-                </div>
-                <div className="portfolio-product-content">
-                  <div className="system-admin-topline">
-                    <span className={`status-pill ${system.is_active ? "status-active" : "status-cancelled"}`}>
-                      {system.is_active ? "active" : "inactive"}
-                    </span>
-                    <strong className="system-admin-display-price">{displayPrice}</strong>
+              return (
+                <article key={system.id} className="portfolio-product-card admin-portfolio-card system-admin-card">
+                  <div className="portfolio-product-image-wrap">
+                    <img src={system.cover_image} alt={system.name} className="portfolio-product-image" />
                   </div>
-                  <h3>{system.name}</h3>
-                  <p className="system-admin-summary">{system.summary}</p>
-                  <div className="system-admin-detail-list">
-                    <p className="system-admin-meta">
-                      <span>Service</span>
-                      <strong>{system.service_name || "-"}</strong>
-                    </p>
-                    <p className="system-admin-meta">
-                      <span>System URL</span>
-                      <strong>{system.system_url || "No system URL"}</strong>
-                    </p>
-                  </div>
-                  {pricePreview.length ? (
-                    <div className="price-list system-admin-price-list">
-                      {pricePreview.map((price) => (
-                        <span key={price.key} className="price-chip">
-                          {price.label}
-                        </span>
-                      ))}
+                  <div className="portfolio-product-content">
+                    <div className="system-admin-topline">
+                      <span className={`status-pill ${system.is_active ? "status-active" : "status-cancelled"}`}>
+                        {system.is_active ? "active" : "inactive"}
+                      </span>
+                      <strong className="system-admin-display-price">{displayPrice}</strong>
                     </div>
-                  ) : (
-                    <p>No package price yet</p>
-                  )}
-                </div>
-                <div className="portfolio-product-footer system-admin-actions">
-                  <button
-                    type="button"
-                    className="outline-button system-admin-button"
-                    onClick={() => {
-                      setSystemForm({
-                        service: String(system.service),
-                        name: system.name,
-                        summary: system.summary,
-                        details: system.details,
-                        system_url: system.system_url || "",
-                        display_price: system.display_price ?? "",
-                        display_price_currency: system.display_price_currency || "USD",
-                        cover_image: system.cover_image,
-                        gallery_images: [...(system.gallery_images || []), "", "", "", "", ""].slice(0, 5),
-                        is_active: system.is_active,
-                      });
-                      setEditingSystemId(system.id);
-                    }}
-                  >
-                    Update
-                  </button>
-                  <button
-                    type="button"
-                    className="header-button system-admin-button"
-                    onClick={() => deleteSubscriptionSystem(system.id)}
-                    aria-label="Delete system subscription"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+                    <h3>{system.name}</h3>
+                    <p className="system-admin-summary">{system.summary}</p>
+                    <div className="system-admin-detail-list">
+                      <p className="system-admin-meta">
+                        <span>Service</span>
+                        <strong>{system.service_name || "-"}</strong>
+                      </p>
+                      <p className="system-admin-meta">
+                        <span>System URL</span>
+                        <strong>{system.system_url || "No system URL"}</strong>
+                      </p>
+                    </div>
+                    {pricePreview.length ? (
+                      <div className="price-list system-admin-price-list">
+                        {pricePreview.map((price) => (
+                          <span key={price.key} className="price-chip">
+                            {price.label}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p>No package price yet</p>
+                    )}
+                  </div>
+                  <div className="portfolio-product-footer system-admin-actions">
+                    <button
+                      type="button"
+                      className="outline-button system-admin-button"
+                      onClick={() => {
+                        setSystemForm({
+                          service: String(system.service),
+                          name: system.name,
+                          summary: system.summary,
+                          details: system.details,
+                          system_url: system.system_url || "",
+                          display_price: system.display_price ?? "",
+                          display_price_currency: system.display_price_currency || "USD",
+                          cover_image: system.cover_image,
+                          gallery_images: [...(system.gallery_images || []), "", "", "", "", ""].slice(0, 5),
+                          is_active: system.is_active,
+                        });
+                        setEditingSystemId(system.id);
+                      }}
+                    >
+                      Update
+                    </button>
+                    <button
+                      type="button"
+                      className="header-button system-admin-button"
+                      onClick={() => deleteSubscriptionSystem(system.id)}
+                      aria-label="Delete system subscription"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="section-card admin-empty-state">
+            <h3>No system subscription posted yet</h3>
+            <p>Create a system subscription above and it will appear here for admin management.</p>
+          </div>
+        )}
 
         <div className="section-headline admin-booking-head">
           <div>
