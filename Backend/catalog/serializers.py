@@ -239,6 +239,7 @@ class ServicePackageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServicePackage
         fields = "__all__"
+        validators = []
 
     @staticmethod
     def _price_has_historical_references(price):
@@ -277,6 +278,7 @@ class ServicePackageSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         attrs = super().validate(attrs)
         service = attrs.get("service") or getattr(self.instance, "service", None)
+        tier = attrs.get("tier") or getattr(self.instance, "tier", None)
         prices = attrs.get("prices")
         if prices is None and self.instance is not None:
             prices = [
@@ -289,12 +291,34 @@ class ServicePackageSerializer(serializers.ModelSerializer):
                 for price in self.instance.prices.all()
             ]
 
+        if service and tier:
+            conflicting_active_package = ServicePackage.objects.filter(
+                service=service,
+                tier=tier,
+                is_active=True,
+            )
+            if self.instance is not None:
+                conflicting_active_package = conflicting_active_package.exclude(id=self.instance.id)
+            if conflicting_active_package.exists():
+                raise serializers.ValidationError({"tier": "An active package with this tier already exists for the selected service."})
+
         if prices is not None:
             attrs["prices"] = self._normalize_prices(service, prices)
         return attrs
 
     def create(self, validated_data):
         prices_data = validated_data.pop("prices", [])
+        service = validated_data["service"]
+        tier = validated_data["tier"]
+        existing_inactive = ServicePackage.objects.filter(service=service, tier=tier, is_active=False).first()
+
+        if existing_inactive:
+            for field, value in validated_data.items():
+                setattr(existing_inactive, field, value)
+            existing_inactive.is_active = validated_data.get("is_active", True)
+            existing_inactive.save()
+            return self.update(existing_inactive, {"prices": prices_data})
+
         package = ServicePackage.objects.create(**validated_data)
         for price_data in prices_data:
             PackagePrice.objects.create(package=package, **price_data)
@@ -339,6 +363,31 @@ class ServicePackageSerializer(serializers.ModelSerializer):
                     existing_price.delete()
 
         return instance
+
+
+class LogoPosterPackageSerializer(ServicePackageSerializer):
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        service = attrs.get("service") or getattr(self.instance, "service", None)
+        if service and service.category != Service.Category.LOGO_POSTER:
+            raise serializers.ValidationError({"service": "Use this API only for Logo & Poster Design services."})
+        prices = attrs.get("prices", [])
+        if not prices:
+            raise serializers.ValidationError({"prices": "Provide at least one per_task price."})
+        return attrs
+
+    def create(self, validated_data):
+        prices_data = validated_data.pop("prices", [])
+        service = validated_data["service"]
+        tier = validated_data["tier"]
+        existing_inactive = ServicePackage.objects.filter(service=service, tier=tier, is_active=False).first()
+        if existing_inactive:
+            for field, value in validated_data.items():
+                setattr(existing_inactive, field, value)
+            existing_inactive.is_active = validated_data.get("is_active", True)
+            existing_inactive.save()
+            return self.update(existing_inactive, {"prices": prices_data})
+        return super().create({**validated_data, "prices": prices_data})
 
 
 class SubscriptionSystemSerializer(serializers.ModelSerializer):

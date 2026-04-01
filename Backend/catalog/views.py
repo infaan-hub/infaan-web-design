@@ -26,6 +26,7 @@ from .models import (
 from .serializers import (
     ensure_subscription_control_records,
     ensure_system_order_control_records,
+    LogoPosterPackageSerializer,
     PackagePriceSerializer,
     PackageSubscriptionOrderSerializer,
     PortfolioItemSerializer,
@@ -96,6 +97,23 @@ class ServicePackageViewSet(viewsets.ModelViewSet):
                 instance.delete()
         except ProtectedError:
             self._soft_delete_package(instance)
+
+
+class LogoPosterPackageViewSet(ServicePackageViewSet):
+    serializer_class = LogoPosterPackageSerializer
+
+    def get_queryset(self):
+        try:
+            queryset = ServicePackage.objects.select_related("service").prefetch_related("prices").filter(
+                service__category=Service.Category.LOGO_POSTER
+            )
+            if self.request.user.is_authenticated and self.request.user.role == CustomUser.Role.ADMIN:
+                return queryset.all()
+            if self.request.method in permissions.SAFE_METHODS:
+                return queryset.filter(is_active=True, service__is_active=True)
+            return queryset.all()
+        except (ProgrammingError, OperationalError):
+            return ServicePackage.objects.none()
 
 
 class PackagePriceViewSet(viewsets.ModelViewSet):
