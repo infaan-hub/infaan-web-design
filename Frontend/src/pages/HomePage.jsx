@@ -43,6 +43,7 @@ function HomePage({ app }) {
     subscriptionSystems,
     selectPackage,
     selectSystem,
+    continueToPackageTime,
     requireLogin,
     formatPrice,
     currentUser,
@@ -219,7 +220,7 @@ function HomePage({ app }) {
         </div>
 
         {subscriptionSystems.length ? (
-          <div className="package-grid">
+          <div className="system-showcase-grid">
             {subscriptionSystems.map((system) => {
               const preferredPackage = system.packages?.[0];
               const preferredPrice =
@@ -229,80 +230,60 @@ function HomePage({ app }) {
                 preferredPackage?.prices?.find((price) => price.is_default) ||
                 preferredPackage?.prices?.find((price) => price.billing_period === "monthly") ||
                 preferredPackage?.prices?.[0];
-              const availableTimes = (preferredPackage?.prices || [])
-                .filter((price) => price.billing_period !== "per_task")
-                .slice(0, 3);
 
               return (
-                <article
-                  key={system.id}
-                  className="package-card system-home-card"
-                  onClick={() => {
-                    selectSystem(system.id);
-                    navigate("/system-subscription");
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      selectSystem(system.id);
-                      navigate("/system-subscription");
-                    }
-                  }}
-                >
-                  <div className="system-home-card-image" style={{ backgroundImage: `url(${system.cover_image})` }}>
-                    <span className="system-subscription-pill">{system.service_name || "System subscription"}</span>
+                <article key={system.id} className="system-showcase-card">
+                  <div className="system-showcase-media" style={{ backgroundImage: `url(${system.cover_image})` }}>
+                    <div className="system-showcase-overlay" />
+                    <div className="system-showcase-content">
+                      <span className="system-showcase-pill">{system.service_name || "System subscription"}</span>
+                      <div className="system-showcase-copy">
+                        <h3>{system.name}</h3>
+                        <p>{system.summary || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}</p>
+                      </div>
+                      {preferredPrice ? <strong className="system-showcase-price">{formatPrice(preferredPrice.amount, preferredPrice.currency)}</strong> : null}
+                    </div>
                   </div>
 
-                  <div className="system-home-card-copy">
-                    <div className="system-home-card-head">
-                      <h3>{system.name}</h3>
-                      {preferredPrice ? <strong>{formatPrice(preferredPrice.amount, preferredPrice.currency)}</strong> : null}
-                    </div>
-
-                    <p>{system.summary || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}</p>
-                    {system.system_url ? <p className="system-url-line">{system.system_url}</p> : null}
-
-                    {availableTimes.length ? (
-                      <div className="price-list">
-                        {availableTimes.map((price) => (
-                          <span key={`${system.id}-${price.id}`} className="price-chip">
-                            {`${price.billing_period} ${formatPrice(price.amount, price.currency)}`}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-
-                    <strong className="system-subscription-link">See /system-subscription</strong>
-
-                    {preferredPackage ? (
-                      <div className="hero-actions">
-                        <button
-                          type="button"
-                          className="outline-button system-preview-button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            selectSystem(system.id);
-                            navigate("/system-subscription");
-                          }}
-                        >
-                          View system
-                        </button>
-                        <button
-                          type="button"
-                          className="solid-button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            selectPackage(preferredPackage.id, system.id);
-                            selectSystem(system.id);
-                            requireLogin("/system-subscription");
-                          }}
-                        >
-                          Subscribe
-                        </button>
-                      </div>
-                    ) : null}
+                  <div className="system-showcase-actions">
+                    <button
+                      type="button"
+                      className="system-showcase-button"
+                      onClick={() => {
+                        if (!preferredPackage) return;
+                        selectPackage(preferredPackage.id, system.id);
+                        selectSystem(system.id);
+                        if (!currentUser) {
+                          requireLogin("/system-subscription");
+                          return;
+                        }
+                        continueToPackageTime(preferredPackage.id, system.id);
+                      }}
+                      disabled={!preferredPackage}
+                    >
+                      Subscribe
+                    </button>
+                    <button
+                      type="button"
+                      className="system-showcase-button"
+                      onClick={() => {
+                        selectSystem(system.id);
+                        navigate("/system-subscription");
+                      }}
+                    >
+                      View Features
+                    </button>
+                    <button
+                      type="button"
+                      className="system-showcase-button"
+                      onClick={() => {
+                        if (!system.system_url) return;
+                        window.open(system.system_url, "_blank", "noopener,noreferrer");
+                      }}
+                      disabled={!system.system_url}
+                    >
+                      Open
+                    </button>
                   </div>
                 </article>
               );

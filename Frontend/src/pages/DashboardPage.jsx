@@ -13,7 +13,6 @@ function DashboardPage({ app }) {
     subscriptionSystems,
     formatPrice,
     continueToPackageTime,
-    selectPackage,
     selectSystem,
     navigate,
     subscriptions,
@@ -175,48 +174,64 @@ function DashboardPage({ app }) {
         </div>
 
         {activeSystems.length ? (
-          <div className="service-visual-grid">
+          <div className="system-showcase-grid">
             {activeSystems.map((system) => {
+              const preferredPackage = system.packages?.[0];
               const pricePreview =
                 (system.display_price !== null && system.display_price !== undefined && system.display_price !== ""
                   ? { amount: system.display_price, currency: system.display_price_currency || "USD" }
                   : null) ||
-                system.packages?.[0]?.prices?.find((price) => price.is_default) ||
-                system.packages?.[0]?.prices?.find((price) => price.billing_period === "monthly") ||
-                system.packages?.[0]?.prices?.[0];
+                preferredPackage?.prices?.find((price) => price.is_default) ||
+                preferredPackage?.prices?.find((price) => price.billing_period === "monthly") ||
+                preferredPackage?.prices?.[0];
 
               return (
-                <article
-                  key={system.id}
-                  className="visual-card visual-card-action system-subscription-card"
-                  onClick={() => {
-                    selectSystem(system.id);
-                    navigate("/system-subscription");
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      selectSystem(system.id);
-                      navigate("/system-subscription");
-                    }
-                  }}
-                >
-                  <div
-                    className="visual-image system-subscription-image"
-                    style={{ backgroundImage: `url(${system.cover_image})` }}
-                  />
-                  <div className="visual-copy system-subscription-copy">
-                    <span className="system-subscription-pill">{system.service_name || "System subscription"}</span>
-                    <h3>{system.name}</h3>
-                    <p>{system.summary}</p>
-                    {system.system_url ? <p className="system-url-line">{system.system_url}</p> : null}
-                    <strong className="system-subscription-link">
-                      {pricePreview
-                        ? `See /system-subscription • ${formatPrice(pricePreview.amount, pricePreview.currency)}`
-                        : "See /system-subscription"}
-                    </strong>
+                <article key={system.id} className="system-showcase-card">
+                  <div className="system-showcase-media" style={{ backgroundImage: `url(${system.cover_image})` }}>
+                    <div className="system-showcase-overlay" />
+                    <div className="system-showcase-content">
+                      <span className="system-showcase-pill">{system.service_name || "System subscription"}</span>
+                      <div className="system-showcase-copy">
+                        <h3>{system.name}</h3>
+                        <p>{system.summary || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}</p>
+                      </div>
+                      {pricePreview ? <strong className="system-showcase-price">{formatPrice(pricePreview.amount, pricePreview.currency)}</strong> : null}
+                    </div>
+                  </div>
+                  <div className="system-showcase-actions">
+                    <button
+                      type="button"
+                      className="system-showcase-button"
+                      onClick={() => {
+                        if (!preferredPackage) return;
+                        selectSystem(system.id);
+                        continueToPackageTime(preferredPackage.id, system.id);
+                      }}
+                      disabled={!preferredPackage}
+                    >
+                      Subscribe
+                    </button>
+                    <button
+                      type="button"
+                      className="system-showcase-button"
+                      onClick={() => {
+                        selectSystem(system.id);
+                        navigate("/system-subscription");
+                      }}
+                    >
+                      View Features
+                    </button>
+                    <button
+                      type="button"
+                      className="system-showcase-button"
+                      onClick={() => {
+                        if (!system.system_url) return;
+                        window.open(system.system_url, "_blank", "noopener,noreferrer");
+                      }}
+                      disabled={!system.system_url}
+                    >
+                      Open
+                    </button>
                   </div>
                 </article>
               );
