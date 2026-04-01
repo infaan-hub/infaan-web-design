@@ -2662,6 +2662,28 @@ body[data-theme="dark"] .home-hero {
   text-align: center;
 }
 
+.receipt-control-block {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.receipt-control-head {
+  align-items: start;
+}
+
+.receipt-control-head h3 {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.15rem;
+}
+
+.receipt-control-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .receipt-barcode-wrap {
   display: grid;
   justify-items: center;

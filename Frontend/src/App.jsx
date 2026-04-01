@@ -98,6 +98,7 @@ const emptySystem = {
   summary: "",
   details: "",
   system_url: "",
+  admin_url: "",
   display_price: "",
   display_price_currency: "USD",
   cover_image: "",
@@ -1043,6 +1044,7 @@ function App() {
       summary: String(systemForm.summary || "").trim(),
       details: String(systemForm.details || "").trim(),
       system_url: String(systemForm.system_url || "").trim(),
+      admin_url: String(systemForm.admin_url || "").trim(),
       display_price:
         systemForm.display_price === "" || systemForm.display_price === null || systemForm.display_price === undefined
           ? null
@@ -1136,9 +1138,13 @@ function App() {
           } ${activePrice?.amount || ""}`.trim(),
         }),
       });
+      let hydratedBooking = createdBooking;
+      if (selectedSystem) {
+        hydratedBooking = await apiRequest(`/subscriptions/${createdBooking.id}/`);
+      }
       setBookingSent(true);
-      setLastBooking(createdBooking);
-      setSelectedBookingId(String(createdBooking.id));
+      setLastBooking(hydratedBooking);
+      setSelectedBookingId(String(hydratedBooking.id));
       setPendingPayment(null);
       setFeedback("Booking sent successfully.");
       await loadProfileAndSubscriptions();

@@ -328,6 +328,7 @@ function AdminDashboardPage({ app }) {
             <input value={systemForm.summary} onChange={(event) => updateField(setSystemForm, "summary", event.target.value)} placeholder="Front card summary" />
             <textarea value={systemForm.details} onChange={(event) => updateField(setSystemForm, "details", event.target.value)} placeholder="System details" />
             <input value={systemForm.system_url} onChange={(event) => updateField(setSystemForm, "system_url", event.target.value)} placeholder="System URL" />
+            <input value={systemForm.admin_url} onChange={(event) => updateField(setSystemForm, "admin_url", event.target.value)} placeholder="Admin URL" />
             <div className="payment-field-grid">
               <input
                 type="number"
@@ -489,6 +490,10 @@ function AdminDashboardPage({ app }) {
                         <span>System URL</span>
                         <strong>{system.system_url || "No system URL"}</strong>
                       </p>
+                      <p className="system-admin-meta">
+                        <span>Admin URL</span>
+                        <strong>{system.admin_url || "No admin URL"}</strong>
+                      </p>
                     </div>
                     {pricePreview.length ? (
                       <div className="price-list system-admin-price-list">
@@ -513,6 +518,7 @@ function AdminDashboardPage({ app }) {
                           summary: system.summary,
                           details: system.details,
                           system_url: system.system_url || "",
+                          admin_url: system.admin_url || "",
                           display_price: system.display_price ?? "",
                           display_price_currency: system.display_price_currency || "USD",
                           cover_image: system.cover_image,

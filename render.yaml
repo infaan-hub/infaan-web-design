@@ -1,8 +1,3 @@
-databases:
-  - name: infaan-db
-    databaseName: infaan_db
-    user: infaan_db_user
-
 services:
   - type: web
     name: infaan-backend
@@ -26,9 +21,7 @@ services:
       - key: CSRF_TRUSTED_ORIGINS
         value: "https://infaan-web-design.onrender.com,https://infaanwebdesign.vercel.app"
       - key: DATABASE_URL
-        fromDatabase:
-          name: infaan-db
-          property: connectionString
+        value: "postgresql://neondb_owner:npg_sRLiTIvBb45q@ep-cool-paper-anfwp3q3-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
       - key: SEED_INFAAN_DATA
         value: "true"
 

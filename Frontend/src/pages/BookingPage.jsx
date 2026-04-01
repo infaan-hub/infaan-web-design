@@ -238,6 +238,7 @@ function BookingPage({ app }) {
     "Selected package";
   const amountText = formatPrice(receiptBooking?.package_details?.amount, receiptBooking?.package_details?.currency);
   const dateText = `${issuedAt.toLocaleDateString()} · ${issuedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  const controlDetails = receiptBooking?.control_details || null;
 
   useEffect(() => {
     if (!selectedPackage || !selectedPrice) {
@@ -319,6 +320,35 @@ function BookingPage({ app }) {
                   ? "Booking sent to admin successfully."
                   : "Receipt is ready now. Booking is being sent silently to admin in the background."}
               </div>
+
+              {controlDetails ? (
+                <div className="receipt-control-block">
+                  <div className="section-headline receipt-control-head">
+                    <div>
+                      <p className="micro-label">system access</p>
+                      <h3>License and API keys</h3>
+                    </div>
+                  </div>
+                  <div className="receipt-control-grid">
+                    <div className="credential-card">
+                      <span className="micro-label">license key</span>
+                      <strong>{controlDetails.license_key}</strong>
+                    </div>
+                    <div className="credential-card">
+                      <span className="micro-label">api key</span>
+                      <strong>{controlDetails.api_key}</strong>
+                    </div>
+                    <div className="credential-card">
+                      <span className="micro-label">admin url</span>
+                      <strong>{controlDetails.admin_url || controlDetails.public_url || "Will be added by admin"}</strong>
+                    </div>
+                    <div className="credential-card">
+                      <span className="micro-label">connection</span>
+                      <strong>{String(controlDetails.connection_status || "active").replace("_", " ")}</strong>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
 
               <div className="receipt-barcode-wrap">
                 <ReceiptBarcode value={receiptNumber} />

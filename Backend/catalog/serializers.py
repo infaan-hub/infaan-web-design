@@ -45,12 +45,13 @@ def ensure_subscription_control_records(subscription):
         "name": subscription.subscription_system.name,
         "service_type": TenantService.ServiceType.DJANGO_SYSTEM,
         "public_url": subscription.subscription_system.system_url or "",
-        "admin_url": "",
+        "admin_url": subscription.subscription_system.admin_url or "",
         "license_key": credentials["license_key"],
         "api_key": credentials["api_key"],
         "api_secret": credentials["api_secret"],
-        "connection_status": TenantService.ConnectionStatus.PENDING,
+        "connection_status": TenantService.ConnectionStatus.ACTIVE,
         "is_enabled": True,
+        "connected_at": timezone.now(),
     }
     tenant_service, created = TenantService.objects.get_or_create(
         subscription=subscription,
@@ -70,15 +71,25 @@ def ensure_subscription_control_records(subscription):
     if not tenant_service.public_url and subscription.subscription_system.system_url:
         tenant_service.public_url = subscription.subscription_system.system_url
         updated_fields.append("public_url")
+    if not tenant_service.admin_url and subscription.subscription_system.admin_url:
+        tenant_service.admin_url = subscription.subscription_system.admin_url
+        updated_fields.append("admin_url")
     if subscription.get_effective_status() in {Subscription.Status.ACTIVE, Subscription.Status.GRACE_PERIOD}:
-        desired_enabled = True
         desired_tenant_status = Tenant.Status.ACTIVE
+        if tenant_service.connection_status == TenantService.ConnectionStatus.PENDING:
+            tenant_service.connection_status = TenantService.ConnectionStatus.ACTIVE
+            updated_fields.append("connection_status")
+        if tenant_service.connected_at is None:
+            tenant_service.connected_at = timezone.now()
+            updated_fields.append("connected_at")
     else:
-        desired_enabled = False
         desired_tenant_status = Tenant.Status.INACTIVE
-    if tenant_service.is_enabled != desired_enabled:
-        tenant_service.is_enabled = desired_enabled
-        updated_fields.append("is_enabled")
+        if tenant_service.connection_status != TenantService.ConnectionStatus.INACTIVE:
+            tenant_service.connection_status = TenantService.ConnectionStatus.INACTIVE
+            updated_fields.append("connection_status")
+        if tenant_service.is_enabled:
+            tenant_service.is_enabled = False
+            updated_fields.append("is_enabled")
     if tenant.status != desired_tenant_status:
         tenant.status = desired_tenant_status
         tenant.save(update_fields=["status", "updated_at"])
@@ -234,6 +245,8 @@ class SubscriptionSystemSerializer(serializers.ModelSerializer):
         attrs = super().validate(attrs)
         if "system_url" in attrs:
             attrs["system_url"] = (attrs.get("system_url") or "").strip()
+        if "admin_url" in attrs:
+            attrs["admin_url"] = (attrs.get("admin_url") or "").strip()
         if "display_price_currency" in attrs:
             attrs["display_price_currency"] = (attrs.get("display_price_currency") or "USD").upper()
         return attrs
@@ -330,6 +343,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             "name": system.name,
             "summary": system.summary,
             "system_url": system.system_url,
+            "admin_url": system.admin_url,
             "display_price": str(system.display_price) if system.display_price is not None else None,
             "display_price_currency": system.display_price_currency,
             "cover_image": system.cover_image,
