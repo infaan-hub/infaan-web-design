@@ -240,6 +240,14 @@ class ServicePackageSerializer(serializers.ModelSerializer):
         model = ServicePackage
         fields = "__all__"
 
+    @staticmethod
+    def _price_has_historical_references(price):
+        return (
+            price.subscriptions.exists()
+            or price.package_subscription_orders.exists()
+            or price.system_subscription_orders.exists()
+        )
+
     def validate_prices(self, value):
         seen = set()
         for price in value:
@@ -312,7 +320,7 @@ class ServicePackageSerializer(serializers.ModelSerializer):
                 for key, existing_price in existing_prices.items():
                     if key in incoming_by_key:
                         continue
-                    if existing_price.subscriptions.exists():
+                    if self._price_has_historical_references(existing_price):
                         # Keep historical prices referenced by subscriptions.
                         continue
                     existing_price.delete()
