@@ -117,10 +117,6 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
             return [permissions.IsAuthenticated(), IsAdminUserRole()]
         return super().get_permissions()
 
-    def create(self, request, *args, **kwargs):
-        return create_checkout_response(request, ServiceCheckoutSerializer, allow_system_provision=False, response_serializer=self.get_serializer)
-
-
 def build_subscription_response_data(instance, serializer_factory):
     try:
         return serializer_factory(instance).data
@@ -228,6 +224,18 @@ class SystemSubscriptionCheckoutView(APIView):
         except (DatabaseError, OperationalError, ProgrammingError, ObjectDoesNotExist, AttributeError):
             pass
         return Response(build_subscription_response_data(order, lambda instance: SystemSubscriptionOrderSerializer(instance)), status=status.HTTP_201_CREATED)
+
+
+class PackageSubscriptionCheckoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        return create_checkout_response(
+            request,
+            ServiceCheckoutSerializer,
+            allow_system_provision=False,
+            response_serializer=lambda instance: SubscriptionSerializer(instance),
+        )
 
 
 class SystemSubscriptionOrderViewSet(viewsets.ModelViewSet):

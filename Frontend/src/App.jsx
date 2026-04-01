@@ -1149,7 +1149,7 @@ function App() {
         activePaymentMethod === "mixx"
           ? pendingPayment?.phone_number || paymentForm.phone_number
           : pendingPayment?.card_name || paymentForm.card_name || "Gateway checkout";
-      const checkoutPath = selectedSystem ? "/system-subscriptions/checkout/" : "/subscriptions/";
+      const checkoutPath = selectedSystem ? "/system-subscriptions/checkout/" : "/package-subscriptions/checkout/";
       const createdBooking = await apiRequest(checkoutPath, {
         method: "POST",
         body: JSON.stringify({
