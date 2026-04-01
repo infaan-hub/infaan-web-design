@@ -16,16 +16,21 @@ from .models import (
     ServicePackage,
     Subscription,
     SubscriptionSystem,
+    SystemSubscriptionOrder,
     Tenant,
     TenantService,
     TenantServiceAdmin,
 )
 from .serializers import (
     ensure_subscription_control_records,
+    ensure_system_order_control_records,
     PackagePriceSerializer,
     PortfolioItemSerializer,
+    ServiceCheckoutSerializer,
     ServicePackageSerializer,
     ServiceSerializer,
+    SystemSubscriptionCheckoutSerializer,
+    SystemSubscriptionOrderSerializer,
     SubscriptionSerializer,
     SubscriptionSystemSerializer,
     TenantSerializer,
@@ -113,128 +118,137 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def create(self, request, *args, **kwargs):
-        package_price_id = request.data.get("package_price")
-        subscription_system_id = request.data.get("subscription_system")
-        payment_status = (request.data.get("payment_status", Subscription.PaymentStatus.PENDING) or Subscription.PaymentStatus.PENDING).lower()
-        payment_method = request.data.get("payment_method", "")
-        payment_contact = request.data.get("payment_contact", "")
-        payment_amount = request.data.get("payment_amount")
-        payment_currency = request.data.get("payment_currency", "USD")
-        business_name = (request.data.get("business_name") or "").strip()
-        contact_email = (request.data.get("contact_email") or "").strip()
-        contact_phone = (request.data.get("contact_phone") or "").strip()
-        notes = request.data.get("notes", "")
-        raw_start_date = request.data.get("start_date")
-        auto_renew = str(request.data.get("auto_renew", "false")).lower() in {"1", "true", "yes", "on"}
-        raw_grace_period_days = request.data.get("grace_period_days", 3)
+        return create_checkout_response(request, ServiceCheckoutSerializer, allow_system_provision=False, response_serializer=self.get_serializer)
 
-        if raw_start_date:
-            start_date = parse_date(str(raw_start_date))
-            if start_date is None:
-                return Response({"detail": "start_date must be a valid YYYY-MM-DD date."}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            start_date = timezone.localdate()
 
+def build_subscription_response_data(instance, serializer_factory):
+    try:
+        return serializer_factory(instance).data
+    except (DatabaseError, OperationalError, ProgrammingError, ObjectDoesNotExist, AttributeError):
+        return {
+            "id": instance.id,
+            "user": instance.user_id,
+            "package_price": instance.package_price_id,
+            "subscription_system": instance.subscription_system_id,
+            "status": instance.status,
+            "payment_status": instance.payment_status,
+            "payment_method": instance.payment_method,
+            "payment_contact": instance.payment_contact,
+            "payment_amount": str(instance.payment_amount) if instance.payment_amount is not None else None,
+            "payment_currency": instance.payment_currency,
+            "business_name": instance.business_name,
+            "contact_email": instance.contact_email,
+            "contact_phone": instance.contact_phone,
+            "notes": instance.notes,
+            "start_date": instance.start_date,
+            "end_date": instance.end_date,
+            "next_billing_date": instance.next_billing_date,
+            "auto_renew": instance.auto_renew,
+            "grace_period_days": instance.grace_period_days,
+            "created_at": instance.created_at,
+            "updated_at": instance.updated_at,
+        }
+
+
+def create_checkout_response(request, input_serializer_class, allow_system_provision, response_serializer):
+    serializer = input_serializer_class(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    validated = serializer.validated_data
+
+    start_date = validated.get("start_date") or timezone.localdate()
+    subscription = Subscription(
+        user=request.user,
+        package_price=validated["package_price"],
+        subscription_system=validated.get("subscription_system"),
+        payment_status=validated.get("payment_status", Subscription.PaymentStatus.PENDING),
+        payment_method=validated.get("payment_method", ""),
+        payment_contact=validated.get("payment_contact", ""),
+        payment_amount=validated.get("payment_amount"),
+        payment_currency=validated.get("payment_currency") or "USD",
+        business_name=validated["business_name"].strip(),
+        contact_email=validated["contact_email"].strip(),
+        contact_phone=validated["contact_phone"].strip(),
+        notes=validated.get("notes", ""),
+        auto_renew=validated.get("auto_renew", False),
+        grace_period_days=validated.get("grace_period_days", 3),
+    )
+
+    if subscription.payment_status == Subscription.PaymentStatus.PAID:
+        subscription.status = Subscription.Status.ACTIVE
+        subscription.assign_service_window(start_date)
+    else:
+        subscription.status = Subscription.Status.PENDING
+        subscription.start_date = start_date
+
+    subscription.save()
+
+    if allow_system_provision:
         try:
-            grace_period_days = int(raw_grace_period_days)
-        except (TypeError, ValueError):
-            return Response({"detail": "grace_period_days must be a whole number."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if payment_status not in {Subscription.PaymentStatus.PAID, Subscription.PaymentStatus.PENDING}:
-            return Response({"detail": "payment_status must be pending or paid."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not package_price_id:
-            return Response({"detail": "package_price is required."}, status=status.HTTP_400_BAD_REQUEST)
-        if not business_name or not contact_email or not contact_phone:
-            return Response(
-                {"detail": "business_name, contact_email, and contact_phone are required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            package_price = PackagePrice.objects.select_related("package", "package__service").get(pk=package_price_id)
-        except PackagePrice.DoesNotExist:
-            return Response({"detail": "Selected package price was not found."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not package_price.package.is_active or not package_price.package.service.is_active:
-            return Response({"detail": "This package is not currently available."}, status=status.HTTP_400_BAD_REQUEST)
-
-        subscription_system = None
-        if subscription_system_id not in (None, "", "null"):
-            try:
-                subscription_system = SubscriptionSystem.objects.only("id", "service_id", "is_active").get(pk=subscription_system_id)
-            except SubscriptionSystem.DoesNotExist:
-                return Response({"detail": "Selected system subscription was not found."}, status=status.HTTP_400_BAD_REQUEST)
-
-            if not subscription_system.is_active:
-                return Response({"detail": "This system is not currently active."}, status=status.HTTP_400_BAD_REQUEST)
-            if subscription_system.service_id != package_price.package.service_id:
-                return Response(
-                    {"detail": "Selected system must match the package service."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-        subscription = Subscription(
-            user=request.user,
-            package_price=package_price,
-            subscription_system=subscription_system,
-            payment_status=payment_status,
-            payment_method=payment_method,
-            payment_contact=payment_contact,
-            payment_amount=payment_amount or None,
-            payment_currency=payment_currency or "USD",
-            business_name=business_name,
-            contact_email=contact_email,
-            contact_phone=contact_phone,
-            notes=notes,
-            auto_renew=auto_renew,
-            grace_period_days=grace_period_days if grace_period_days >= 0 else 3,
-        )
-
-        if payment_status == Subscription.PaymentStatus.PAID:
-            subscription.status = Subscription.Status.ACTIVE
-            subscription.assign_service_window(start_date)
-        else:
-            subscription.status = Subscription.Status.PENDING
-            subscription.start_date = start_date
-
-        subscription.save()
-        instance = subscription
-
-        try:
-            ensure_subscription_control_records(instance)
+            ensure_subscription_control_records(subscription)
         except (DatabaseError, OperationalError, ProgrammingError, ObjectDoesNotExist, AttributeError):
             pass
 
-        try:
-            data = self.get_serializer(instance).data
-        except (DatabaseError, OperationalError, ProgrammingError, ObjectDoesNotExist, AttributeError):
-            data = {
-                "id": instance.id,
-                "user": instance.user_id,
-                "package_price": instance.package_price_id,
-                "subscription_system": instance.subscription_system_id,
-                "status": instance.status,
-                "payment_status": instance.payment_status,
-                "payment_method": instance.payment_method,
-                "payment_contact": instance.payment_contact,
-                "payment_amount": str(instance.payment_amount) if instance.payment_amount is not None else None,
-                "payment_currency": instance.payment_currency,
-                "business_name": instance.business_name,
-                "contact_email": instance.contact_email,
-                "contact_phone": instance.contact_phone,
-                "notes": instance.notes,
-                "start_date": instance.start_date,
-                "end_date": instance.end_date,
-                "next_billing_date": instance.next_billing_date,
-                "auto_renew": instance.auto_renew,
-                "grace_period_days": instance.grace_period_days,
-                "created_at": instance.created_at,
-                "updated_at": instance.updated_at,
-            }
+    data = build_subscription_response_data(subscription, response_serializer)
+    return Response(data, status=status.HTTP_201_CREATED)
 
-        headers = self.get_success_headers(data)
-        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+
+class SystemSubscriptionCheckoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = SystemSubscriptionCheckoutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated = serializer.validated_data
+        start_date = validated.get("start_date") or timezone.localdate()
+        order = SystemSubscriptionOrder(
+            user=request.user,
+            package_price=validated["package_price"],
+            subscription_system=validated["subscription_system"],
+            payment_status=validated.get("payment_status", SystemSubscriptionOrder.PaymentStatus.PENDING),
+            payment_method=validated.get("payment_method", ""),
+            payment_contact=validated.get("payment_contact", ""),
+            payment_amount=validated.get("payment_amount"),
+            payment_currency=validated.get("payment_currency") or "USD",
+            business_name=validated["business_name"].strip(),
+            contact_email=validated["contact_email"].strip(),
+            contact_phone=validated["contact_phone"].strip(),
+            notes=validated.get("notes", ""),
+            auto_renew=validated.get("auto_renew", False),
+            grace_period_days=validated.get("grace_period_days", 3),
+        )
+        if order.payment_status == SystemSubscriptionOrder.PaymentStatus.PAID:
+            order.status = SystemSubscriptionOrder.Status.ACTIVE
+            order.assign_service_window(start_date)
+        else:
+            order.status = SystemSubscriptionOrder.Status.PENDING
+            order.start_date = start_date
+        order.save()
+        try:
+            ensure_system_order_control_records(order)
+        except (DatabaseError, OperationalError, ProgrammingError, ObjectDoesNotExist, AttributeError):
+            pass
+        return Response(build_subscription_response_data(order, lambda instance: SystemSubscriptionOrderSerializer(instance)), status=status.HTTP_201_CREATED)
+
+
+class SystemSubscriptionOrderViewSet(viewsets.ModelViewSet):
+    serializer_class = SystemSubscriptionOrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        try:
+            queryset = SystemSubscriptionOrder.objects.select_related(
+                "user", "package_price", "package_price__package", "package_price__package__service", "subscription_system"
+            )
+            if self.request.user.role == CustomUser.Role.ADMIN:
+                return queryset.all()
+            return queryset.filter(user=self.request.user)
+        except (ProgrammingError, OperationalError):
+            return SystemSubscriptionOrder.objects.none()
+
+    def get_permissions(self):
+        if self.action in ("update", "partial_update", "destroy"):
+            return [permissions.IsAuthenticated(), IsAdminUserRole()]
+        return super().get_permissions()
 
 
 class TenantViewSet(viewsets.ReadOnlyModelViewSet):

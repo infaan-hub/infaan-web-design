@@ -11,6 +11,7 @@ from .models import (
     ServicePackage,
     Subscription,
     SubscriptionSystem,
+    SystemSubscriptionOrder,
     Tenant,
     TenantService,
     TenantServiceAdmin,
@@ -117,6 +118,98 @@ def ensure_subscription_control_records(subscription):
         tenant=tenant,
         service=tenant_service,
         user_identifier=subscription.user.email or subscription.user.username,
+        defaults={"role": "tenant_admin", "is_active": True},
+    )
+    return tenant_service
+
+
+def ensure_system_order_control_records(order):
+    if not order.subscription_system_id or order.payment_status != SystemSubscriptionOrder.PaymentStatus.PAID:
+        return None
+
+    tenant, _ = Tenant.objects.get_or_create(
+        owner=order.user,
+        business_name=order.business_name,
+        defaults={"status": Tenant.Status.ACTIVE},
+    )
+    if tenant.status != Tenant.Status.ACTIVE:
+        tenant.status = Tenant.Status.ACTIVE
+        tenant.save(update_fields=["status", "updated_at"])
+
+    credentials = TenantService.issue_credentials()
+    tenant_service, _ = TenantService.objects.get_or_create(
+        system_order=order,
+        defaults={
+            "tenant": tenant,
+            "subscription_system": order.subscription_system,
+            "name": order.subscription_system.name,
+            "service_type": TenantService.ServiceType.DJANGO_SYSTEM,
+            "public_url": order.subscription_system.system_url or "",
+            "admin_url": order.subscription_system.admin_url or "",
+            "license_key": credentials["license_key"],
+            "api_key": credentials["api_key"],
+            "api_secret": credentials["api_secret"],
+            "connection_status": TenantService.ConnectionStatus.ACTIVE,
+            "is_enabled": True,
+            "connected_at": timezone.now(),
+        },
+    )
+
+    updated_fields = []
+    if tenant_service.tenant_id != tenant.id:
+        tenant_service.tenant = tenant
+        updated_fields.append("tenant")
+    if tenant_service.subscription_id is not None:
+        tenant_service.subscription = None
+        updated_fields.append("subscription")
+    if tenant_service.subscription_system_id != order.subscription_system_id:
+        tenant_service.subscription_system = order.subscription_system
+        updated_fields.append("subscription_system")
+    if tenant_service.name != order.subscription_system.name:
+        tenant_service.name = order.subscription_system.name
+        updated_fields.append("name")
+    if not tenant_service.public_url and order.subscription_system.system_url:
+        tenant_service.public_url = order.subscription_system.system_url
+        updated_fields.append("public_url")
+    if not tenant_service.admin_url and order.subscription_system.admin_url:
+        tenant_service.admin_url = order.subscription_system.admin_url
+        updated_fields.append("admin_url")
+    if order.get_effective_status() in {SystemSubscriptionOrder.Status.ACTIVE, SystemSubscriptionOrder.Status.GRACE_PERIOD}:
+        if tenant_service.connection_status == TenantService.ConnectionStatus.PENDING:
+            tenant_service.connection_status = TenantService.ConnectionStatus.ACTIVE
+            updated_fields.append("connection_status")
+        if tenant_service.connected_at is None:
+            tenant_service.connected_at = timezone.now()
+            updated_fields.append("connected_at")
+    else:
+        if tenant_service.connection_status != TenantService.ConnectionStatus.INACTIVE:
+            tenant_service.connection_status = TenantService.ConnectionStatus.INACTIVE
+            updated_fields.append("connection_status")
+        if tenant_service.is_enabled:
+            tenant_service.is_enabled = False
+            updated_fields.append("is_enabled")
+    if updated_fields:
+        tenant_service.save(update_fields=[*updated_fields, "updated_at"])
+
+    package = order.package_price.package
+    feature_codes = build_feature_codes(package)
+    existing_features = {item.feature_code: item for item in tenant_service.feature_access.all()}
+    for feature_code in feature_codes:
+        if feature_code in existing_features:
+            if not existing_features[feature_code].enabled:
+                existing_features[feature_code].enabled = True
+                existing_features[feature_code].save(update_fields=["enabled", "updated_at"])
+        else:
+            TenantServiceFeatureAccess.objects.create(service=tenant_service, feature_code=feature_code, enabled=True)
+    for feature_code, feature in existing_features.items():
+        if feature_code not in feature_codes and feature.enabled:
+            feature.enabled = False
+            feature.save(update_fields=["enabled", "updated_at"])
+
+    TenantServiceAdmin.objects.get_or_create(
+        tenant=tenant,
+        service=tenant_service,
+        user_identifier=order.user.email or order.user.username,
         defaults={"role": "tenant_admin", "is_active": True},
     )
     return tenant_service
@@ -261,6 +354,168 @@ class PortfolioItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = PortfolioItem
         fields = "__all__"
+
+
+class BaseCheckoutSerializer(serializers.Serializer):
+    package_price = serializers.PrimaryKeyRelatedField(queryset=PackagePrice.objects.select_related("package", "package__service"))
+    payment_status = serializers.ChoiceField(
+        choices=[Subscription.PaymentStatus.PENDING, Subscription.PaymentStatus.PAID],
+        default=Subscription.PaymentStatus.PENDING,
+    )
+    payment_method = serializers.CharField(required=False, allow_blank=True, default="")
+    payment_contact = serializers.CharField(required=False, allow_blank=True, default="")
+    payment_amount = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    payment_currency = serializers.CharField(required=False, allow_blank=True, default="USD")
+    business_name = serializers.CharField()
+    contact_email = serializers.EmailField()
+    contact_phone = serializers.CharField()
+    notes = serializers.CharField(required=False, allow_blank=True, default="")
+    start_date = serializers.DateField(required=False)
+    auto_renew = serializers.BooleanField(required=False, default=False)
+    grace_period_days = serializers.IntegerField(required=False, min_value=0, default=3)
+
+    def validate_package_price(self, value):
+        if not value.package.is_active or not value.package.service.is_active:
+            raise serializers.ValidationError("This package is not currently available.")
+        return value
+
+
+class ServiceCheckoutSerializer(BaseCheckoutSerializer):
+    subscription_system = serializers.PrimaryKeyRelatedField(read_only=True, allow_null=True)
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if self.initial_data.get("subscription_system") not in (None, "", "null"):
+            raise serializers.ValidationError({"subscription_system": "Use the system subscription checkout API for system subscriptions."})
+        return attrs
+
+
+class SystemSubscriptionCheckoutSerializer(BaseCheckoutSerializer):
+    subscription_system = serializers.PrimaryKeyRelatedField(
+        queryset=SubscriptionSystem.objects.only(
+            "id",
+            "service_id",
+            "is_active",
+        )
+    )
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        subscription_system = attrs["subscription_system"]
+        package_price = attrs["package_price"]
+        if not subscription_system.is_active:
+            raise serializers.ValidationError({"subscription_system": "This system is not currently active."})
+        if subscription_system.service_id != package_price.package.service_id:
+            raise serializers.ValidationError({"subscription_system": "Selected system must match the package service."})
+        return attrs
+
+
+class SystemSubscriptionOrderSerializer(serializers.ModelSerializer):
+    user_details = serializers.SerializerMethodField(read_only=True)
+    package_details = serializers.SerializerMethodField(read_only=True)
+    service_access = serializers.SerializerMethodField(read_only=True)
+    system_details = serializers.SerializerMethodField(read_only=True)
+    control_details = serializers.SerializerMethodField(read_only=True)
+    record_type = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = SystemSubscriptionOrder
+        fields = (
+            "id",
+            "user",
+            "package_price",
+            "subscription_system",
+            "status",
+            "payment_status",
+            "payment_method",
+            "payment_contact",
+            "payment_amount",
+            "payment_currency",
+            "business_name",
+            "contact_email",
+            "contact_phone",
+            "notes",
+            "start_date",
+            "end_date",
+            "next_billing_date",
+            "auto_renew",
+            "grace_period_days",
+            "created_at",
+            "updated_at",
+            "user_details",
+            "package_details",
+            "service_access",
+            "system_details",
+            "control_details",
+            "record_type",
+        )
+
+    def get_record_type(self, obj):
+        return "system_subscription"
+
+    def get_user_details(self, obj):
+        return {"id": obj.user_id, "username": obj.user.username, "email": obj.user.email, "role": obj.user.role}
+
+    def get_package_details(self, obj):
+        price = obj.package_price
+        package = price.package
+        return {
+            "service": package.service.name,
+            "tier": package.tier,
+            "title": package.title,
+            "features": package.features,
+            "payment_notes": package.payment_notes,
+            "billing_period": price.billing_period,
+            "amount": str(price.amount),
+            "currency": price.currency,
+        }
+
+    def get_service_access(self, obj):
+        effective_status = obj.get_effective_status()
+        return {
+            "status": effective_status,
+            "can_access": obj.can_access_service(),
+            "start_date": obj.start_date,
+            "end_date": obj.end_date,
+            "next_billing_date": obj.next_billing_date,
+            "grace_period_days": obj.grace_period_days,
+        }
+
+    def get_system_details(self, obj):
+        system = obj.subscription_system
+        return {
+            "id": system.id,
+            "name": system.name,
+            "summary": system.summary,
+            "system_url": system.system_url,
+            "admin_url": getattr(system, "admin_url", ""),
+            "display_price": str(system.display_price) if system.display_price is not None else None,
+            "display_price_currency": system.display_price_currency,
+            "cover_image": system.cover_image,
+            "gallery_images": system.gallery_images,
+            "is_active": system.is_active,
+        }
+
+    def get_control_details(self, obj):
+        try:
+            tenant_service = obj.tenant_service
+        except (ObjectDoesNotExist, AttributeError, DatabaseError, OperationalError, ProgrammingError):
+            tenant_service = None
+        if not tenant_service:
+            return None
+        return {
+            "tenant_id": tenant_service.tenant_id,
+            "tenant_name": tenant_service.tenant.business_name,
+            "service_id": tenant_service.id,
+            "service_name": tenant_service.name,
+            "license_key": tenant_service.license_key,
+            "api_key": tenant_service.api_key,
+            "api_secret": tenant_service.api_secret,
+            "connection_status": tenant_service.connection_status,
+            "admin_url": tenant_service.admin_url,
+            "public_url": tenant_service.public_url,
+            "is_enabled": tenant_service.is_enabled,
+        }
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):

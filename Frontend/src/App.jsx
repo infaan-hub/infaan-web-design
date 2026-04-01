@@ -373,12 +373,22 @@ function App() {
   async function loadProfileAndSubscriptions() {
     if (!token) return;
 
-    const [profileData, subscriptionData] = await Promise.all([apiRequest("/auth/me/"), apiRequest("/subscriptions/")]);
+    const [profileData, subscriptionData, systemOrderData] = await Promise.all([
+      apiRequest("/auth/me/"),
+      apiRequest("/subscriptions/"),
+      apiRequest("/system-subscription-orders/"),
+    ]);
     if (profileData?.id) {
       setCurrentUser(profileData);
       localStorage.setItem("infaan_user", JSON.stringify(profileData));
     }
-    setSubscriptions(subscriptionData.results || subscriptionData || []);
+    const standardSubscriptions = subscriptionData.results || subscriptionData || [];
+    const systemOrders = systemOrderData.results || systemOrderData || [];
+    setSubscriptions(
+      [...standardSubscriptions, ...systemOrders].sort(
+        (left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0)
+      )
+    );
   }
 
   async function loadUsers() {
@@ -1126,7 +1136,8 @@ function App() {
         activePaymentMethod === "mixx"
           ? pendingPayment?.phone_number || paymentForm.phone_number
           : pendingPayment?.card_name || paymentForm.card_name || "Gateway checkout";
-      const createdBooking = await apiRequest("/subscriptions/", {
+      const checkoutPath = selectedSystem ? "/system-subscriptions/checkout/" : "/subscriptions/";
+      const createdBooking = await apiRequest(checkoutPath, {
         method: "POST",
         body: JSON.stringify({
           ...subscriptionForm,

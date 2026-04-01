@@ -12,6 +12,8 @@ from catalog.views import (
     PackagePriceViewSet,
     ServicePackageViewSet,
     ServiceViewSet,
+    SystemSubscriptionCheckoutView,
+    SystemSubscriptionOrderViewSet,
     SubscriptionSystemViewSet,
     SubscriptionViewSet,
     SubscriptionStatusView,
@@ -29,6 +31,7 @@ router.register("prices", PackagePriceViewSet, basename="price")
 router.register("portfolio-items", PortfolioItemViewSet, basename="portfolio-item")
 router.register("subscription-systems", SubscriptionSystemViewSet, basename="subscription-system")
 router.register("subscriptions", SubscriptionViewSet, basename="subscription")
+router.register("system-subscription-orders", SystemSubscriptionOrderViewSet, basename="system-subscription-order")
 router.register("tenants", TenantViewSet, basename="tenant")
 router.register("tenant-services", TenantServiceViewSet, basename="tenant-service")
 router.register("tenant-service-admins", TenantServiceAdminViewSet, basename="tenant-service-admin")
@@ -43,6 +46,7 @@ urlpatterns = [
     path("api/auth/me/", profile, name="profile"),
     path("api/license/validate/", LicenseValidateView.as_view(), name="license-validate"),
     path("api/subscription/status/", SubscriptionStatusView.as_view(), name="subscription-status"),
+    path("api/system-subscriptions/checkout/", SystemSubscriptionCheckoutView.as_view(), name="system-subscription-checkout"),
     path("api/features/", FeatureAccessView.as_view(), name="feature-access"),
     path("api/admin-access/", AdminAccessView.as_view(), name="admin-access"),
     path("api/heartbeat/", HeartbeatView.as_view(), name="heartbeat"),

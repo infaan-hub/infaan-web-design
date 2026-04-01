@@ -140,7 +140,10 @@ class TenantService(TimeStampedModel):
         INACTIVE = "inactive", "Inactive"
 
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="services")
-    subscription = models.OneToOneField("Subscription", on_delete=models.CASCADE, related_name="tenant_service")
+    subscription = models.OneToOneField("Subscription", on_delete=models.CASCADE, related_name="tenant_service", null=True, blank=True)
+    system_order = models.OneToOneField(
+        "SystemSubscriptionOrder", on_delete=models.CASCADE, related_name="tenant_service", null=True, blank=True
+    )
     subscription_system = models.ForeignKey(
         SubscriptionSystem, on_delete=models.SET_NULL, related_name="tenant_services", null=True, blank=True
     )
@@ -184,13 +187,14 @@ class TenantService(TimeStampedModel):
         }
 
     def is_subscription_active(self):
-        if not self.subscription_id:
+        active_record = self.system_order or self.subscription
+        if not active_record:
             return False
-        if self.subscription.payment_status != Subscription.PaymentStatus.PAID:
+        if active_record.payment_status != Subscription.PaymentStatus.PAID:
             return False
         if self.tenant.status != Tenant.Status.ACTIVE:
             return False
-        return self.subscription.can_access_service() and self.connection_status == self.ConnectionStatus.ACTIVE and self.is_enabled
+        return active_record.can_access_service() and self.connection_status == self.ConnectionStatus.ACTIVE and self.is_enabled
 
 
 class TenantServiceAdmin(TimeStampedModel):
@@ -299,6 +303,77 @@ class Subscription(TimeStampedModel):
         if today <= grace_end:
             return self.Status.GRACE_PERIOD
 
+        return self.Status.EXPIRED
+
+    def can_access_service(self, reference_date=None):
+        return self.get_effective_status(reference_date) in {self.Status.ACTIVE, self.Status.GRACE_PERIOD}
+
+
+class SystemSubscriptionOrder(TimeStampedModel):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        ACTIVE = "active", "Active"
+        COMPLETED = "completed", "Completed"
+        EXPIRED = "expired", "Expired"
+        SUSPENDED = "suspended", "Suspended"
+        GRACE_PERIOD = "grace_period", "Grace Period"
+        CANCELLED = "cancelled", "Cancelled"
+
+    class PaymentStatus(models.TextChoices):
+        PENDING = "pending", "Pending"
+        PAID = "paid", "Paid"
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="system_subscription_orders")
+    package_price = models.ForeignKey(PackagePrice, on_delete=models.PROTECT, related_name="system_subscription_orders")
+    subscription_system = models.ForeignKey(SubscriptionSystem, on_delete=models.CASCADE, related_name="system_orders")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
+    payment_method = models.CharField(max_length=30, blank=True)
+    payment_contact = models.CharField(max_length=120, blank=True)
+    payment_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    payment_currency = models.CharField(max_length=10, default="USD")
+    business_name = models.CharField(max_length=120)
+    contact_email = models.EmailField()
+    contact_phone = models.CharField(max_length=30)
+    notes = models.TextField(blank=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    next_billing_date = models.DateField(null=True, blank=True)
+    auto_renew = models.BooleanField(default=False)
+    grace_period_days = models.PositiveIntegerField(default=3)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def get_duration_days(self):
+        period = self.package_price.billing_period
+        return {
+            PackagePrice.BillingPeriod.WEEKLY: 7,
+            PackagePrice.BillingPeriod.MONTHLY: 30,
+            PackagePrice.BillingPeriod.YEARLY: 365,
+            PackagePrice.BillingPeriod.PER_TASK: 30,
+        }.get(period, 30)
+
+    def assign_service_window(self, reference_date=None):
+        start = reference_date or self.start_date or timezone.localdate()
+        self.start_date = start
+        duration_days = self.get_duration_days()
+        self.end_date = start + timedelta(days=duration_days)
+        self.next_billing_date = self.end_date
+
+    def get_effective_status(self, reference_date=None):
+        today = reference_date or timezone.localdate()
+        if self.status in {self.Status.CANCELLED, self.Status.SUSPENDED, self.Status.COMPLETED}:
+            return self.status
+        if not self.end_date:
+            return self.Status.ACTIVE if self.payment_status == self.PaymentStatus.PAID else self.Status.PENDING
+        if self.payment_status != self.PaymentStatus.PAID:
+            return self.Status.PENDING
+        if today <= self.end_date:
+            return self.Status.ACTIVE
+        grace_end = self.end_date + timedelta(days=self.grace_period_days)
+        if today <= grace_end:
+            return self.Status.GRACE_PERIOD
         return self.Status.EXPIRED
 
     def can_access_service(self, reference_date=None):
