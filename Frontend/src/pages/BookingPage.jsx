@@ -201,7 +201,7 @@ function downloadReceiptImage({ receiptNumber, amountText, dateText, customerNam
 }
 
 function BookingPage({ app }) {
-  const { selectedPackage, selectedPrice, submitBooking, bookingSent, loading, lastBooking, currentUser, formatPrice, pendingPayment, navigate } =
+  const { selectedPackage, selectedPrice, selectedSystem, submitBooking, bookingSent, loading, lastBooking, currentUser, formatPrice, pendingPayment, navigate } =
     app;
   const autoSubmitRef = useRef(false);
   const autoDownloadRef = useRef("");
@@ -213,18 +213,29 @@ function BookingPage({ app }) {
       id: buildPendingReceiptNumber(selectedPrice),
       created_at: new Date().toISOString(),
       package_details: {
-        title: selectedPackage.title,
+        title: pendingPayment?.package_title || selectedSystem?.name || selectedPackage.title,
         amount: selectedPrice.amount,
         currency: selectedPrice.currency,
         billing_period: selectedPrice.billing_period,
       },
+      system_details: selectedSystem
+        ? {
+            name: selectedSystem.name,
+          }
+        : null,
     };
-  }, [lastBooking, pendingPayment, selectedPackage, selectedPrice]);
+  }, [lastBooking, pendingPayment, selectedPackage, selectedPrice, selectedSystem]);
 
   const issuedAt = receiptBooking?.created_at ? new Date(receiptBooking.created_at) : new Date();
   const receiptNumber = lastBooking ? buildReceiptNumber(lastBooking) : buildPendingReceiptNumber(selectedPrice);
   const customerName = currentUser?.first_name || currentUser?.username || "Customer";
-  const packageName = selectedPackage?.title || receiptBooking?.package_details?.title || "Selected package";
+  const packageName =
+    receiptBooking?.system_details?.name ||
+    pendingPayment?.system_name ||
+    selectedSystem?.name ||
+    selectedPackage?.title ||
+    receiptBooking?.package_details?.title ||
+    "Selected package";
   const amountText = formatPrice(receiptBooking?.package_details?.amount, receiptBooking?.package_details?.currency);
   const dateText = `${issuedAt.toLocaleDateString()} · ${issuedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 

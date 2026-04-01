@@ -527,7 +527,14 @@ function App() {
   }
 
   function getSystemBasePackage(systemObject) {
-    return systemObject?.packages?.[0] || null;
+    if (!systemObject?.packages?.length) return null;
+    return (
+      systemObject.packages.find((pkg) =>
+        (pkg.prices || []).some((price) => ["monthly", "yearly"].includes(price.billing_period))
+      ) ||
+      systemObject.packages.find((pkg) => pkg.tier !== "extra") ||
+      systemObject.packages[0]
+    );
   }
 
   function getSystemBasePrice(systemObject, billingPeriod) {
@@ -572,6 +579,7 @@ function App() {
 
   function selectPackage(packageId, systemId = "") {
     const packageMatch = packages.find((pkg) => String(pkg.id) === String(packageId));
+    const systemMatch = subscriptionSystems.find((system) => String(system.id) === String(systemId));
     clearSystemSubscriptionPlan();
     setSelectedPackageId(String(packageId));
     setSelectedPriceId(packageMatch ? String(getPreferredPrice(packageMatch)?.id || "") : "");
@@ -584,7 +592,7 @@ function App() {
     }
     setSubscriptionForm((previous) => ({
       ...previous,
-      business_name: previous.business_name || packageMatch.title,
+      business_name: previous.business_name || systemMatch?.name || packageMatch.title,
     }));
   }
 
@@ -724,6 +732,7 @@ function App() {
       currency: activePrice?.currency || "USD",
       billing_period: activePrice?.billing_period || "",
       package_title: selectedSystem ? selectedSystem.name : selectedPackage.title,
+      system_name: selectedSystem?.name || "",
     });
     setBookingSent(false);
     setLastBooking(null);
@@ -1120,7 +1129,7 @@ function App() {
           payment_contact: paymentContact,
           payment_amount: activePrice?.amount || 0,
           payment_currency: activePrice?.currency || "USD",
-          notes: `${subscriptionForm.notes}\nPayment method: ${activePaymentMethod}\nPayment contact: ${paymentContact}\nBilling period: ${
+          notes: `${subscriptionForm.notes}\nSelected system: ${selectedSystem?.name || "N/A"}\nPayment method: ${activePaymentMethod}\nPayment contact: ${paymentContact}\nBilling period: ${
             activePrice?.billing_period || ""
           }\nAmount: ${
             activePrice?.currency || "USD"

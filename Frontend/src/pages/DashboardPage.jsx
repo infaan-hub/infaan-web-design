@@ -176,7 +176,10 @@ function DashboardPage({ app }) {
         {activeSystems.length ? (
           <div className="system-showcase-grid">
             {activeSystems.map((system) => {
-              const preferredPackage = system.packages?.[0];
+              const preferredPackage =
+                system.packages?.find((pkg) => (pkg.prices || []).some((price) => ["monthly", "yearly"].includes(price.billing_period))) ||
+                system.packages?.find((pkg) => pkg.tier !== "extra") ||
+                system.packages?.[0];
               const pricePreview =
                 (system.display_price !== null && system.display_price !== undefined && system.display_price !== ""
                   ? { amount: system.display_price, currency: system.display_price_currency || "USD" }
