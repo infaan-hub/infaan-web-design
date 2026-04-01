@@ -1,6 +1,7 @@
 from django.utils import timezone
 from django.db import DatabaseError, OperationalError, ProgrammingError
 from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from .models import (
@@ -338,22 +339,39 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         if not obj.subscription_system_id:
             return None
 
-        system = obj.subscription_system
-        return {
-            "id": system.id,
-            "name": system.name,
-            "summary": system.summary,
-            "system_url": system.system_url,
-            "admin_url": system.admin_url,
-            "display_price": str(system.display_price) if system.display_price is not None else None,
-            "display_price_currency": system.display_price_currency,
-            "cover_image": system.cover_image,
-            "gallery_images": system.gallery_images,
-            "is_active": system.is_active,
-        }
+        try:
+            system = obj.subscription_system
+            return {
+                "id": system.id,
+                "name": system.name,
+                "summary": system.summary,
+                "system_url": system.system_url,
+                "admin_url": getattr(system, "admin_url", ""),
+                "display_price": str(system.display_price) if system.display_price is not None else None,
+                "display_price_currency": system.display_price_currency,
+                "cover_image": system.cover_image,
+                "gallery_images": system.gallery_images,
+                "is_active": system.is_active,
+            }
+        except (ObjectDoesNotExist, AttributeError, DatabaseError, OperationalError, ProgrammingError):
+            return {
+                "id": obj.subscription_system_id,
+                "name": "",
+                "summary": "",
+                "system_url": "",
+                "admin_url": "",
+                "display_price": None,
+                "display_price_currency": "USD",
+                "cover_image": "",
+                "gallery_images": [],
+                "is_active": True,
+            }
 
     def get_control_details(self, obj):
-        tenant_service = getattr(obj, "tenant_service", None)
+        try:
+            tenant_service = obj.tenant_service
+        except (ObjectDoesNotExist, AttributeError, DatabaseError, OperationalError, ProgrammingError):
+            tenant_service = None
         if not tenant_service:
             return None
         return {
