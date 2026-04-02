@@ -75,7 +75,7 @@ DATABASES = {
     "default": dj_database_url.config(
         default=os.getenv(
             "DATABASE_URL",
-            "postgresql://neondb_owner:npg_sRLiTIvBb45q@ep-cool-paper-anfwp3q3-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+            "postgresql://neondb_owner:npg_8pDOUbzjG5dP@ep-misty-dust-amt29kro-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
         ),
         conn_max_age=600,
     )
