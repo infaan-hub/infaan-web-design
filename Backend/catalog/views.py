@@ -51,9 +51,19 @@ class IsAdminOrReadOnly(permissions.BasePermission):
 
 
 class ServiceViewSet(viewsets.ModelViewSet):
-    queryset = Service.objects.all()
     serializer_class = ServiceSerializer
     permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        try:
+            queryset = Service.objects.all()
+            if self.request.user.is_authenticated and self.request.user.role == CustomUser.Role.ADMIN:
+                return queryset
+            if self.request.method in permissions.SAFE_METHODS:
+                return queryset.filter(is_active=True)
+            return queryset
+        except (DatabaseError, ProgrammingError, OperationalError):
+            return Service.objects.none()
 
 
 class ServicePackageViewSet(viewsets.ModelViewSet):
@@ -138,9 +148,19 @@ class LogoPosterPackageViewSet(ServicePackageViewSet):
 
 
 class PackagePriceViewSet(viewsets.ModelViewSet):
-    queryset = PackagePrice.objects.select_related("package", "package__service").all()
     serializer_class = PackagePriceSerializer
     permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        try:
+            queryset = PackagePrice.objects.select_related("package", "package__service")
+            if self.request.user.is_authenticated and self.request.user.role == CustomUser.Role.ADMIN:
+                return queryset.all()
+            if self.request.method in permissions.SAFE_METHODS:
+                return queryset.filter(package__is_active=True, package__service__is_active=True)
+            return queryset.all()
+        except (DatabaseError, ProgrammingError, OperationalError):
+            return PackagePrice.objects.none()
 
 
 class PortfolioItemViewSet(viewsets.ModelViewSet):
