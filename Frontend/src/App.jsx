@@ -104,6 +104,10 @@ const emptySystem = {
   is_active: true,
 };
 
+function isIsoDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
+}
+
 function formatPrice(amount, currency = "USD") {
   if (amount === null || amount === undefined || amount === "") {
     return `${currency} 0`;
@@ -724,8 +728,18 @@ function App() {
       setSelectedPriceId(String(activePrice.id));
     }
 
-    if (!subscriptionForm.business_name || !subscriptionForm.contact_email || !subscriptionForm.contact_phone) {
+    const normalizedBusinessName = String(subscriptionForm.business_name || "").trim();
+    const normalizedContactEmail = String(subscriptionForm.contact_email || "").trim();
+    const normalizedContactPhone = String(subscriptionForm.contact_phone || "").trim();
+    const normalizedStartDate = String(subscriptionForm.start_date || "").trim();
+
+    if (!normalizedBusinessName || !normalizedContactEmail || !normalizedContactPhone) {
       setError("Fill business name, contact email, and contact phone before continuing.");
+      return false;
+    }
+
+    if (normalizedStartDate && !isIsoDate(normalizedStartDate)) {
+      setError("Use a valid start date in YYYY-MM-DD format.");
       return false;
     }
 
@@ -754,6 +768,13 @@ function App() {
       package_title: selectedSystem ? selectedSystem.name : selectedPackage.title,
       system_name: selectedSystem?.name || "",
     });
+    setSubscriptionForm((previous) => ({
+      ...previous,
+      business_name: normalizedBusinessName,
+      contact_email: normalizedContactEmail,
+      contact_phone: normalizedContactPhone,
+      start_date: normalizedStartDate,
+    }));
     setBookingSent(false);
     setLastBooking(null);
     setError("");
@@ -1161,29 +1182,55 @@ function App() {
     setError("");
     setFeedback("");
     try {
+      const normalizedBusinessName = String(subscriptionForm.business_name || "").trim();
+      const normalizedContactEmail = String(subscriptionForm.contact_email || "").trim();
+      const normalizedContactPhone = String(subscriptionForm.contact_phone || "").trim();
+      const normalizedStartDate = String(subscriptionForm.start_date || "").trim();
+      const normalizedNotes = String(subscriptionForm.notes || "").trim();
+
+      if (!normalizedBusinessName || !normalizedContactEmail || !normalizedContactPhone) {
+        setError("Fill business name, contact email, and contact phone before continuing.");
+        navigate("/billing");
+        return null;
+      }
+
+      if (normalizedStartDate && !isIsoDate(normalizedStartDate)) {
+        setError("Use a valid start date in YYYY-MM-DD format.");
+        navigate("/billing");
+        return null;
+      }
+
       const activePaymentMethod = pendingPayment?.method || paymentForm.method;
       const paymentContact =
         activePaymentMethod === "mixx"
           ? pendingPayment?.phone_number || paymentForm.phone_number
           : pendingPayment?.card_name || paymentForm.card_name || "Gateway checkout";
       const checkoutPath = selectedSystem ? "/system-subscriptions/checkout/" : "/package-subscriptions/checkout/";
+      const bookingPayload = {
+        business_name: normalizedBusinessName,
+        contact_email: normalizedContactEmail,
+        contact_phone: normalizedContactPhone,
+        package_price: Number(activePriceId),
+        payment_status: "paid",
+        payment_method: activePaymentMethod,
+        payment_contact: paymentContact,
+        payment_amount: activePrice?.amount || 0,
+        payment_currency: activePrice?.currency || "USD",
+        notes: `${normalizedNotes}\nSelected system: ${selectedSystem?.name || "N/A"}\nPayment method: ${activePaymentMethod}\nPayment contact: ${paymentContact}\nBilling period: ${
+          activePrice?.billing_period || ""
+        }\nAmount: ${
+          activePrice?.currency || "USD"
+        } ${activePrice?.amount || ""}`.trim(),
+      };
+      if (normalizedStartDate) {
+        bookingPayload.start_date = normalizedStartDate;
+      }
+      if (selectedSystem) {
+        bookingPayload.subscription_system = Number(selectedSystem.id);
+      }
       const createdBooking = await apiRequest(checkoutPath, {
         method: "POST",
-        body: JSON.stringify({
-          ...subscriptionForm,
-          package_price: Number(activePriceId),
-          subscription_system: selectedSystem ? Number(selectedSystem.id) : null,
-          payment_status: "paid",
-          payment_method: activePaymentMethod,
-          payment_contact: paymentContact,
-          payment_amount: activePrice?.amount || 0,
-          payment_currency: activePrice?.currency || "USD",
-          notes: `${subscriptionForm.notes}\nSelected system: ${selectedSystem?.name || "N/A"}\nPayment method: ${activePaymentMethod}\nPayment contact: ${paymentContact}\nBilling period: ${
-            activePrice?.billing_period || ""
-          }\nAmount: ${
-            activePrice?.currency || "USD"
-          } ${activePrice?.amount || ""}`.trim(),
-        }),
+        body: JSON.stringify(bookingPayload),
       });
       let hydratedBooking = createdBooking;
       if (selectedSystem) {
