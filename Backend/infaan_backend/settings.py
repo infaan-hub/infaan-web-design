@@ -130,4 +130,6 @@ SIMPLE_JWT = {
 
 GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
 GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
-SYSTEM_SUBSCRIPTION_API_URL = (os.getenv("SYSTEM_SUBSCRIPTION_API_URL", "http://127.0.0.1:8000/api") or "").rstrip("/")
+SYSTEM_SUBSCRIPTION_API_URL = (
+    os.getenv("SYSTEM_SUBSCRIPTION_API_URL", "https://infaan-web-design.onrender.com/api") or ""
+).rstrip("/")
