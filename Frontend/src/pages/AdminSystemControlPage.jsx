@@ -122,6 +122,10 @@ function AdminSystemControlPage({ app }) {
 
                   <div className="system-control-keys">
                     <div className="credential-card">
+                      <span className="micro-label">api url</span>
+                      <strong>{service.api_url || "Set SYSTEM_SUBSCRIPTION_API_URL"}</strong>
+                    </div>
+                    <div className="credential-card">
                       <span className="micro-label">license key</span>
                       <strong>{service.license_key}</strong>
                     </div>

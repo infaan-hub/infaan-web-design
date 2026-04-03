@@ -2,6 +2,7 @@ from django.utils import timezone
 from django.db import DatabaseError, OperationalError, ProgrammingError
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 from rest_framework import serializers
 
 from .models import (
@@ -27,6 +28,29 @@ def build_feature_codes(package):
         if code:
             feature_codes.append(code[:120])
     return feature_codes
+
+
+def build_service_connection_details(tenant_service):
+    api_url = (getattr(settings, "SYSTEM_SUBSCRIPTION_API_URL", "") or "").rstrip("/")
+    return {
+        "tenant_id": tenant_service.tenant_id,
+        "tenant_name": tenant_service.tenant.business_name,
+        "service_id": tenant_service.id,
+        "service_name": tenant_service.name,
+        "license_key": tenant_service.license_key,
+        "api_key": tenant_service.api_key,
+        "api_secret": tenant_service.api_secret,
+        "api_url": api_url,
+        "license_validate_url": f"{api_url}/license/validate/" if api_url else "",
+        "subscription_status_url": f"{api_url}/subscription/status/" if api_url else "",
+        "features_url": f"{api_url}/features/" if api_url else "",
+        "admin_access_url": f"{api_url}/admin-access/" if api_url else "",
+        "heartbeat_url": f"{api_url}/heartbeat/" if api_url else "",
+        "connection_status": tenant_service.connection_status,
+        "admin_url": tenant_service.admin_url,
+        "public_url": tenant_service.public_url,
+        "is_enabled": tenant_service.is_enabled,
+    }
 
 
 def ensure_subscription_control_records(subscription):
@@ -601,19 +625,7 @@ class SystemSubscriptionOrderSerializer(serializers.ModelSerializer):
             tenant_service = None
         if not tenant_service:
             return None
-        return {
-            "tenant_id": tenant_service.tenant_id,
-            "tenant_name": tenant_service.tenant.business_name,
-            "service_id": tenant_service.id,
-            "service_name": tenant_service.name,
-            "license_key": tenant_service.license_key,
-            "api_key": tenant_service.api_key,
-            "api_secret": tenant_service.api_secret,
-            "connection_status": tenant_service.connection_status,
-            "admin_url": tenant_service.admin_url,
-            "public_url": tenant_service.public_url,
-            "is_enabled": tenant_service.is_enabled,
-        }
+        return build_service_connection_details(tenant_service)
 
 
 class PackageSubscriptionOrderSerializer(serializers.ModelSerializer):
@@ -820,19 +832,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             tenant_service = None
         if not tenant_service:
             return None
-        return {
-            "tenant_id": tenant_service.tenant_id,
-            "tenant_name": tenant_service.tenant.business_name,
-            "service_id": tenant_service.id,
-            "service_name": tenant_service.name,
-            "license_key": tenant_service.license_key,
-            "api_key": tenant_service.api_key,
-            "api_secret": tenant_service.api_secret,
-            "connection_status": tenant_service.connection_status,
-            "admin_url": tenant_service.admin_url,
-            "public_url": tenant_service.public_url,
-            "is_enabled": tenant_service.is_enabled,
-        }
+        return build_service_connection_details(tenant_service)
 
     def validate_package_price(self, value):
         if not value.package.is_active or not value.package.service.is_active:
@@ -916,6 +916,12 @@ class TenantServiceSerializer(serializers.ModelSerializer):
     feature_access = TenantServiceFeatureAccessSerializer(many=True, read_only=True)
     admins = TenantServiceAdminSerializer(many=True, read_only=True)
     computed_active = serializers.SerializerMethodField(read_only=True)
+    api_url = serializers.SerializerMethodField(read_only=True)
+    license_validate_url = serializers.SerializerMethodField(read_only=True)
+    subscription_status_url = serializers.SerializerMethodField(read_only=True)
+    features_url = serializers.SerializerMethodField(read_only=True)
+    admin_access_url = serializers.SerializerMethodField(read_only=True)
+    heartbeat_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = TenantService
@@ -933,6 +939,12 @@ class TenantServiceSerializer(serializers.ModelSerializer):
             "license_key",
             "api_key",
             "api_secret",
+            "api_url",
+            "license_validate_url",
+            "subscription_status_url",
+            "features_url",
+            "admin_access_url",
+            "heartbeat_url",
             "connection_status",
             "is_enabled",
             "last_heartbeat_at",
@@ -948,6 +960,24 @@ class TenantServiceSerializer(serializers.ModelSerializer):
 
     def get_computed_active(self, obj):
         return obj.is_subscription_active()
+
+    def get_api_url(self, obj):
+        return build_service_connection_details(obj)["api_url"]
+
+    def get_license_validate_url(self, obj):
+        return build_service_connection_details(obj)["license_validate_url"]
+
+    def get_subscription_status_url(self, obj):
+        return build_service_connection_details(obj)["subscription_status_url"]
+
+    def get_features_url(self, obj):
+        return build_service_connection_details(obj)["features_url"]
+
+    def get_admin_access_url(self, obj):
+        return build_service_connection_details(obj)["admin_access_url"]
+
+    def get_heartbeat_url(self, obj):
+        return build_service_connection_details(obj)["heartbeat_url"]
 
 
 class TenantSerializer(serializers.ModelSerializer):

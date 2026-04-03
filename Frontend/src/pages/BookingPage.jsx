@@ -320,6 +320,10 @@ function BookingPage({ app }) {
                       <strong>{controlDetails.license_key}</strong>
                     </div>
                     <div className="credential-card">
+                      <span className="micro-label">api url</span>
+                      <strong>{controlDetails.api_url || "Set SYSTEM_SUBSCRIPTION_API_URL"}</strong>
+                    </div>
+                    <div className="credential-card">
                       <span className="micro-label">api key</span>
                       <strong>{controlDetails.api_key}</strong>
                     </div>

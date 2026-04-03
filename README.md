@@ -64,10 +64,33 @@ Render backend env vars used by Django:
 - `CSRF_TRUSTED_ORIGINS`
 - `DATABASE_URL`
 - `SEED_INFAAN_DATA`
+- `SYSTEM_SUBSCRIPTION_API_URL`
 
 Render frontend env vars used by Vite:
 
 - `VITE_API_BASE_URL`
+
+For subsystem-to-subsystem subscription control, set:
+
+- `SYSTEM_SUBSCRIPTION_API_URL`
+
+Example:
+
+```env
+SYSTEM_SUBSCRIPTION_API_URL=https://your-backend-domain/api
+```
+
+Paid system subscription responses now include:
+
+- `control_details.api_url`
+- `control_details.api_key`
+- `control_details.license_key`
+
+and direct endpoint URLs such as:
+
+- `control_details.license_validate_url`
+- `control_details.subscription_status_url`
+- `control_details.heartbeat_url`
 
 If Render is configured from the repo root instead of `Backend`, use:
 
