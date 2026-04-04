@@ -423,13 +423,18 @@ class SubscriptionSystemSerializer(serializers.ModelSerializer):
         model = SubscriptionSystem
         fields = "__all__"
 
+    def _get_active_packages(self, obj):
+        prefetched_packages = getattr(obj.service, "_prefetched_objects_cache", {}).get("packages")
+        packages = prefetched_packages if prefetched_packages is not None else obj.service.packages.all()
+        return [package for package in packages if package.is_active]
+
     def get_packages(self, obj):
-        packages = obj.service.packages.filter(is_active=True).prefetch_related("prices")
+        packages = self._get_active_packages(obj)
         return ServicePackageSerializer(packages, many=True).data
 
     def get_price_preview(self, obj):
         preview = []
-        for package in obj.service.packages.filter(is_active=True).prefetch_related("prices"):
+        for package in self._get_active_packages(obj):
             for price in package.prices.all():
                 preview.append(
                     {
