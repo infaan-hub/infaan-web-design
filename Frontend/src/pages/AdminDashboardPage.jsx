@@ -26,6 +26,7 @@ function AdminDashboardPage({ app }) {
     savePortfolio,
     deletePortfolio,
     subscriptionSystems,
+    subscriptionSystemsError,
     systemForm,
     setSystemForm,
     editingSystemId,
@@ -540,7 +541,7 @@ function AdminDashboardPage({ app }) {
         ) : (
           <div className="section-card admin-empty-state">
             <h3>No system subscription posted yet</h3>
-            <p>Create a system subscription above and it will appear here for admin management.</p>
+            <p>{subscriptionSystemsError || "Create a system subscription above and it will appear here for admin management."}</p>
           </div>
         )}
 
@@ -551,97 +552,111 @@ function AdminDashboardPage({ app }) {
           </div>
         </div>
 
-        <div className="package-grid">
-          {services.map((service) => (
-            <div key={service.id} className="package-card service-admin-card">
-              <div className="package-topline">
-                <span className="tier-pill">{service.category.replace("_", " ")}</span>
-                <span className={`status-pill ${service.is_active ? "status-active" : "status-cancelled"}`}>
-                  {service.is_active ? "active" : "inactive"}
-                </span>
-              </div>
-              <h4>{service.name}</h4>
-              <p>{service.short_description}</p>
-              <p>{service.details}</p>
-              <div className="price-list">
-                <button
-                  type="button"
-                  className="outline-button"
-                  onClick={() => {
-                    setServiceForm({
-                      name: service.name,
-                      category: service.category,
-                      short_description: service.short_description,
-                      details: service.details,
-                      is_active: service.is_active,
-                    });
-                    setEditingServiceId(service.id);
-                  }}
-                >
-                  Edit
-                </button>
-                <button type="button" className="header-button" onClick={() => deleteService(service.id)}>
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="package-grid">
-          {groupedPackages.flatMap((service) =>
-            service.packages.map((pkg) => (
-              <div key={pkg.id} className={`package-card tone-${pkg.tier}`}>
-                <h4>{pkg.title}</h4>
-                <p>{pkg.description}</p>
-                <div className="admin-package-prices">
-                  {pkg.prices.map((price) => (
-                    <span key={`${price.billing_period}-${price.currency}`} className="price-chip">
-                      {price.billing_period} {price.currency}{" "}
-                      {formatPrice(price.amount, price.currency).replace(`${price.currency} `, "")}
-                    </span>
-                  ))}
+        {services.length ? (
+          <div className="package-grid">
+            {services.map((service) => (
+              <div key={service.id} className="package-card service-admin-card">
+                <div className="package-topline">
+                  <span className="tier-pill">{service.category.replace("_", " ")}</span>
+                  <span className={`status-pill ${service.is_active ? "status-active" : "status-cancelled"}`}>
+                    {service.is_active ? "active" : "inactive"}
+                  </span>
                 </div>
+                <h4>{service.name}</h4>
+                <p>{service.short_description}</p>
+                <p>{service.details}</p>
                 <div className="price-list">
                   <button
                     type="button"
                     className="outline-button"
                     onClick={() => {
-                      const priceMap = {
-                        weekly: { billing_period: "weekly", usd_amount: "", tzs_amount: "" },
-                        monthly: { billing_period: "monthly", usd_amount: "", tzs_amount: "" },
-                        yearly: { billing_period: "yearly", usd_amount: "", tzs_amount: "" },
-                        per_task: { billing_period: "per_task", usd_amount: "", tzs_amount: "" },
-                      };
-                      pkg.prices.forEach((price) => {
-                        const amountKey = price.currency === "TZS" ? "tzs_amount" : "usd_amount";
-                        if (priceMap[price.billing_period]) {
-                          priceMap[price.billing_period][amountKey] = String(price.amount);
-                        }
+                      setServiceForm({
+                        name: service.name,
+                        category: service.category,
+                        short_description: service.short_description,
+                        details: service.details,
+                        is_active: service.is_active,
                       });
-                      setPackageForm({
-                        service: String(pkg.service),
-                        tier: pkg.tier,
-                        title: pkg.title,
-                        description: pkg.description,
-                        features: pkg.features.join("\n"),
-                        payment_notes: pkg.payment_notes,
-                        prices: Object.values(priceMap),
-                        is_active: pkg.is_active,
-                      });
-                      setEditingPackageId(pkg.id);
+                      setEditingServiceId(service.id);
                     }}
                   >
                     Edit
                   </button>
-                  <button type="button" className="header-button" onClick={() => deletePackage(pkg.id, service.category)}>
+                  <button type="button" className="header-button" onClick={() => deleteService(service.id)}>
                     Delete
                   </button>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="section-card admin-empty-state">
+            <h3>No service posted yet</h3>
+            <p>Create a service above and it will appear here for admin management.</p>
+          </div>
+        )}
+
+        {groupedPackages.some((service) => service.packages?.length) ? (
+          <div className="package-grid">
+            {groupedPackages.flatMap((service) =>
+              service.packages.map((pkg) => (
+                <div key={pkg.id} className={`package-card tone-${pkg.tier}`}>
+                  <h4>{pkg.title}</h4>
+                  <p>{pkg.description}</p>
+                  <div className="admin-package-prices">
+                    {pkg.prices.map((price) => (
+                      <span key={`${price.billing_period}-${price.currency}`} className="price-chip">
+                        {price.billing_period} {price.currency}{" "}
+                        {formatPrice(price.amount, price.currency).replace(`${price.currency} `, "")}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="price-list">
+                    <button
+                      type="button"
+                      className="outline-button"
+                      onClick={() => {
+                        const priceMap = {
+                          weekly: { billing_period: "weekly", usd_amount: "", tzs_amount: "" },
+                          monthly: { billing_period: "monthly", usd_amount: "", tzs_amount: "" },
+                          yearly: { billing_period: "yearly", usd_amount: "", tzs_amount: "" },
+                          per_task: { billing_period: "per_task", usd_amount: "", tzs_amount: "" },
+                        };
+                        pkg.prices.forEach((price) => {
+                          const amountKey = price.currency === "TZS" ? "tzs_amount" : "usd_amount";
+                          if (priceMap[price.billing_period]) {
+                            priceMap[price.billing_period][amountKey] = String(price.amount);
+                          }
+                        });
+                        setPackageForm({
+                          service: String(pkg.service),
+                          tier: pkg.tier,
+                          title: pkg.title,
+                          description: pkg.description,
+                          features: pkg.features.join("\n"),
+                          payment_notes: pkg.payment_notes,
+                          prices: Object.values(priceMap),
+                          is_active: pkg.is_active,
+                        });
+                        setEditingPackageId(pkg.id);
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button type="button" className="header-button" onClick={() => deletePackage(pkg.id, service.category)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="section-card admin-empty-state">
+            <h3>No package posted yet</h3>
+            <p>Create a package above and it will appear here for admin management.</p>
+          </div>
+        )}
 
         <div className="section-headline admin-booking-head">
           <div>

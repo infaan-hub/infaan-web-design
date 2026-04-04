@@ -128,6 +128,19 @@ function ensureArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function setStoredValue(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function setStoredJson(key, value) {
+  return setStoredValue(key, JSON.stringify(value));
+}
+
 function formatPrice(amount, currency = "USD") {
   if (amount === null || amount === undefined || amount === "") {
     return `${currency} 0`;
@@ -156,8 +169,8 @@ function App() {
   const [services, setServices] = useState(() => readStoredJson("infaan_services", []));
   const [packages, setPackages] = useState(() => readStoredJson("infaan_packages", []));
   const [prices, setPrices] = useState(() => readStoredJson("infaan_prices", []));
-  const [portfolioItems, setPortfolioItems] = useState(() => readStoredJson("infaan_portfolio_items", []));
-  const [subscriptionSystems, setSubscriptionSystems] = useState(() => readStoredJson("infaan_subscription_systems", []));
+  const [portfolioItems, setPortfolioItems] = useState([]);
+  const [subscriptionSystems, setSubscriptionSystems] = useState([]);
   const [subscriptionSystemsError, setSubscriptionSystemsError] = useState("");
   const [subscriptions, setSubscriptions] = useState([]);
   const [tenants, setTenants] = useState([]);
@@ -196,6 +209,8 @@ function App() {
   const catalogRequestIdRef = useRef(0);
 
   useEffect(() => {
+    localStorage.removeItem("infaan_portfolio_items");
+    localStorage.removeItem("infaan_subscription_systems");
     if (window.location.pathname === "/") {
       navigate("/home", true);
     }
@@ -205,36 +220,36 @@ function App() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("infaan_selected_package", selectedPackageId || "");
+    setStoredValue("infaan_selected_package", selectedPackageId || "");
   }, [selectedPackageId]);
 
   useEffect(() => {
-    localStorage.setItem("infaan_selected_price", selectedPriceId || "");
+    setStoredValue("infaan_selected_price", selectedPriceId || "");
   }, [selectedPriceId]);
 
   useEffect(() => {
     if (systemSubscriptionPlan) {
-      localStorage.setItem("infaan_system_subscription_plan", JSON.stringify(systemSubscriptionPlan));
+      setStoredJson("infaan_system_subscription_plan", systemSubscriptionPlan);
     } else {
       localStorage.removeItem("infaan_system_subscription_plan");
     }
   }, [systemSubscriptionPlan]);
 
   useEffect(() => {
-    localStorage.setItem("infaan_selected_booking", selectedBookingId || "");
+    setStoredValue("infaan_selected_booking", selectedBookingId || "");
   }, [selectedBookingId]);
 
   useEffect(() => {
-    localStorage.setItem("infaan_selected_system", selectedSystemId || "");
+    setStoredValue("infaan_selected_system", selectedSystemId || "");
   }, [selectedSystemId]);
 
   useEffect(() => {
-    localStorage.setItem("infaan_selected_portfolio_service", selectedPortfolioServiceId || "");
+    setStoredValue("infaan_selected_portfolio_service", selectedPortfolioServiceId || "");
   }, [selectedPortfolioServiceId]);
 
   useEffect(() => {
     if (pendingPayment) {
-      localStorage.setItem("infaan_payment", JSON.stringify(pendingPayment));
+      setStoredJson("infaan_payment", pendingPayment);
     } else {
       localStorage.removeItem("infaan_payment");
     }
@@ -242,7 +257,7 @@ function App() {
 
   useEffect(() => {
     if (lastBooking) {
-      localStorage.setItem("infaan_last_booking", JSON.stringify(lastBooking));
+      setStoredJson("infaan_last_booking", lastBooking);
     } else {
       localStorage.removeItem("infaan_last_booking");
     }
@@ -250,7 +265,7 @@ function App() {
 
   useEffect(() => {
     if (postLoginPath) {
-      localStorage.setItem("infaan_post_login_path", postLoginPath);
+      setStoredValue("infaan_post_login_path", postLoginPath);
     } else {
       localStorage.removeItem("infaan_post_login_path");
     }
@@ -258,12 +273,12 @@ function App() {
 
   useEffect(() => {
     document.body.dataset.theme = theme;
-    localStorage.setItem("infaan_theme", theme);
+    setStoredValue("infaan_theme", theme);
   }, [theme]);
 
   useEffect(() => {
     if (refreshToken) {
-      localStorage.setItem("infaan_refresh_token", refreshToken);
+      setStoredValue("infaan_refresh_token", refreshToken);
     } else {
       localStorage.removeItem("infaan_refresh_token");
     }
@@ -317,7 +332,7 @@ function App() {
     });
     const data = await parseApiResponse(response);
     setToken(data.access);
-    localStorage.setItem("infaan_token", data.access);
+    setStoredValue("infaan_token", data.access);
     return data.access;
   }
 
@@ -371,12 +386,10 @@ function App() {
         if (catalogRequestIdRef.current !== requestId) return;
         const nextPortfolioItems = ensureArray(portfolioData.results || portfolioData);
         setPortfolioItems(nextPortfolioItems);
-        localStorage.setItem("infaan_portfolio_items", JSON.stringify(nextPortfolioItems));
       })
       .catch(() => {
         if (catalogRequestIdRef.current !== requestId) return;
         setPortfolioItems([]);
-        localStorage.removeItem("infaan_portfolio_items");
       });
 
     systemsRequest
@@ -385,13 +398,11 @@ function App() {
         const nextSystems = ensureArray(systemData.results || systemData);
         setSubscriptionSystemsError("");
         setSubscriptionSystems(nextSystems);
-        localStorage.setItem("infaan_subscription_systems", JSON.stringify(nextSystems));
       })
       .catch((requestError) => {
         if (catalogRequestIdRef.current !== requestId) return;
         setSubscriptionSystems([]);
         setSubscriptionSystemsError(requestError?.message || "Unable to load system subscriptions.");
-        localStorage.removeItem("infaan_subscription_systems");
       });
 
     servicesRequest
@@ -399,7 +410,7 @@ function App() {
         if (catalogRequestIdRef.current !== requestId) return;
         const nextServices = ensureArray(serviceData.results || serviceData);
         setServices(nextServices);
-        localStorage.setItem("infaan_services", JSON.stringify(nextServices));
+        setStoredJson("infaan_services", nextServices);
       })
       .catch(() => {
         if (catalogRequestIdRef.current !== requestId) return;
@@ -412,7 +423,7 @@ function App() {
         if (catalogRequestIdRef.current !== requestId) return;
         const nextPackages = ensureArray(packageData.results || packageData);
         setPackages(nextPackages);
-        localStorage.setItem("infaan_packages", JSON.stringify(nextPackages));
+        setStoredJson("infaan_packages", nextPackages);
       })
       .catch(() => {
         if (catalogRequestIdRef.current !== requestId) return;
@@ -425,7 +436,7 @@ function App() {
         if (catalogRequestIdRef.current !== requestId) return;
         const nextPrices = ensureArray(priceData.results || priceData);
         setPrices(nextPrices);
-        localStorage.setItem("infaan_prices", JSON.stringify(nextPrices));
+        setStoredJson("infaan_prices", nextPrices);
       })
       .catch(() => {
         if (catalogRequestIdRef.current !== requestId) return;
@@ -447,7 +458,7 @@ function App() {
     ]);
     if (profileData?.id) {
       setCurrentUser(profileData);
-      localStorage.setItem("infaan_user", JSON.stringify(profileData));
+      setStoredJson("infaan_user", profileData);
     }
     const standardSubscriptions = subscriptionData.results || subscriptionData || [];
     const packageOrders = packageOrderData.results || packageOrderData || [];
@@ -476,7 +487,7 @@ function App() {
 
   useEffect(() => {
     if (token) {
-      localStorage.setItem("infaan_token", token);
+      setStoredValue("infaan_token", token);
       loadProfileAndSubscriptions().catch((requestError) => {
         clearAuthState();
         setError(requestError.message || "Unable to load account data.");
@@ -864,7 +875,7 @@ function App() {
       setToken(data.access);
       setRefreshToken(data.refresh);
       setCurrentUser(data.user);
-      localStorage.setItem("infaan_user", JSON.stringify(data.user));
+      setStoredJson("infaan_user", data.user);
       setFeedback("Authentication successful.");
       const nextPath = data.user.role === "admin" ? "/admin-dashboard" : postLoginPath || "/dashboard";
       setPostLoginPath("");
@@ -901,7 +912,7 @@ function App() {
       setToken(data.access);
       setRefreshToken(data.refresh);
       setCurrentUser(data.user);
-      localStorage.setItem("infaan_user", JSON.stringify(data.user));
+      setStoredJson("infaan_user", data.user);
       setFeedback("Google login successful.");
       navigate(postLoginPath || "/dashboard");
       setPostLoginPath("");
