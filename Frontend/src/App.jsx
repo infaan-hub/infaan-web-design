@@ -138,6 +138,7 @@ function App() {
   const [prices, setPrices] = useState([]);
   const [portfolioItems, setPortfolioItems] = useState([]);
   const [subscriptionSystems, setSubscriptionSystems] = useState([]);
+  const [subscriptionSystemsError, setSubscriptionSystemsError] = useState("");
   const [subscriptions, setSubscriptions] = useState([]);
   const [tenants, setTenants] = useState([]);
   const [tenantServices, setTenantServices] = useState([]);
@@ -358,11 +359,13 @@ function App() {
     systemsRequest
       .then((systemData) => {
         if (catalogRequestIdRef.current !== requestId) return;
+        setSubscriptionSystemsError("");
         setSubscriptionSystems(systemData.results || systemData);
       })
-      .catch(() => {
+      .catch((requestError) => {
         if (catalogRequestIdRef.current !== requestId) return;
         setSubscriptionSystems([]);
+        setSubscriptionSystemsError(requestError?.message || "Unable to load system subscriptions.");
       });
 
     const [serviceData, packageData, priceData] = await Promise.all([servicesRequest, packagesRequest, pricesRequest]);
@@ -1413,6 +1416,7 @@ function App() {
     prices,
     portfolioItems,
     subscriptionSystems,
+    subscriptionSystemsError,
     subscriptions,
     tenants,
     tenantServices,

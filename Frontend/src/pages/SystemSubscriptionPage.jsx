@@ -1,6 +1,7 @@
 function SystemSubscriptionPage({ app }) {
   const {
     subscriptionSystems,
+    subscriptionSystemsError,
     subscriptions,
     selectedSystem,
     formatPrice,
@@ -157,7 +158,7 @@ function SystemSubscriptionPage({ app }) {
         ) : (
           <div className="form-card">
             <h3>No system card yet</h3>
-            <p>Admin can add a system with one front image and five gallery images, then customers will subscribe here.</p>
+            <p>{subscriptionSystemsError || "Admin can add a system with one front image and five gallery images, then customers will subscribe here."}</p>
             <button type="button" className="solid-button" onClick={() => navigate("/package")}>
               View standard packages
             </button>

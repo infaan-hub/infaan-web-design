@@ -27,12 +27,14 @@ function DashboardPage({ app }) {
     groupedPackages,
     groupedPortfolio,
     subscriptionSystems,
+    subscriptionSystemsError,
     formatPrice,
     selectPackage,
     continueToPackageTime,
     beginSystemSubscription,
     selectSystem,
     subscriptions,
+    navigate,
   } = app;
   const visibleServices = getOrderedServices(groupedPackages.filter((service) => service.packages?.length)).slice(0, 4);
   const activeSystems = (subscriptionSystems || []).slice(0, 4);
@@ -260,7 +262,7 @@ function DashboardPage({ app }) {
         ) : (
           <div className="form-card">
             <h3>No active systems yet</h3>
-            <p>When admin adds active systems with one cover image and five view images, they will appear here.</p>
+            <p>{subscriptionSystemsError || "When admin adds active systems with one cover image and five view images, they will appear here."}</p>
           </div>
         )}
       </section>

@@ -64,6 +64,7 @@ function HomePage({ app }) {
     groupedPackages,
     groupedPortfolio,
     subscriptionSystems,
+    subscriptionSystemsError,
     currentUser,
     selectSystem,
     selectPackage,
@@ -222,7 +223,9 @@ function HomePage({ app }) {
         ) : (
           <div className="form-card">
             <h3>No system subscription posted yet</h3>
-            <p>When admin posts system subscriptions, all of them will appear here with image, name, price, and subscribe button.</p>
+            <p>
+              {subscriptionSystemsError || "When admin posts system subscriptions, all of them will appear here with image, name, price, and subscribe button."}
+            </p>
           </div>
         )}
       </section>
