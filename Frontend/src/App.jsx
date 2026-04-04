@@ -111,10 +111,21 @@ function isIsoDate(value) {
 function readStoredJson(key, fallback) {
   try {
     const rawValue = localStorage.getItem(key);
-    return rawValue ? JSON.parse(rawValue) : fallback;
+    if (!rawValue) {
+      return fallback;
+    }
+    const parsedValue = JSON.parse(rawValue);
+    if (Array.isArray(fallback)) {
+      return Array.isArray(parsedValue) ? parsedValue : fallback;
+    }
+    return parsedValue ?? fallback;
   } catch {
     return fallback;
   }
+}
+
+function ensureArray(value) {
+  return Array.isArray(value) ? value : [];
 }
 
 function formatPrice(amount, currency = "USD") {
@@ -358,7 +369,7 @@ function App() {
     portfolioRequest
       .then((portfolioData) => {
         if (catalogRequestIdRef.current !== requestId) return;
-        const nextPortfolioItems = portfolioData.results || portfolioData;
+        const nextPortfolioItems = ensureArray(portfolioData.results || portfolioData);
         setPortfolioItems(nextPortfolioItems);
         localStorage.setItem("infaan_portfolio_items", JSON.stringify(nextPortfolioItems));
       })
@@ -371,7 +382,7 @@ function App() {
     systemsRequest
       .then((systemData) => {
         if (catalogRequestIdRef.current !== requestId) return;
-        const nextSystems = systemData.results || systemData;
+        const nextSystems = ensureArray(systemData.results || systemData);
         setSubscriptionSystemsError("");
         setSubscriptionSystems(nextSystems);
         localStorage.setItem("infaan_subscription_systems", JSON.stringify(nextSystems));
@@ -386,7 +397,7 @@ function App() {
     servicesRequest
       .then((serviceData) => {
         if (catalogRequestIdRef.current !== requestId) return;
-        const nextServices = serviceData.results || serviceData;
+        const nextServices = ensureArray(serviceData.results || serviceData);
         setServices(nextServices);
         localStorage.setItem("infaan_services", JSON.stringify(nextServices));
       })
@@ -399,7 +410,7 @@ function App() {
     packagesRequest
       .then((packageData) => {
         if (catalogRequestIdRef.current !== requestId) return;
-        const nextPackages = packageData.results || packageData;
+        const nextPackages = ensureArray(packageData.results || packageData);
         setPackages(nextPackages);
         localStorage.setItem("infaan_packages", JSON.stringify(nextPackages));
       })
@@ -412,7 +423,7 @@ function App() {
     pricesRequest
       .then((priceData) => {
         if (catalogRequestIdRef.current !== requestId) return;
-        const nextPrices = priceData.results || priceData;
+        const nextPrices = ensureArray(priceData.results || priceData);
         setPrices(nextPrices);
         localStorage.setItem("infaan_prices", JSON.stringify(nextPrices));
       })
