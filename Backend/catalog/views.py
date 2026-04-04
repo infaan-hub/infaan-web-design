@@ -485,7 +485,38 @@ def _resolve_managed_service(request):
     return service, None
 
 
+def _get_service_access_record(service):
+    return service.system_order or service.subscription
+
+
+def _build_subscription_control_response(service, detail=None):
+    access_record = _get_service_access_record(service)
+    if not access_record:
+        return {
+            "allowed": False,
+            "status": "inactive",
+            "end_date": None,
+            "detail": detail or "Subscription record not found.",
+        }
+
+    current_status = access_record.get_effective_status()
+    allowed = service.is_subscription_active()
+    if detail is None:
+        detail = "Subscription is active." if allowed else "Subscription is not active."
+
+    return {
+        "allowed": allowed,
+        "status": current_status,
+        "end_date": access_record.end_date,
+        "detail": detail,
+    }
+
+
 def _service_payload(service):
+    access_record = _get_service_access_record(service)
+    if not access_record:
+        return _build_subscription_control_response(service)
+
     return {
         "service_id": service.id,
         "tenant_id": service.tenant_id,
@@ -497,13 +528,13 @@ def _service_payload(service):
         "public_url": service.public_url,
         "admin_url": service.admin_url,
         "connection_status": service.connection_status,
-        "subscription_status": service.subscription.get_effective_status(),
-        "payment_status": service.subscription.payment_status,
+        "subscription_status": access_record.get_effective_status(),
+        "payment_status": access_record.payment_status,
         "active": service.is_subscription_active(),
-        "expires_at": service.subscription.end_date,
+        "expires_at": access_record.end_date,
         "grace_until": (
-            service.subscription.end_date + timedelta(days=service.subscription.grace_period_days)
-            if service.subscription.end_date
+            access_record.end_date + timedelta(days=access_record.grace_period_days)
+            if access_record.end_date
             else None
         ),
         "features": [
@@ -520,7 +551,7 @@ class LicenseValidateView(APIView):
         service, error_response = _resolve_managed_service(request)
         if error_response:
             return error_response
-        return Response(_service_payload(service))
+        return Response(_build_subscription_control_response(service))
 
 
 class SubscriptionStatusView(APIView):
@@ -530,16 +561,7 @@ class SubscriptionStatusView(APIView):
         service, error_response = _resolve_managed_service(request)
         if error_response:
             return error_response
-        return Response(
-            {
-                "active": service.is_subscription_active(),
-                "subscription_status": service.subscription.get_effective_status(),
-                "payment_status": service.subscription.payment_status,
-                "expires_at": service.subscription.end_date,
-                "tenant_status": service.tenant.status,
-                "connection_status": service.connection_status,
-            }
-        )
+        return Response(_build_subscription_control_response(service))
 
 
 class FeatureAccessView(APIView):
@@ -598,4 +620,4 @@ class HeartbeatView(APIView):
             service.save(update_fields=["last_heartbeat_at", "connection_status", "connected_at", "updated_at"])
         else:
             service.save(update_fields=["last_heartbeat_at", "updated_at"])
-        return Response({"status": "ok", "active": service.is_subscription_active(), "last_heartbeat_at": service.last_heartbeat_at})
+        return Response(_build_subscription_control_response(service, detail="Heartbeat received."))
