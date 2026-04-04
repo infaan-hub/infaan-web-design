@@ -108,6 +108,15 @@ function isIsoDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
 }
 
+function readStoredJson(key, fallback) {
+  try {
+    const rawValue = localStorage.getItem(key);
+    return rawValue ? JSON.parse(rawValue) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function formatPrice(amount, currency = "USD") {
   if (amount === null || amount === undefined || amount === "") {
     return `${currency} 0`;
@@ -133,11 +142,11 @@ function App() {
   const [token, setToken] = useState(localStorage.getItem("infaan_token") || "");
   const [refreshToken, setRefreshToken] = useState(localStorage.getItem("infaan_refresh_token") || "");
   const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem("infaan_user") || "null"));
-  const [services, setServices] = useState([]);
-  const [packages, setPackages] = useState([]);
-  const [prices, setPrices] = useState([]);
-  const [portfolioItems, setPortfolioItems] = useState([]);
-  const [subscriptionSystems, setSubscriptionSystems] = useState([]);
+  const [services, setServices] = useState(() => readStoredJson("infaan_services", []));
+  const [packages, setPackages] = useState(() => readStoredJson("infaan_packages", []));
+  const [prices, setPrices] = useState(() => readStoredJson("infaan_prices", []));
+  const [portfolioItems, setPortfolioItems] = useState(() => readStoredJson("infaan_portfolio_items", []));
+  const [subscriptionSystems, setSubscriptionSystems] = useState(() => readStoredJson("infaan_subscription_systems", []));
   const [subscriptionSystemsError, setSubscriptionSystemsError] = useState("");
   const [subscriptions, setSubscriptions] = useState([]);
   const [tenants, setTenants] = useState([]);
@@ -349,30 +358,71 @@ function App() {
     portfolioRequest
       .then((portfolioData) => {
         if (catalogRequestIdRef.current !== requestId) return;
-        setPortfolioItems(portfolioData.results || portfolioData);
+        const nextPortfolioItems = portfolioData.results || portfolioData;
+        setPortfolioItems(nextPortfolioItems);
+        localStorage.setItem("infaan_portfolio_items", JSON.stringify(nextPortfolioItems));
       })
       .catch(() => {
         if (catalogRequestIdRef.current !== requestId) return;
         setPortfolioItems([]);
+        localStorage.removeItem("infaan_portfolio_items");
       });
 
     systemsRequest
       .then((systemData) => {
         if (catalogRequestIdRef.current !== requestId) return;
+        const nextSystems = systemData.results || systemData;
         setSubscriptionSystemsError("");
-        setSubscriptionSystems(systemData.results || systemData);
+        setSubscriptionSystems(nextSystems);
+        localStorage.setItem("infaan_subscription_systems", JSON.stringify(nextSystems));
       })
       .catch((requestError) => {
         if (catalogRequestIdRef.current !== requestId) return;
         setSubscriptionSystems([]);
         setSubscriptionSystemsError(requestError?.message || "Unable to load system subscriptions.");
+        localStorage.removeItem("infaan_subscription_systems");
       });
 
-    const [serviceData, packageData, priceData] = await Promise.all([servicesRequest, packagesRequest, pricesRequest]);
-    if (catalogRequestIdRef.current !== requestId) return;
-    setServices(serviceData.results || serviceData);
-    setPackages(packageData.results || packageData);
-    setPrices(priceData.results || priceData);
+    servicesRequest
+      .then((serviceData) => {
+        if (catalogRequestIdRef.current !== requestId) return;
+        const nextServices = serviceData.results || serviceData;
+        setServices(nextServices);
+        localStorage.setItem("infaan_services", JSON.stringify(nextServices));
+      })
+      .catch(() => {
+        if (catalogRequestIdRef.current !== requestId) return;
+        setServices([]);
+        localStorage.removeItem("infaan_services");
+      });
+
+    packagesRequest
+      .then((packageData) => {
+        if (catalogRequestIdRef.current !== requestId) return;
+        const nextPackages = packageData.results || packageData;
+        setPackages(nextPackages);
+        localStorage.setItem("infaan_packages", JSON.stringify(nextPackages));
+      })
+      .catch(() => {
+        if (catalogRequestIdRef.current !== requestId) return;
+        setPackages([]);
+        localStorage.removeItem("infaan_packages");
+      });
+
+    pricesRequest
+      .then((priceData) => {
+        if (catalogRequestIdRef.current !== requestId) return;
+        const nextPrices = priceData.results || priceData;
+        setPrices(nextPrices);
+        localStorage.setItem("infaan_prices", JSON.stringify(nextPrices));
+      })
+      .catch(() => {
+        if (catalogRequestIdRef.current !== requestId) return;
+        setPrices([]);
+        localStorage.removeItem("infaan_prices");
+      });
+
+    await Promise.allSettled([servicesRequest, packagesRequest, pricesRequest, portfolioRequest, systemsRequest]);
   }
 
   async function loadProfileAndSubscriptions() {
