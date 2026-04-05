@@ -5,7 +5,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("accounts", "0002_customuser_phone_number"),
+        ("accounts", "0001_initial"),
     ]
 
     operations = [
