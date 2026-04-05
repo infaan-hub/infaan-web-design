@@ -253,7 +253,7 @@ class PackagePriceSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "package", "created_at", "updated_at")
 
     def validate_currency(self, value):
-        return (value or "USD").upper()
+        return (value or "TZS").upper()
 
 
 class ServicePackageSerializer(serializers.ModelSerializer):
@@ -278,7 +278,7 @@ class ServicePackageSerializer(serializers.ModelSerializer):
         normalized = {}
         for price in prices or []:
             billing_period = price.get("billing_period")
-            currency = (price.get("currency") or "USD").upper()
+            currency = (price.get("currency") or "TZS").upper()
             if not billing_period:
                 continue
             if service and service.category == Service.Category.LOGO_POSTER and billing_period != PackagePrice.BillingPeriod.PER_TASK:
@@ -293,7 +293,7 @@ class ServicePackageSerializer(serializers.ModelSerializer):
     def validate_prices(self, value):
         seen = set()
         for price in value:
-            key = (price.get("billing_period"), (price.get("currency") or "USD").upper())
+            key = (price.get("billing_period"), (price.get("currency") or "TZS").upper())
             if key in seen:
                 raise serializers.ValidationError("Each billing period and currency combination must be unique.")
             seen.add(key)
@@ -357,14 +357,14 @@ class ServicePackageSerializer(serializers.ModelSerializer):
         if prices_data is not None:
             incoming_by_key = {}
             for price_data in prices_data:
-                key = (price_data["billing_period"], (price_data.get("currency") or "USD").upper())
+                key = (price_data["billing_period"], (price_data.get("currency") or "TZS").upper())
                 incoming_by_key[key] = {
                     **price_data,
-                    "currency": (price_data.get("currency") or "USD").upper(),
+                    "currency": (price_data.get("currency") or "TZS").upper(),
                 }
 
             existing_prices = {
-                (price.billing_period, (price.currency or "USD").upper()): price
+                (price.billing_period, (price.currency or "TZS").upper()): price
                 for price in instance.prices.all()
             }
 
@@ -466,7 +466,7 @@ class SubscriptionSystemSerializer(serializers.ModelSerializer):
         if "admin_url" in attrs:
             attrs["admin_url"] = (attrs.get("admin_url") or "").strip()
         if "display_price_currency" in attrs:
-            attrs["display_price_currency"] = (attrs.get("display_price_currency") or "USD").upper()
+            attrs["display_price_currency"] = (attrs.get("display_price_currency") or "TZS").upper()
         return attrs
 
 
@@ -492,7 +492,7 @@ class BaseCheckoutSerializer(serializers.Serializer):
     payment_method = serializers.CharField(required=False, allow_blank=True, default="")
     payment_contact = serializers.CharField(required=False, allow_blank=True, default="")
     payment_amount = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
-    payment_currency = serializers.CharField(required=False, allow_blank=True, default="USD")
+    payment_currency = serializers.CharField(required=False, allow_blank=True, default="TZS")
     business_name = serializers.CharField()
     contact_email = serializers.EmailField()
     contact_phone = serializers.CharField()
@@ -824,7 +824,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
                 "system_url": "",
                 "admin_url": "",
                 "display_price": None,
-                "display_price_currency": "USD",
+                "display_price_currency": "TZS",
                 "cover_image": "",
                 "gallery_images": [],
                 "is_active": True,

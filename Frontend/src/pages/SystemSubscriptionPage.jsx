@@ -59,7 +59,7 @@ function SystemSubscriptionPage({ app }) {
                 <p>{selectedSystem.summary}</p>
                 <p>{selectedSystem.details}</p>
                 {selectedSystem.display_price !== null && selectedSystem.display_price !== undefined && selectedSystem.display_price !== "" ? (
-                  <p>{formatPrice(selectedSystem.display_price, selectedSystem.display_price_currency || "USD")}</p>
+                  <p>{formatPrice(selectedSystem.display_price, selectedSystem.display_price_currency || "TZS")}</p>
                 ) : null}
                 {selectedSystem.system_url ? (
                   <a className="outline-button system-url-button" href={selectedSystem.system_url} target="_blank" rel="noreferrer">
@@ -104,7 +104,7 @@ function SystemSubscriptionPage({ app }) {
               <span className="micro-label">starting price</span>
               <strong>
                 {selectedSystem.display_price !== null && selectedSystem.display_price !== undefined && selectedSystem.display_price !== ""
-                  ? formatPrice(selectedSystem.display_price, selectedSystem.display_price_currency || "USD")
+                  ? formatPrice(selectedSystem.display_price, selectedSystem.display_price_currency || "TZS")
                   : "Available on next step"}
               </strong>
             </div>
@@ -202,7 +202,7 @@ function SystemSubscriptionPage({ app }) {
                     <strong>
                       {formatPrice(
                         subscription.payment_amount || subscription.package_details?.amount,
-                        subscription.payment_currency || subscription.package_details?.currency || "USD"
+                        subscription.payment_currency || subscription.package_details?.currency || "TZS"
                       )}
                     </strong>
                   </div>

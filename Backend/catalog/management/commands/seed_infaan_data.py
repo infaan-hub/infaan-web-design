@@ -214,7 +214,7 @@ class Command(BaseCommand):
                     existing_prices = PackagePrice.objects.filter(
                         package=package,
                         billing_period=billing_period,
-                        currency="USD",
+                        currency="TZS",
                     ).order_by("id")
 
                     seeded_price = existing_prices.first()
@@ -228,7 +228,7 @@ class Command(BaseCommand):
                             package=package,
                             billing_period=billing_period,
                             amount=amount,
-                            currency="USD",
+                            currency="TZS",
                             is_default=billing_period in {"monthly", "per_task"},
                         )
 

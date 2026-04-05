@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 function AdminSystemControlPage({ app }) {
-  const { tenants, tenantServices, updateTenantService, loading } = app;
+  const { tenants, tenantServices, updateTenantService, deleteTenantService, loading } = app;
   const [draftServices, setDraftServices] = useState({});
 
   useEffect(() => {
@@ -212,6 +212,14 @@ function AdminSystemControlPage({ app }) {
                       }
                     >
                       Block service
+                    </button>
+                    <button
+                      type="button"
+                      className="header-button"
+                      disabled={loading}
+                      onClick={() => deleteTenantService(service.id, "Tenant system control deleted successfully.")}
+                    >
+                      Delete control
                     </button>
                   </div>
                 </form>

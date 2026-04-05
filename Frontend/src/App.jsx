@@ -70,10 +70,10 @@ const emptyPackage = {
   features: "",
   payment_notes: "",
   prices: [
-    { billing_period: "weekly", usd_amount: "", tzs_amount: "" },
-    { billing_period: "monthly", usd_amount: "", tzs_amount: "" },
-    { billing_period: "yearly", usd_amount: "", tzs_amount: "" },
-    { billing_period: "per_task", usd_amount: "", tzs_amount: "" },
+    { billing_period: "weekly", tzs_amount: "" },
+    { billing_period: "monthly", tzs_amount: "" },
+    { billing_period: "yearly", tzs_amount: "" },
+    { billing_period: "per_task", tzs_amount: "" },
   ],
   is_active: true,
 };
@@ -98,7 +98,7 @@ const emptySystem = {
   system_url: "",
   admin_url: "",
   display_price: "",
-  display_price_currency: "USD",
+  display_price_currency: "TZS",
   cover_image: "",
   gallery_images: ["", "", "", "", ""],
   is_active: true,
@@ -141,7 +141,7 @@ function setStoredJson(key, value) {
   return setStoredValue(key, JSON.stringify(value));
 }
 
-function formatPrice(amount, currency = "USD") {
+function formatPrice(amount, currency = "TZS") {
   if (amount === null || amount === undefined || amount === "") {
     return `${currency} 0`;
   }
@@ -657,7 +657,7 @@ function App() {
     const basePackage = getSystemBasePackage(systemObject);
     const basePrice = getSystemBasePrice(systemObject, billingPeriod);
     const monthlyAmount = getSystemMonthlyAmount(systemObject);
-    const currency = systemObject?.display_price_currency || basePrice?.currency || "USD";
+    const currency = systemObject?.display_price_currency || basePrice?.currency || "TZS";
     const amount = billingPeriod === "yearly" ? monthlyAmount * 12 : monthlyAmount;
     if (!basePackage || !basePrice || !amount) return null;
     return {
@@ -838,7 +838,7 @@ function App() {
     setPendingPayment({
       ...paymentForm,
       subtotal: activePrice?.amount || 0,
-      currency: activePrice?.currency || "USD",
+      currency: activePrice?.currency || "TZS",
       billing_period: activePrice?.billing_period || "",
       package_title: selectedSystem ? selectedSystem.name : selectedPackage.title,
       system_name: selectedSystem?.name || "",
@@ -1050,29 +1050,16 @@ function App() {
         return [];
       }
       const rows = [];
-      const normalizedUsdAmount =
-        price.usd_amount === "" || price.usd_amount === null || price.usd_amount === undefined
-          ? ""
-          : String(price.usd_amount).trim();
       const normalizedTzsAmount =
         price.tzs_amount === "" || price.tzs_amount === null || price.tzs_amount === undefined
           ? ""
           : String(price.tzs_amount).trim();
-
-      if (normalizedUsdAmount !== "") {
-        rows.push({
-          billing_period: price.billing_period,
-          amount: normalizedUsdAmount,
-          currency: "USD",
-          is_default: true,
-        });
-      }
       if (normalizedTzsAmount !== "") {
         rows.push({
           billing_period: price.billing_period,
           amount: normalizedTzsAmount,
           currency: "TZS",
-          is_default: false,
+          is_default: true,
         });
       }
       return rows;
@@ -1191,7 +1178,7 @@ function App() {
         systemForm.display_price === "" || systemForm.display_price === null || systemForm.display_price === undefined
           ? null
           : String(systemForm.display_price).trim(),
-      display_price_currency: String(systemForm.display_price_currency || "USD").trim().toUpperCase(),
+      display_price_currency: String(systemForm.display_price_currency || "TZS").trim().toUpperCase(),
       cover_image: String(systemForm.cover_image || "").trim(),
       gallery_images: (systemForm.gallery_images || []).map((image) => String(image || "").trim()).filter(Boolean),
     };
@@ -1290,11 +1277,11 @@ function App() {
         payment_method: activePaymentMethod,
         payment_contact: paymentContact,
         payment_amount: activePrice?.amount || 0,
-        payment_currency: activePrice?.currency || "USD",
+        payment_currency: activePrice?.currency || "TZS",
         notes: `${normalizedNotes}\nSelected system: ${selectedSystem?.name || "N/A"}\nPayment method: ${activePaymentMethod}\nPayment contact: ${paymentContact}\nBilling period: ${
           activePrice?.billing_period || ""
         }\nAmount: ${
-          activePrice?.currency || "USD"
+          activePrice?.currency || "TZS"
         } ${activePrice?.amount || ""}`.trim(),
       };
       if (normalizedStartDate) {
@@ -1448,6 +1435,26 @@ function App() {
     }
   }
 
+  async function deleteTenantService(serviceId, successMessage = "Connected service deleted successfully.") {
+    setLoading(true);
+    setError("");
+    setFeedback("");
+    try {
+      await apiRequest(`/tenant-services/${serviceId}/`, {
+        method: "DELETE",
+      });
+      setTenantServices((previous) => previous.filter((item) => String(item.id) !== String(serviceId)));
+      setFeedback(successMessage);
+      await loadSystemControl();
+      return true;
+    } catch (requestError) {
+      setError(requestError.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function markBookingDone() {
     if (!selectedBookingId) return;
     updateBooking(selectedBookingId, { status: "completed" }, "Booking marked as done and moved to history.").then(
@@ -1581,6 +1588,7 @@ function App() {
     loadUsers,
     loadSystemControl,
     updateTenantService,
+    deleteTenantService,
     emptyLogin,
     emptyRegister,
     emptyAdminUser,

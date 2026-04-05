@@ -370,7 +370,7 @@ function BookingPage({ app }) {
           <div className="form-card">
             <h3>Processing your payment</h3>
             <p>
-              {selectedPrice?.billing_period || "billing"} - {formatPrice(selectedPrice?.amount || "", selectedPrice?.currency || "USD")}
+              {selectedPrice?.billing_period || "billing"} - {formatPrice(selectedPrice?.amount || "", selectedPrice?.currency || "TZS")}
             </p>
             <p>We are confirming your payment and preparing the receipt.</p>
           </div>
@@ -378,7 +378,7 @@ function BookingPage({ app }) {
           <div className="form-card">
             <h3>{selectedPackage?.title || "Selected package"}</h3>
             <p>
-              {selectedPrice?.billing_period || "billing"} - {formatPrice(selectedPrice?.amount || "", selectedPrice?.currency || "USD")}
+              {selectedPrice?.billing_period || "billing"} - {formatPrice(selectedPrice?.amount || "", selectedPrice?.currency || "TZS")}
             </p>
             <div className="hero-actions">
               <button type="button" className="solid-button" onClick={() => navigate("/billing")}>

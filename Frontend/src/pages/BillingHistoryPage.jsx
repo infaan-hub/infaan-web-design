@@ -24,7 +24,7 @@ function BillingHistoryPage({ app }) {
                 <p>{item.contact_phone || "-"}</p>
                 <p>
                   {item.package_details?.billing_period || "-"} ·{" "}
-                  {formatPrice(item.payment_amount || item.package_details?.amount || 0, item.payment_currency || item.package_details?.currency || "USD")}
+                  {formatPrice(item.payment_amount || item.package_details?.amount || 0, item.payment_currency || item.package_details?.currency || "TZS")}
                 </p>
                 <span className={`status-pill status-${item.status}`}>{item.status}</span>
               </article>

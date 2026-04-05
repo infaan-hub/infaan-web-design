@@ -93,7 +93,7 @@ function BookedServicePage({ app }) {
                 </div>
                 <div className="price-strip-card">
                   <strong>Amount</strong>
-                  <span>{formatPrice(selectedBooking.payment_amount || 0, selectedBooking.payment_currency || "USD")}</span>
+                  <span>{formatPrice(selectedBooking.payment_amount || 0, selectedBooking.payment_currency || "TZS")}</span>
                 </div>
               </div>
             </div>

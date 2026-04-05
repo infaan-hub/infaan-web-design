@@ -42,7 +42,7 @@ function AdminSubscriptionPage({ app }) {
                   </div>
                   <div className="credential-card">
                     <span className="micro-label">amount</span>
-                    <strong>{formatPrice(subscription.payment_amount || subscription.package_details?.amount, subscription.payment_currency || subscription.package_details?.currency || "USD")}</strong>
+                    <strong>{formatPrice(subscription.payment_amount || subscription.package_details?.amount, subscription.payment_currency || subscription.package_details?.currency || "TZS")}</strong>
                   </div>
                   <div className="credential-card">
                     <span className="micro-label">start date</span>

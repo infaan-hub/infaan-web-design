@@ -225,14 +225,6 @@ function AdminDashboardPage({ app }) {
                         type="number"
                         min="0"
                         step="0.01"
-                        value={packageForm.prices[actualIndex]?.usd_amount || ""}
-                        onChange={(event) => updatePackagePrice(actualIndex, "usd_amount", event.target.value)}
-                        placeholder="USD amount"
-                      />
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
                         value={packageForm.prices[actualIndex]?.tzs_amount || ""}
                         onChange={(event) => updatePackagePrice(actualIndex, "tzs_amount", event.target.value)}
                         placeholder="TZS amount"
@@ -335,10 +327,7 @@ function AdminDashboardPage({ app }) {
                 onChange={(event) => updateField(setSystemForm, "display_price", event.target.value)}
                 placeholder="System price"
               />
-              <select value={systemForm.display_price_currency} onChange={(event) => updateField(setSystemForm, "display_price_currency", event.target.value)}>
-                <option value="USD">USD</option>
-                <option value="TZS">TZS</option>
-              </select>
+              <input value="TZS" readOnly aria-label="Display price currency" />
             </div>
             <label className="portfolio-upload-field">
               <span>Front image</span>
@@ -459,7 +448,7 @@ function AdminDashboardPage({ app }) {
               const pricePreview = getSystemPricePreview(system);
               const displayPrice =
                 system.display_price !== null && system.display_price !== undefined && system.display_price !== ""
-                  ? formatPrice(system.display_price, system.display_price_currency || "USD")
+                  ? formatPrice(system.display_price, system.display_price_currency || "TZS")
                   : "No display price";
 
               return (
@@ -515,7 +504,7 @@ function AdminDashboardPage({ app }) {
                           system_url: system.system_url || "",
                           admin_url: system.admin_url || "",
                           display_price: system.display_price ?? "",
-                          display_price_currency: system.display_price_currency || "USD",
+                          display_price_currency: system.display_price_currency || "TZS",
                           cover_image: system.cover_image,
                           gallery_images: [...(system.gallery_images || []), "", "", "", "", ""].slice(0, 5),
                           is_active: system.is_active,
@@ -617,15 +606,14 @@ function AdminDashboardPage({ app }) {
                       className="outline-button"
                       onClick={() => {
                         const priceMap = {
-                          weekly: { billing_period: "weekly", usd_amount: "", tzs_amount: "" },
-                          monthly: { billing_period: "monthly", usd_amount: "", tzs_amount: "" },
-                          yearly: { billing_period: "yearly", usd_amount: "", tzs_amount: "" },
-                          per_task: { billing_period: "per_task", usd_amount: "", tzs_amount: "" },
+                          weekly: { billing_period: "weekly", tzs_amount: "" },
+                          monthly: { billing_period: "monthly", tzs_amount: "" },
+                          yearly: { billing_period: "yearly", tzs_amount: "" },
+                          per_task: { billing_period: "per_task", tzs_amount: "" },
                         };
                         pkg.prices.forEach((price) => {
-                          const amountKey = price.currency === "TZS" ? "tzs_amount" : "usd_amount";
-                          if (priceMap[price.billing_period]) {
-                            priceMap[price.billing_period][amountKey] = String(price.amount);
+                          if (price.currency === "TZS" && priceMap[price.billing_period]) {
+                            priceMap[price.billing_period].tzs_amount = String(price.amount);
                           }
                         });
                         setPackageForm({

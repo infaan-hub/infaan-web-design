@@ -17,7 +17,7 @@ function getPackageDisplayPrices(pkg) {
   return [...(pkg.prices || [])]
     .filter((price) => price.billing_period === preferredBillingPeriod)
     .sort((left, right) => {
-      const currencyOrder = { USD: 0, TZS: 1 };
+      const currencyOrder = { TZS: 0 };
       return (currencyOrder[left.currency] ?? 999) - (currencyOrder[right.currency] ?? 999);
     });
 }
@@ -140,12 +140,12 @@ function DashboardPage({ app }) {
                               <div className="pricing-amount">
                                 {primaryPrice?.billing_period === "per_task" ? (
                                   <>
-                                    <strong>{formatPrice(primaryPrice?.amount || 0, primaryPrice?.currency || "USD")}</strong>
+                                    <strong>{formatPrice(primaryPrice?.amount || 0, primaryPrice?.currency || "TZS")}</strong>
                                     <span>per task</span>
                                   </>
                                 ) : (
                                   <>
-                                    <strong>{formatPrice(primaryPrice?.amount || 0, primaryPrice?.currency || "USD")}</strong>
+                                    <strong>{formatPrice(primaryPrice?.amount || 0, primaryPrice?.currency || "TZS")}</strong>
                                     <span>/month</span>
                                   </>
                                 )}
@@ -205,7 +205,7 @@ function DashboardPage({ app }) {
                 system.packages?.[0];
               const pricePreview =
                 (system.display_price !== null && system.display_price !== undefined && system.display_price !== ""
-                  ? { amount: system.display_price, currency: system.display_price_currency || "USD" }
+                  ? { amount: system.display_price, currency: system.display_price_currency || "TZS" }
                   : null) ||
                 preferredPackage?.prices?.find((price) => price.is_default) ||
                 preferredPackage?.prices?.find((price) => price.billing_period === "monthly") ||

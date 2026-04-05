@@ -14,9 +14,8 @@ function BillingPage({ app }) {
   } = app;
 
   const subtotal = Number(selectedPrice?.amount || 0);
-  const activeCurrency = selectedPrice?.currency || "USD";
+  const activeCurrency = selectedPrice?.currency || "TZS";
   const serviceFeeByCurrency = {
-    USD: 5,
     TZS: 15000,
   };
   const serviceFee = selectedPrice?.billing_period === "per_task" ? serviceFeeByCurrency[activeCurrency] || 0 : 0;

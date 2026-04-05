@@ -128,7 +128,7 @@ function PackagePage({ app }) {
                         <strong>
                           {monthlyPrice?.billing_period === "per_task"
                             ? "Custom"
-                            : formatPrice(monthlyPrice?.amount || 0, monthlyPrice?.currency || "USD")}
+                            : formatPrice(monthlyPrice?.amount || 0, monthlyPrice?.currency || "TZS")}
                         </strong>
                         <span>{monthlyPrice?.billing_period === "per_task" ? "per task" : `/${monthlyPrice?.billing_period}`}</span>
                       </div>
