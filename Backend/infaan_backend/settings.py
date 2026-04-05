@@ -23,7 +23,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-infaan-web-and-desi
 DEBUG = env_bool("DJANGO_DEBUG", True)
 ALLOWED_HOSTS = env_list(
     "ALLOWED_HOSTS",
-    "127.0.0.1,localhost,infaan-web-design.onrender.com,infaanwebdesign.vercel.app,*",
+    "127.0.0.1,localhost,infaan-backend.onrender.com,infaanwebdesign.vercel.app,*",
 ) or ["*"]
 
 INSTALLED_APPS = [
@@ -108,7 +108,7 @@ CORS_ALLOWED_ORIGINS = env_list(
 )
 CSRF_TRUSTED_ORIGINS = env_list(
     "CSRF_TRUSTED_ORIGINS",
-    "https://infaanwebdesign.vercel.app,https://infaan-web-design.onrender.com",
+    "https://infaanwebdesign.vercel.app,https://infaan-backend.onrender.com",
 )
 
 REST_FRAMEWORK = {
@@ -139,5 +139,5 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 SYSTEM_SUBSCRIPTION_API_URL = (
-    os.getenv("SYSTEM_SUBSCRIPTION_API_URL", "https://infaan-web-design.onrender.com/api") or ""
+    os.getenv("SYSTEM_SUBSCRIPTION_API_URL", "https://infaan-backend.onrender.com/api") or ""
 ).rstrip("/")

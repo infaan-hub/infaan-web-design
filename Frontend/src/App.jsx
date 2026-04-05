@@ -25,7 +25,7 @@ import SubscriptionPage from "./pages/SubscriptionPage";
 import SystemSubscriptionPage from "./pages/SystemSubscriptionPage";
 import SystemSubscriptionTimePage from "./pages/SystemSubscriptionTimePage";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://infaan-web-design.onrender.com/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://infaan-backend.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 const CUSTOMER_PROTECTED_PATHS = ["/dashboard", "/profile", "/subscription", "/package", "/package-time", "/system-subscription-time", "/billing", "/booking", "/billing-history"];
 const ADMIN_PROTECTED_PATHS = ["/admin-dashboard", "/admin/users", "/admin-subscription", "/system-control", "/bookings-services", "/booked-service", "/booking-history"];
