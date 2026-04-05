@@ -69,7 +69,7 @@ function buildSidebarGroups(app) {
     ];
   }
 
-  const authPages = ["/login", "/register", "/admin/login"];
+  const authPages = ["/login", "/register", "/admin/login", "/verify-email-otp"];
   const guestPrimary = authPages.includes(path) ? guestAccess : publicMenu;
   const guestSecondary = authPages.includes(path) ? publicMenu : guestAccess;
 

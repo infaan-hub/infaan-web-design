@@ -3,7 +3,16 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from accounts.views import AdminRegisterView, GoogleLoginView, LoginView, RegisterView, UserViewSet, profile
+from accounts.views import (
+    AdminRegisterView,
+    GoogleLoginView,
+    LoginView,
+    RegisterView,
+    ResendEmailOTPView,
+    UserViewSet,
+    VerifyEmailOTPView,
+    profile,
+)
 from catalog.views import (
     AdminAccessView,
     FeatureAccessView,
@@ -47,6 +56,8 @@ urlpatterns = [
     path("api/auth/admin/register/", AdminRegisterView.as_view(), name="admin-register"),
     path("api/auth/login/", LoginView.as_view(), name="login"),
     path("api/auth/google/", GoogleLoginView.as_view(), name="google-login"),
+    path("api/auth/email-otp/verify/", VerifyEmailOTPView.as_view(), name="verify-email-otp"),
+    path("api/auth/email-otp/resend/", ResendEmailOTPView.as_view(), name="resend-email-otp"),
     path("api/auth/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
     path("api/auth/me/", profile, name="profile"),
     path("api/license/validate/", LicenseValidateView.as_view(), name="license-validate"),

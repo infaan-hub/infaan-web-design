@@ -1,8 +1,13 @@
 import json
 import re
+import secrets
+from datetime import timedelta
 from urllib import error, parse, request as urllib_request
 
 from django.conf import settings
+from django.contrib.auth.hashers import check_password, make_password
+from django.core.mail import send_mail
+from django.utils import timezone
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -10,7 +15,7 @@ from rest_framework.serializers import ValidationError
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import CustomUser
+from .models import CustomUser, EmailOTP
 from .serializers import AdminUserSerializer, LoginSerializer, RegisterSerializer, UserSerializer
 
 
@@ -34,6 +39,35 @@ def build_unique_username(email):
         suffix += 1
         username = f"{base[:140]}_{suffix}"
     return username
+
+
+def mask_email_address(email):
+    local_part, _, domain = (email or "").partition("@")
+    if not local_part or not domain:
+        return email
+    if len(local_part) <= 2:
+        visible_local = local_part[:1]
+    else:
+        visible_local = f"{local_part[:2]}{'*' * max(len(local_part) - 2, 2)}"
+    return f"{visible_local}@{domain}"
+
+
+def generate_otp_code():
+    return f"{secrets.randbelow(900000) + 100000:06d}"
+
+
+def build_otp_payload(otp):
+    now = timezone.now()
+    resend_after = max(int((otp.resend_available_at - now).total_seconds()), 0)
+    expires_in = max(int((otp.expires_at - now).total_seconds()), 0)
+    return {
+        "requires_verification": True,
+        "verification_token": otp.verification_token,
+        "email": otp.user.email,
+        "masked_email": mask_email_address(otp.user.email),
+        "resend_after_seconds": resend_after,
+        "expires_in_seconds": expires_in,
+    }
 
 
 def exchange_google_code(code, redirect_uri):
@@ -63,6 +97,90 @@ def fetch_google_userinfo(access_token):
     )
     with urllib_request.urlopen(userinfo_request) as userinfo_response:
         return json.loads(userinfo_response.read().decode())
+
+
+def send_otp_email(user, code):
+    sender = settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER
+    if not sender:
+        raise ValidationError("Email sender is not configured on the server.")
+
+    send_mail(
+        subject="Your email verification code",
+        message=f"Your verification code is: {code}\nThis code expires in 10 minutes.",
+        from_email=sender,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+
+
+def create_otp_for_user(user, purpose=EmailOTP.Purpose.GOOGLE_LOGIN):
+    EmailOTP.objects.filter(user=user, purpose=purpose, is_verified=False).delete()
+    code = generate_otp_code()
+    now = timezone.now()
+    otp = EmailOTP.objects.create(
+        user=user,
+        purpose=purpose,
+        verification_token=secrets.token_urlsafe(32),
+        otp_hash=make_password(code),
+        expires_at=now + timedelta(minutes=10),
+        resend_available_at=now + timedelta(seconds=60),
+    )
+    send_otp_email(user, code)
+    return otp
+
+
+def get_pending_otp(verification_token, purpose=EmailOTP.Purpose.GOOGLE_LOGIN):
+    otp = EmailOTP.objects.filter(
+        verification_token=verification_token,
+        purpose=purpose,
+        is_verified=False,
+    ).select_related("user").first()
+    if not otp:
+        raise ValidationError("Verification session was not found. Please login with Google again.")
+    return otp
+
+
+def verify_pending_otp(verification_token, entered_code, purpose=EmailOTP.Purpose.GOOGLE_LOGIN):
+    otp = get_pending_otp(verification_token, purpose)
+
+    if otp.is_expired():
+        otp.delete()
+        raise ValidationError("This verification code has expired. Please request a new one.")
+
+    if otp.attempts >= otp.max_attempts:
+        otp.delete()
+        raise ValidationError("Too many invalid attempts. Please request a new code.")
+
+    if not check_password(entered_code, otp.otp_hash):
+        otp.attempts += 1
+        otp.save(update_fields=["attempts"])
+        raise ValidationError("Invalid verification code.")
+
+    otp.is_verified = True
+    otp.verified_at = timezone.now()
+    otp.save(update_fields=["is_verified", "verified_at"])
+    EmailOTP.objects.filter(user=otp.user, purpose=purpose, is_verified=False).exclude(id=otp.id).delete()
+    return otp.user
+
+
+def resend_pending_otp(verification_token, purpose=EmailOTP.Purpose.GOOGLE_LOGIN):
+    otp = get_pending_otp(verification_token, purpose)
+    now = timezone.now()
+    if otp.is_expired():
+        otp.delete()
+        raise ValidationError("This verification code has expired. Please login with Google again.")
+    if otp.resend_available_at > now:
+        seconds_left = max(int((otp.resend_available_at - now).total_seconds()), 1)
+        raise ValidationError(f"Please wait {seconds_left} seconds before requesting another code.")
+
+    code = generate_otp_code()
+    otp.otp_hash = make_password(code)
+    otp.expires_at = now + timedelta(minutes=10)
+    otp.resend_available_at = now + timedelta(seconds=60)
+    otp.attempts = 0
+    otp.save(update_fields=["otp_hash", "expires_at", "resend_available_at", "attempts"])
+    send_otp_email(otp.user, code)
+    return otp
 
 
 class IsAdminUserRole(permissions.BasePermission):
@@ -155,7 +273,58 @@ class GoogleLoginView(APIView):
             if updated:
                 user.save(update_fields=["first_name", "last_name"])
 
+        try:
+            otp = create_otp_for_user(user)
+        except Exception:
+            raise ValidationError("Unable to send the verification code email right now.")
+
+        return Response(
+            {
+                "detail": "Verification code sent to your email.",
+                "user": UserSerializer(user).data,
+                **build_otp_payload(otp),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class VerifyEmailOTPView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        verification_token = (request.data.get("verification_token") or "").strip()
+        otp_code = (request.data.get("otp_code") or "").strip()
+        if not verification_token or not otp_code:
+            raise ValidationError("Verification token and OTP code are required.")
+        if not otp_code.isdigit() or len(otp_code) != 6:
+            raise ValidationError("Enter the 6-digit verification code.")
+
+        user = verify_pending_otp(verification_token, otp_code)
         return build_auth_response(user)
+
+
+class ResendEmailOTPView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        verification_token = (request.data.get("verification_token") or "").strip()
+        if not verification_token:
+            raise ValidationError("Verification token is required.")
+
+        try:
+            otp = resend_pending_otp(verification_token)
+        except Exception as exc:
+            if isinstance(exc, ValidationError):
+                raise
+            raise ValidationError("Unable to resend the verification code right now.")
+
+        return Response(
+            {
+                "detail": "A new verification code has been sent to your email.",
+                **build_otp_payload(otp),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 @api_view(["GET"])

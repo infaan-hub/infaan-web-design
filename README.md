@@ -65,6 +65,13 @@ Render backend env vars used by Django:
 - `DATABASE_URL`
 - `SEED_INFAAN_DATA`
 - `SYSTEM_SUBSCRIPTION_API_URL`
+- `EMAIL_BACKEND`
+- `EMAIL_HOST`
+- `EMAIL_PORT`
+- `EMAIL_USE_TLS`
+- `EMAIL_HOST_USER`
+- `EMAIL_HOST_PASSWORD`
+- `DEFAULT_FROM_EMAIL`
 
 Render frontend env vars used by Vite:
 

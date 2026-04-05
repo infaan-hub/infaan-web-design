@@ -12,6 +12,7 @@ import BookedServicePage from "./pages/BookedServicePage";
 import BookingsServicesPage from "./pages/BookingsServicesPage";
 import BookingHistoryPage from "./pages/BookingHistoryPage";
 import DashboardPage from "./pages/DashboardPage";
+import EmailOtpVerificationPage from "./pages/EmailOtpVerificationPage";
 import BillingHistoryPage from "./pages/BillingHistoryPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
@@ -84,6 +85,13 @@ const emptyPayment = {
   expiry_date: "",
   cvv: "",
   phone_number: "",
+};
+const emptyEmailOtpVerification = {
+  verification_token: "",
+  email: "",
+  masked_email: "",
+  resend_after_seconds: 0,
+  expires_in_seconds: 0,
 };
 const emptyPortfolio = {
   name: "",
@@ -203,6 +211,10 @@ function App() {
   const [systemForm, setSystemForm] = useState(emptySystem);
   const [editingSystemId, setEditingSystemId] = useState(null);
   const [paymentForm, setPaymentForm] = useState(emptyPayment);
+  const [emailOtpVerification, setEmailOtpVerification] = useState(() =>
+    readStoredJson("infaan_email_otp_verification", emptyEmailOtpVerification)
+  );
+  const [emailOtpCode, setEmailOtpCode] = useState("");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -270,6 +282,14 @@ function App() {
       localStorage.removeItem("infaan_post_login_path");
     }
   }, [postLoginPath]);
+
+  useEffect(() => {
+    if (emailOtpVerification?.verification_token) {
+      setStoredJson("infaan_email_otp_verification", emailOtpVerification);
+    } else {
+      localStorage.removeItem("infaan_email_otp_verification");
+    }
+  }, [emailOtpVerification]);
 
   useEffect(() => {
     document.body.dataset.theme = theme;
@@ -553,7 +573,7 @@ function App() {
       return;
     }
 
-    if (currentUser?.role === "customer" && ["/login", "/register"].includes(path)) {
+    if (currentUser?.role === "customer" && ["/login", "/register", "/verify-email-otp"].includes(path)) {
       navigate("/dashboard", true);
       return;
     }
@@ -909,15 +929,105 @@ function App() {
         false
       );
 
+      if (!data.requires_verification || !data.verification_token) {
+        throw new Error("Google verification session was not created.");
+      }
+
+      clearAuthState();
+      setEmailOtpVerification({
+        verification_token: data.verification_token,
+        email: data.email || data.user?.email || "",
+        masked_email: data.masked_email || data.user?.email || "",
+        resend_after_seconds: data.resend_after_seconds || 0,
+        expires_in_seconds: data.expires_in_seconds || 0,
+      });
+      setEmailOtpCode("");
+      setFeedback(data.detail || "Verification code sent to your email.");
+      navigate("/verify-email-otp");
+    } catch (requestError) {
+      clearAuthState();
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function verifyEmailOtp() {
+    setLoading(true);
+    setError("");
+    setFeedback("");
+
+    try {
+      const normalizedCode = String(emailOtpCode || "").replace(/\D/g, "").slice(0, 6);
+      if (!emailOtpVerification?.verification_token) {
+        throw new Error("Verification session not found. Please login with Google again.");
+      }
+      if (normalizedCode.length !== 6) {
+        throw new Error("Enter the 6-digit verification code.");
+      }
+
+      const data = await apiRequest(
+        "/auth/email-otp/verify/",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            verification_token: emailOtpVerification.verification_token,
+            otp_code: normalizedCode,
+          }),
+        },
+        false
+      );
+
       setToken(data.access);
       setRefreshToken(data.refresh);
       setCurrentUser(data.user);
       setStoredJson("infaan_user", data.user);
-      setFeedback("Google login successful.");
-      navigate(postLoginPath || "/dashboard");
+      setEmailOtpVerification(emptyEmailOtpVerification);
+      setEmailOtpCode("");
+      setFeedback("Email verified successfully.");
+      const nextPath = data.user.role === "admin" ? "/admin-dashboard" : postLoginPath || "/dashboard";
       setPostLoginPath("");
+      navigate(nextPath);
     } catch (requestError) {
       clearAuthState();
+      setEmailOtpVerification((previous) => previous || emptyEmailOtpVerification);
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function resendEmailOtp() {
+    setLoading(true);
+    setError("");
+    setFeedback("");
+
+    try {
+      if (!emailOtpVerification?.verification_token) {
+        throw new Error("Verification session not found. Please login with Google again.");
+      }
+
+      const data = await apiRequest(
+        "/auth/email-otp/resend/",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            verification_token: emailOtpVerification.verification_token,
+          }),
+        },
+        false
+      );
+
+      setEmailOtpVerification((previous) => ({
+        ...previous,
+        verification_token: data.verification_token || previous.verification_token,
+        email: data.email || previous.email,
+        masked_email: data.masked_email || previous.masked_email,
+        resend_after_seconds: data.resend_after_seconds || 0,
+        expires_in_seconds: data.expires_in_seconds || 0,
+      }));
+      setFeedback(data.detail || "Verification code sent again.");
+    } catch (requestError) {
       setError(requestError.message);
     } finally {
       setLoading(false);
@@ -1351,6 +1461,8 @@ function App() {
 
   function logout() {
     clearAuthState();
+    setEmailOtpVerification(emptyEmailOtpVerification);
+    setEmailOtpCode("");
     setSelectedPackageId("");
     setSelectedPriceId("");
     setSelectedSystemId("");
@@ -1525,6 +1637,10 @@ function App() {
     feedback,
     error,
     loading,
+    emailOtpVerification,
+    setEmailOtpVerification,
+    emailOtpCode,
+    setEmailOtpCode,
     loginForm,
     setLoginForm,
     registerForm,
@@ -1582,6 +1698,8 @@ function App() {
     selectPortfolioService,
     requireLogin,
     beginGoogleLogin,
+    verifyEmailOtp,
+    resendEmailOtp,
     logout,
     setFeedback,
     setError,
@@ -1608,6 +1726,7 @@ function App() {
     "/portfolio": <PortfolioPage app={app} />,
     "/login": <LoginPage app={app} />,
     "/register": <RegisterPage app={app} />,
+    "/verify-email-otp": <EmailOtpVerificationPage app={app} />,
     "/dashboard": <DashboardPage app={app} />,
     "/profile": <ProfilePage app={app} />,
     "/subscription": <SubscriptionPage app={app} />,
