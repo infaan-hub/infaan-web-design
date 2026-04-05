@@ -71,12 +71,13 @@ TEMPLATES = [
 WSGI_APPLICATION = "infaan_backend.wsgi.application"
 ASGI_APPLICATION = "infaan_backend.asgi.application"
 
+database_url = os.getenv("DATABASE_URL")
+if not database_url:
+    raise RuntimeError("DATABASE_URL is not set.")
+
 DATABASES = {
     "default": dj_database_url.config(
-        default=os.getenv(
-            "DATABASE_URL",
-            "postgresql://neondb_owner:npg_8pDOUbzjG5dP@ep-misty-dust-amt29kro-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
-        ),
+        default=database_url,
         conn_max_age=600,
     )
 }

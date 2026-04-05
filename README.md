@@ -70,6 +70,16 @@ Render frontend env vars used by Vite:
 
 - `VITE_API_BASE_URL`
 
+Render Postgres is now the expected database for this project.
+
+Examples:
+
+```env
+DATABASE_URL=postgresql://infaanwebdesign_user:your-password@dpg-d79ajpadbo4c73a8k4a0-a.oregon-postgres.render.com/infaanwebdesign
+```
+
+For Render web service to Render Postgres inside Render, use the internal database URL in `render.yaml`.
+
 For subsystem-to-subsystem subscription control, set:
 
 - `SYSTEM_SUBSCRIPTION_API_URL`

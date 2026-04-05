@@ -21,7 +21,7 @@ services:
       - key: CSRF_TRUSTED_ORIGINS
         value: "https://infaan-web-design.onrender.com,https://infaanwebdesign.vercel.app"
       - key: DATABASE_URL
-        value: "postgresql://neondb_owner:npg_8pDOUbzjG5dP@ep-misty-dust-amt29kro-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+        value: "postgresql://infaanwebdesign_user:VxClXqMttFCCQ4i1EwR70klTfLRAtVNQ@dpg-d79ajpadbo4c73a8k4a0-a/infaanwebdesign"
       - key: SEED_INFAAN_DATA
         value: "true"
 
