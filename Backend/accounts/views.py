@@ -7,6 +7,7 @@ from urllib import error, parse, request as urllib_request
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.core.mail import send_mail
+from django.db import DatabaseError, OperationalError, ProgrammingError
 from django.utils import timezone
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
@@ -103,6 +104,11 @@ def send_otp_email(user, code):
     sender = settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER
     if not sender:
         raise ValidationError("Email sender is not configured on the server.")
+    if not user.email:
+        raise ValidationError("This account does not have an email address for verification.")
+    if settings.EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
+        if not settings.EMAIL_HOST_USER or not settings.EMAIL_HOST_PASSWORD:
+            raise ValidationError("SMTP email is not configured on the server.")
 
     send_mail(
         subject="Your email verification code",
@@ -240,7 +246,7 @@ class GoogleLoginView(APIView):
         try:
             token_data = exchange_google_code(code, redirect_uri)
             userinfo = fetch_google_userinfo(token_data["access_token"])
-        except error.HTTPError:
+        except (error.HTTPError, error.URLError, KeyError, json.JSONDecodeError):
             raise ValidationError("Unable to verify the Google login.")
 
         email = userinfo.get("email")
@@ -275,6 +281,10 @@ class GoogleLoginView(APIView):
 
         try:
             otp = create_otp_for_user(user)
+        except ValidationError:
+            raise
+        except (ProgrammingError, OperationalError, DatabaseError):
+            raise ValidationError("Email verification is not ready on the server yet. Please run the latest database migrations.")
         except Exception:
             raise ValidationError("Unable to send the verification code email right now.")
 

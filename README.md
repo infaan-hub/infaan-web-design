@@ -94,7 +94,7 @@ For subsystem-to-subsystem subscription control, set:
 Example:
 
 ```env
-SYSTEM_SUBSCRIPTION_API_URL=https://infaan-backend.onrender.com/api
+SYSTEM_SUBSCRIPTION_API_URL=https://infaan-web-design.onrender.com/api
 ```
 
 Paid system subscription responses now include:
