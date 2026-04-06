@@ -3,6 +3,7 @@ import re
 import secrets
 from datetime import timedelta
 from urllib import error, parse, request as urllib_request
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
@@ -55,6 +56,27 @@ def mask_email_address(email):
 
 def generate_otp_code():
     return f"{secrets.randbelow(900000) + 100000:06d}"
+
+
+def is_allowed_request_origin(origin):
+    normalized_origin = (origin or "").rstrip("/")
+    if not normalized_origin:
+        return False
+    if getattr(settings, "CORS_ALLOW_ALL_ORIGINS", False):
+        return True
+    if normalized_origin in {item.rstrip("/") for item in getattr(settings, "CORS_ALLOWED_ORIGINS", [])}:
+        return True
+    for pattern in getattr(settings, "CORS_ALLOWED_ORIGIN_REGEXES", []):
+        if re.match(pattern, normalized_origin):
+            return True
+    return False
+
+
+def normalize_redirect_origin(redirect_uri):
+    parsed = urlparse((redirect_uri or "").strip())
+    if parsed.scheme and parsed.netloc:
+        return f"{parsed.scheme}://{parsed.netloc}"
+    return ""
 
 
 def build_otp_payload(otp):
@@ -239,8 +261,8 @@ class GoogleLoginView(APIView):
         if not code or not redirect_uri:
             raise ValidationError("Google authorization code is required.")
 
-        allowed_origins = {origin.rstrip("/") for origin in settings.CORS_ALLOWED_ORIGINS}
-        if redirect_uri.rstrip("/") not in allowed_origins:
+        request_origin = normalize_redirect_origin(redirect_uri)
+        if not is_allowed_request_origin(request_origin):
             raise ValidationError("This origin is not allowed for Google login.")
 
         try:

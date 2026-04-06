@@ -106,6 +106,11 @@ CORS_ALLOWED_ORIGINS = env_list(
     "CORS_ALLOWED_ORIGINS",
     "https://infaanwebdesign.vercel.app,http://127.0.0.1:5173,http://localhost:5173",
 )
+CORS_ALLOWED_ORIGIN_REGEXES = env_list(
+    "CORS_ALLOWED_ORIGIN_REGEXES",
+    r"https://.*\.vercel\.app",
+)
+CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = env_list(
     "CSRF_TRUSTED_ORIGINS",
     "https://infaanwebdesign.vercel.app,https://infaan-web-design.onrender.com",
