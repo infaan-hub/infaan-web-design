@@ -86,13 +86,14 @@ const emptyPayment = {
   cvv: "",
   phone_number: "",
 };
-const emptyEmailOtpVerification = {
-  verification_token: "",
-  email: "",
-  masked_email: "",
-  resend_after_seconds: 0,
-  expires_in_seconds: 0,
-};
+  const emptyEmailOtpVerification = {
+    verification_token: "",
+    email: "",
+    masked_email: "",
+    resend_after_seconds: 0,
+    expires_in_seconds: 0,
+    source: "",
+  };
 const emptyPortfolio = {
   name: "",
   image_data: "",
@@ -323,6 +324,21 @@ function App() {
     setTenants([]);
     setTenantServices([]);
     setUsers([]);
+  }
+
+  function applyOtpChallenge(data, fallbackMessage = "Verification code sent to your email.") {
+    clearAuthState();
+    setEmailOtpVerification({
+      verification_token: data.verification_token || "",
+      email: data.email || data.user?.email || "",
+      masked_email: data.masked_email || data.user?.email || "",
+      resend_after_seconds: data.resend_after_seconds || 0,
+      expires_in_seconds: data.expires_in_seconds || 0,
+      source: data.source || "",
+    });
+    setEmailOtpCode("");
+    setFeedback(data.detail || fallbackMessage);
+    navigate("/verify-email-otp");
   }
 
   async function parseApiResponse(response) {
@@ -884,6 +900,18 @@ function App() {
 
     try {
       const data = await apiRequest(routePath, { method: "POST", body: JSON.stringify(form) }, false);
+      if (data.requires_verification && data.verification_token) {
+        if (expectedRole && data.user?.role !== expectedRole) {
+          throw new Error(
+            expectedRole === "admin"
+              ? "This page is only for admin accounts."
+              : "This page is only for customer accounts."
+          );
+        }
+        applyOtpChallenge(data, "Verification code sent to your email.");
+        return;
+      }
+
       if (expectedRole && data.user?.role !== expectedRole) {
         throw new Error(
           expectedRole === "admin"
@@ -933,17 +961,7 @@ function App() {
         throw new Error("Google verification session was not created.");
       }
 
-      clearAuthState();
-      setEmailOtpVerification({
-        verification_token: data.verification_token,
-        email: data.email || data.user?.email || "",
-        masked_email: data.masked_email || data.user?.email || "",
-        resend_after_seconds: data.resend_after_seconds || 0,
-        expires_in_seconds: data.expires_in_seconds || 0,
-      });
-      setEmailOtpCode("");
-      setFeedback(data.detail || "Verification code sent to your email.");
-      navigate("/verify-email-otp");
+      applyOtpChallenge(data, "Verification code sent to your email.");
     } catch (requestError) {
       clearAuthState();
       setError(requestError.message);
@@ -960,7 +978,7 @@ function App() {
     try {
       const normalizedCode = String(emailOtpCode || "").replace(/\D/g, "").slice(0, 6);
       if (!emailOtpVerification?.verification_token) {
-        throw new Error("Verification session not found. Please login with Google again.");
+        throw new Error("Verification session not found. Please login again.");
       }
       if (normalizedCode.length !== 6) {
         throw new Error("Enter the 6-digit verification code.");
@@ -1004,7 +1022,7 @@ function App() {
 
     try {
       if (!emailOtpVerification?.verification_token) {
-        throw new Error("Verification session not found. Please login with Google again.");
+        throw new Error("Verification session not found. Please login again.");
       }
 
       const data = await apiRequest(

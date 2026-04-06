@@ -131,7 +131,7 @@ function EmailOtpVerificationPage({ app }) {
           </div>
           <div className="otp-form-copy">
             <h2>Enter OTP Code</h2>
-            <p>Complete verification to finish Google sign-in and open your customer dashboard.</p>
+            <p>Complete verification to finish sign-in and open your account.</p>
           </div>
 
           <div className="otp-input-row" onPaste={handleOtpPaste}>

@@ -93,6 +93,26 @@ def build_otp_payload(otp):
     }
 
 
+def build_otp_challenge_response(user, detail="Verification code sent to your email.", status_code=status.HTTP_200_OK):
+    try:
+        otp = create_otp_for_user(user)
+    except ValidationError:
+        raise
+    except (ProgrammingError, OperationalError, DatabaseError):
+        raise ValidationError("Email verification is not ready on the server yet. Please run the latest database migrations.")
+    except Exception:
+        raise ValidationError("Unable to send the verification code email right now.")
+
+    return Response(
+        {
+            "detail": detail,
+            "user": UserSerializer(user).data,
+            **build_otp_payload(otp),
+        },
+        status=status_code,
+    )
+
+
 def exchange_google_code(code, redirect_uri):
     payload = parse.urlencode(
         {
@@ -164,7 +184,7 @@ def get_pending_otp(verification_token, purpose=EmailOTP.Purpose.GOOGLE_LOGIN):
         is_verified=False,
     ).select_related("user").first()
     if not otp:
-        raise ValidationError("Verification session was not found. Please login with Google again.")
+        raise ValidationError("Verification session was not found. Please login again.")
     return otp
 
 
@@ -196,7 +216,7 @@ def resend_pending_otp(verification_token, purpose=EmailOTP.Purpose.GOOGLE_LOGIN
     now = timezone.now()
     if otp.is_expired():
         otp.delete()
-        raise ValidationError("This verification code has expired. Please login with Google again.")
+        raise ValidationError("This verification code has expired. Please login again.")
     if otp.resend_available_at > now:
         seconds_left = max(int((otp.resend_available_at - now).total_seconds()), 1)
         raise ValidationError(f"Please wait {seconds_left} seconds before requesting another code.")
@@ -223,7 +243,11 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        return build_auth_response(user, status.HTTP_201_CREATED)
+        return build_otp_challenge_response(
+            user,
+            detail="Registration successful. Verification code sent to your email.",
+            status_code=status.HTTP_201_CREATED,
+        )
 
 
 class AdminRegisterView(APIView):
@@ -243,7 +267,7 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
-        return build_auth_response(user)
+        return build_otp_challenge_response(user)
 
 
 class GoogleLoginView(APIView):
@@ -301,23 +325,7 @@ class GoogleLoginView(APIView):
             if updated:
                 user.save(update_fields=["first_name", "last_name"])
 
-        try:
-            otp = create_otp_for_user(user)
-        except ValidationError:
-            raise
-        except (ProgrammingError, OperationalError, DatabaseError):
-            raise ValidationError("Email verification is not ready on the server yet. Please run the latest database migrations.")
-        except Exception:
-            raise ValidationError("Unable to send the verification code email right now.")
-
-        return Response(
-            {
-                "detail": "Verification code sent to your email.",
-                "user": UserSerializer(user).data,
-                **build_otp_payload(otp),
-            },
-            status=status.HTTP_200_OK,
-        )
+        return build_otp_challenge_response(user)
 
 
 class VerifyEmailOTPView(APIView):
