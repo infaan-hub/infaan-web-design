@@ -1352,8 +1352,6 @@ function App() {
 
   function logout() {
     clearAuthState();
-    setEmailOtpVerification(emptyEmailOtpVerification);
-    setEmailOtpCode("");
     setSelectedPackageId("");
     setSelectedPriceId("");
     setSelectedSystemId("");
