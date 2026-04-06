@@ -90,12 +90,32 @@ def build_otp_payload(otp):
         "masked_email": mask_email_address(otp.user.email),
         "resend_after_seconds": resend_after,
         "expires_in_seconds": expires_in,
+        "otp_requested": bool(otp.otp_hash),
     }
 
 
-def build_otp_challenge_response(user, detail="Verification code sent to your email.", status_code=status.HTTP_200_OK):
+def create_pending_otp_session(user, purpose=EmailOTP.Purpose.GOOGLE_LOGIN):
+    EmailOTP.objects.filter(user=user, purpose=purpose, is_verified=False).delete()
+    now = timezone.now()
+    return EmailOTP.objects.create(
+        user=user,
+        purpose=purpose,
+        verification_token=secrets.token_urlsafe(32),
+        otp_hash="",
+        expires_at=now,
+        resend_available_at=now,
+    )
+
+
+def build_otp_challenge_response(
+    user,
+    detail="Verification code sent to your email.",
+    status_code=status.HTTP_200_OK,
+    auto_send=True,
+    source="",
+):
     try:
-        otp = create_otp_for_user(user)
+        otp = create_otp_for_user(user) if auto_send else create_pending_otp_session(user)
     except ValidationError:
         raise
     except (ProgrammingError, OperationalError, DatabaseError):
@@ -107,6 +127,7 @@ def build_otp_challenge_response(user, detail="Verification code sent to your em
         {
             "detail": detail,
             "user": UserSerializer(user).data,
+            "source": source,
             **build_otp_payload(otp),
         },
         status=status_code,
@@ -190,6 +211,8 @@ def get_pending_otp(verification_token, purpose=EmailOTP.Purpose.GOOGLE_LOGIN):
 
 def verify_pending_otp(verification_token, entered_code, purpose=EmailOTP.Purpose.GOOGLE_LOGIN):
     otp = get_pending_otp(verification_token, purpose)
+    if not otp.otp_hash:
+        raise ValidationError("Request a verification code first.")
 
     if otp.is_expired():
         otp.delete()
@@ -213,6 +236,8 @@ def verify_pending_otp(verification_token, entered_code, purpose=EmailOTP.Purpos
 
 def resend_pending_otp(verification_token, purpose=EmailOTP.Purpose.GOOGLE_LOGIN):
     otp = get_pending_otp(verification_token, purpose)
+    if not otp.otp_hash:
+        raise ValidationError("Request a verification code first.")
     now = timezone.now()
     if otp.is_expired():
         otp.delete()
@@ -222,6 +247,25 @@ def resend_pending_otp(verification_token, purpose=EmailOTP.Purpose.GOOGLE_LOGIN
         raise ValidationError(f"Please wait {seconds_left} seconds before requesting another code.")
 
     code = generate_otp_code()
+    otp.otp_hash = make_password(code)
+    otp.expires_at = now + timedelta(minutes=10)
+    otp.resend_available_at = now + timedelta(seconds=60)
+    otp.attempts = 0
+    otp.save(update_fields=["otp_hash", "expires_at", "resend_available_at", "attempts"])
+    send_otp_email(otp.user, code)
+    return otp
+
+
+def request_pending_otp(verification_token, email, purpose=EmailOTP.Purpose.GOOGLE_LOGIN):
+    otp = get_pending_otp(verification_token, purpose)
+    normalized_email = (email or "").strip().lower()
+    if not normalized_email:
+        raise ValidationError("Email address is required.")
+    if normalized_email != (otp.user.email or "").strip().lower():
+        raise ValidationError("Enter the same email address used for this account.")
+
+    code = generate_otp_code()
+    now = timezone.now()
     otp.otp_hash = make_password(code)
     otp.expires_at = now + timedelta(minutes=10)
     otp.resend_available_at = now + timedelta(seconds=60)
@@ -247,6 +291,7 @@ class RegisterView(APIView):
             user,
             detail="Registration successful. Verification code sent to your email.",
             status_code=status.HTTP_201_CREATED,
+            source="register",
         )
 
 
@@ -267,7 +312,7 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
-        return build_otp_challenge_response(user)
+        return build_otp_challenge_response(user, source="login")
 
 
 class GoogleLoginView(APIView):
@@ -325,7 +370,37 @@ class GoogleLoginView(APIView):
             if updated:
                 user.save(update_fields=["first_name", "last_name"])
 
-        return build_otp_challenge_response(user)
+        return build_otp_challenge_response(
+            user,
+            detail="Google account verified. Enter your email to request the OTP code.",
+            auto_send=False,
+            source="google",
+        )
+
+
+class RequestEmailOTPView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        verification_token = (request.data.get("verification_token") or "").strip()
+        email = (request.data.get("email") or "").strip()
+        if not verification_token:
+            raise ValidationError("Verification token is required.")
+
+        try:
+            otp = request_pending_otp(verification_token, email)
+        except ValidationError:
+            raise
+        except Exception:
+            raise ValidationError("Unable to send the verification code email right now.")
+
+        return Response(
+            {
+                "detail": "Verification code sent to your email.",
+                **build_otp_payload(otp),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class VerifyEmailOTPView(APIView):

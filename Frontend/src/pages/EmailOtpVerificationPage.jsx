@@ -13,6 +13,7 @@ function EmailOtpVerificationPage({ app }) {
     setEmailOtpVerification,
     emailOtpCode,
     setEmailOtpCode,
+    requestEmailOtp,
     verifyEmailOtp,
     resendEmailOtp,
     loading,
@@ -88,6 +89,7 @@ function EmailOtpVerificationPage({ app }) {
 
   const canResend = (emailOtpVerification?.resend_after_seconds || 0) <= 0;
   const expiresSoon = (emailOtpVerification?.expires_in_seconds || 0) <= 60;
+  const otpRequested = !!emailOtpVerification?.otp_requested;
 
   return (
     <main className="otp-page">
@@ -107,7 +109,11 @@ function EmailOtpVerificationPage({ app }) {
           </div>
           <div className="otp-copy-block">
             <h2>Verify your email</h2>
-            <p>We sent a 6-digit verification code to {emailOtpVerification?.masked_email || "your email"}.</p>
+            <p>
+              {otpRequested
+                ? `We sent a 6-digit verification code to ${emailOtpVerification?.masked_email || "your email"}.`
+                : "Enter the email address for this account to request your 6-digit OTP code."}
+            </p>
           </div>
           <div className="otp-meta-strip">
             <div>
@@ -130,41 +136,67 @@ function EmailOtpVerificationPage({ app }) {
             <span className="otp-lock-body" />
           </div>
           <div className="otp-form-copy">
-            <h2>Enter OTP Code</h2>
-            <p>Complete verification to finish sign-in and open your account.</p>
+            <h2>{otpRequested ? "Enter OTP Code" : "Request OTP Code"}</h2>
+            <p>
+              {otpRequested
+                ? "Complete verification to finish sign-in and open your account."
+                : "Use the same email address linked to this account, then request the OTP code."}
+            </p>
           </div>
 
-          <div className="otp-input-row" onPaste={handleOtpPaste}>
-            {otpDigits.map((digit, index) => (
+          {!otpRequested ? (
+            <>
               <input
-                key={`otp-digit-${index + 1}`}
-                ref={(element) => {
-                  inputRefs.current[index] = element;
-                }}
-                className="otp-digit-input"
-                inputMode="numeric"
-                autoComplete={index === 0 ? "one-time-code" : "off"}
-                maxLength={1}
-                value={digit}
-                onChange={(event) => updateOtpDigit(index, event.target.value)}
-                onKeyDown={(event) => handleOtpKeyDown(index, event)}
-                aria-label={`OTP digit ${index + 1}`}
+                className="auth-input otp-email-input"
+                type="email"
+                value={emailOtpVerification?.email || ""}
+                onChange={(event) =>
+                  setEmailOtpVerification((previous) => ({
+                    ...previous,
+                    email: event.target.value,
+                  }))
+                }
+                placeholder="Enter your email address"
               />
-            ))}
-          </div>
+              <button type="button" className="otp-submit-button" onClick={requestEmailOtp} disabled={loading}>
+                {loading ? "Sending..." : "Request OTP"}
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="otp-input-row" onPaste={handleOtpPaste}>
+                {otpDigits.map((digit, index) => (
+                  <input
+                    key={`otp-digit-${index + 1}`}
+                    ref={(element) => {
+                      inputRefs.current[index] = element;
+                    }}
+                    className="otp-digit-input"
+                    inputMode="numeric"
+                    autoComplete={index === 0 ? "one-time-code" : "off"}
+                    maxLength={1}
+                    value={digit}
+                    onChange={(event) => updateOtpDigit(index, event.target.value)}
+                    onKeyDown={(event) => handleOtpKeyDown(index, event)}
+                    aria-label={`OTP digit ${index + 1}`}
+                  />
+                ))}
+              </div>
 
-          <button
-            type="button"
-            className="otp-resend-link"
-            onClick={resendEmailOtp}
-            disabled={!canResend || loading}
-          >
-            {canResend ? "Resend code" : `Resend in ${formatCountdown(emailOtpVerification?.resend_after_seconds || 0)}`}
-          </button>
+              <button
+                type="button"
+                className="otp-resend-link"
+                onClick={resendEmailOtp}
+                disabled={!canResend || loading}
+              >
+                {canResend ? "Resend code" : `Resend in ${formatCountdown(emailOtpVerification?.resend_after_seconds || 0)}`}
+              </button>
 
-          <button type="button" className="otp-submit-button" onClick={verifyEmailOtp} disabled={loading}>
-            {loading ? "Verifying..." : "Verify Code"}
-          </button>
+              <button type="button" className="otp-submit-button" onClick={verifyEmailOtp} disabled={loading}>
+                {loading ? "Verifying..." : "Verify Code"}
+              </button>
+            </>
+          )}
         </div>
       </section>
     </main>

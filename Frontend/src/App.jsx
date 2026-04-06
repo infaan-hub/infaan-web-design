@@ -86,14 +86,15 @@ const emptyPayment = {
   cvv: "",
   phone_number: "",
 };
-  const emptyEmailOtpVerification = {
-    verification_token: "",
-    email: "",
-    masked_email: "",
-    resend_after_seconds: 0,
-    expires_in_seconds: 0,
-    source: "",
-  };
+const emptyEmailOtpVerification = {
+  verification_token: "",
+  email: "",
+  masked_email: "",
+  resend_after_seconds: 0,
+  expires_in_seconds: 0,
+  source: "",
+  otp_requested: false,
+};
 const emptyPortfolio = {
   name: "",
   image_data: "",
@@ -330,11 +331,12 @@ function App() {
     clearAuthState();
     setEmailOtpVerification({
       verification_token: data.verification_token || "",
-      email: data.email || data.user?.email || "",
+      email: data.source === "google" && !data.otp_requested ? "" : data.email || data.user?.email || "",
       masked_email: data.masked_email || data.user?.email || "",
       resend_after_seconds: data.resend_after_seconds || 0,
       expires_in_seconds: data.expires_in_seconds || 0,
       source: data.source || "",
+      otp_requested: !!data.otp_requested,
     });
     setEmailOtpCode("");
     setFeedback(data.detail || fallbackMessage);
@@ -1043,8 +1045,51 @@ function App() {
         masked_email: data.masked_email || previous.masked_email,
         resend_after_seconds: data.resend_after_seconds || 0,
         expires_in_seconds: data.expires_in_seconds || 0,
+        otp_requested: true,
       }));
       setFeedback(data.detail || "Verification code sent again.");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function requestEmailOtp() {
+    setLoading(true);
+    setError("");
+    setFeedback("");
+
+    try {
+      if (!emailOtpVerification?.verification_token) {
+        throw new Error("Verification session not found. Please login again.");
+      }
+      const normalizedEmail = String(emailOtpVerification.email || "").trim();
+      if (!normalizedEmail) {
+        throw new Error("Enter your email address to request the OTP code.");
+      }
+
+      const data = await apiRequest(
+        "/auth/email-otp/request/",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            verification_token: emailOtpVerification.verification_token,
+            email: normalizedEmail,
+          }),
+        },
+        false
+      );
+
+      setEmailOtpVerification((previous) => ({
+        ...previous,
+        email: normalizedEmail,
+        masked_email: data.masked_email || previous.masked_email || normalizedEmail,
+        resend_after_seconds: data.resend_after_seconds || 0,
+        expires_in_seconds: data.expires_in_seconds || 0,
+        otp_requested: true,
+      }));
+      setFeedback(data.detail || "Verification code sent to your email.");
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -1718,6 +1763,7 @@ function App() {
     beginGoogleLogin,
     verifyEmailOtp,
     resendEmailOtp,
+    requestEmailOtp,
     logout,
     setFeedback,
     setError,
