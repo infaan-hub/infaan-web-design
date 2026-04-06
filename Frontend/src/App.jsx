@@ -12,7 +12,6 @@ import BookedServicePage from "./pages/BookedServicePage";
 import BookingsServicesPage from "./pages/BookingsServicesPage";
 import BookingHistoryPage from "./pages/BookingHistoryPage";
 import DashboardPage from "./pages/DashboardPage";
-import EmailOtpVerificationPage from "./pages/EmailOtpVerificationPage";
 import BillingHistoryPage from "./pages/BillingHistoryPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
@@ -85,15 +84,6 @@ const emptyPayment = {
   expiry_date: "",
   cvv: "",
   phone_number: "",
-};
-const emptyEmailOtpVerification = {
-  verification_token: "",
-  email: "",
-  masked_email: "",
-  resend_after_seconds: 0,
-  expires_in_seconds: 0,
-  source: "",
-  otp_requested: false,
 };
 const emptyPortfolio = {
   name: "",
@@ -213,10 +203,6 @@ function App() {
   const [systemForm, setSystemForm] = useState(emptySystem);
   const [editingSystemId, setEditingSystemId] = useState(null);
   const [paymentForm, setPaymentForm] = useState(emptyPayment);
-  const [emailOtpVerification, setEmailOtpVerification] = useState(() =>
-    readStoredJson("infaan_email_otp_verification", emptyEmailOtpVerification)
-  );
-  const [emailOtpCode, setEmailOtpCode] = useState("");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -225,6 +211,7 @@ function App() {
   useEffect(() => {
     localStorage.removeItem("infaan_portfolio_items");
     localStorage.removeItem("infaan_subscription_systems");
+    localStorage.removeItem("infaan_email_otp_verification");
     if (window.location.pathname === "/") {
       navigate("/home", true);
     }
@@ -286,14 +273,6 @@ function App() {
   }, [postLoginPath]);
 
   useEffect(() => {
-    if (emailOtpVerification?.verification_token) {
-      setStoredJson("infaan_email_otp_verification", emailOtpVerification);
-    } else {
-      localStorage.removeItem("infaan_email_otp_verification");
-    }
-  }, [emailOtpVerification]);
-
-  useEffect(() => {
     document.body.dataset.theme = theme;
     setStoredValue("infaan_theme", theme);
   }, [theme]);
@@ -325,22 +304,6 @@ function App() {
     setTenants([]);
     setTenantServices([]);
     setUsers([]);
-  }
-
-  function applyOtpChallenge(data, fallbackMessage = "Verification code sent to your email.") {
-    clearAuthState();
-    setEmailOtpVerification({
-      verification_token: data.verification_token || "",
-      email: data.source === "google" && !data.otp_requested ? "" : data.email || data.user?.email || "",
-      masked_email: data.masked_email || data.user?.email || "",
-      resend_after_seconds: data.resend_after_seconds || 0,
-      expires_in_seconds: data.expires_in_seconds || 0,
-      source: data.source || "",
-      otp_requested: !!data.otp_requested,
-    });
-    setEmailOtpCode("");
-    setFeedback(data.detail || fallbackMessage);
-    navigate("/verify-email-otp");
   }
 
   async function parseApiResponse(response) {
@@ -591,7 +554,7 @@ function App() {
       return;
     }
 
-    if (currentUser?.role === "customer" && ["/login", "/register", "/verify-email-otp"].includes(path)) {
+    if (currentUser?.role === "customer" && ["/login", "/register"].includes(path)) {
       navigate("/dashboard", true);
       return;
     }
@@ -902,18 +865,6 @@ function App() {
 
     try {
       const data = await apiRequest(routePath, { method: "POST", body: JSON.stringify(form) }, false);
-      if (data.requires_verification && data.verification_token) {
-        if (expectedRole && data.user?.role !== expectedRole) {
-          throw new Error(
-            expectedRole === "admin"
-              ? "This page is only for admin accounts."
-              : "This page is only for customer accounts."
-          );
-        }
-        applyOtpChallenge(data, "Verification code sent to your email.");
-        return;
-      }
-
       if (expectedRole && data.user?.role !== expectedRole) {
         throw new Error(
           expectedRole === "admin"
@@ -958,139 +909,16 @@ function App() {
         },
         false
       );
-
-      if (!data.requires_verification || !data.verification_token) {
-        throw new Error("Google verification session was not created.");
-      }
-
-      applyOtpChallenge(data, "Verification code sent to your email.");
-    } catch (requestError) {
-      clearAuthState();
-      setError(requestError.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function verifyEmailOtp() {
-    setLoading(true);
-    setError("");
-    setFeedback("");
-
-    try {
-      const normalizedCode = String(emailOtpCode || "").replace(/\D/g, "").slice(0, 6);
-      if (!emailOtpVerification?.verification_token) {
-        throw new Error("Verification session not found. Please login again.");
-      }
-      if (normalizedCode.length !== 6) {
-        throw new Error("Enter the 6-digit verification code.");
-      }
-
-      const data = await apiRequest(
-        "/auth/email-otp/verify/",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            verification_token: emailOtpVerification.verification_token,
-            otp_code: normalizedCode,
-          }),
-        },
-        false
-      );
-
       setToken(data.access);
       setRefreshToken(data.refresh);
       setCurrentUser(data.user);
       setStoredJson("infaan_user", data.user);
-      setEmailOtpVerification(emptyEmailOtpVerification);
-      setEmailOtpCode("");
-      setFeedback("Email verified successfully.");
+      setFeedback("Authentication successful.");
       const nextPath = data.user.role === "admin" ? "/admin-dashboard" : postLoginPath || "/dashboard";
       setPostLoginPath("");
       navigate(nextPath);
     } catch (requestError) {
       clearAuthState();
-      setEmailOtpVerification((previous) => previous || emptyEmailOtpVerification);
-      setError(requestError.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function resendEmailOtp() {
-    setLoading(true);
-    setError("");
-    setFeedback("");
-
-    try {
-      if (!emailOtpVerification?.verification_token) {
-        throw new Error("Verification session not found. Please login again.");
-      }
-
-      const data = await apiRequest(
-        "/auth/email-otp/resend/",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            verification_token: emailOtpVerification.verification_token,
-          }),
-        },
-        false
-      );
-
-      setEmailOtpVerification((previous) => ({
-        ...previous,
-        verification_token: data.verification_token || previous.verification_token,
-        email: data.email || previous.email,
-        masked_email: data.masked_email || previous.masked_email,
-        resend_after_seconds: data.resend_after_seconds || 0,
-        expires_in_seconds: data.expires_in_seconds || 0,
-        otp_requested: true,
-      }));
-      setFeedback(data.detail || "Verification code sent again.");
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function requestEmailOtp() {
-    setLoading(true);
-    setError("");
-    setFeedback("");
-
-    try {
-      if (!emailOtpVerification?.verification_token) {
-        throw new Error("Verification session not found. Please login again.");
-      }
-      const normalizedEmail = String(emailOtpVerification.email || "").trim();
-      if (!normalizedEmail) {
-        throw new Error("Enter your email address to request the OTP code.");
-      }
-
-      const data = await apiRequest(
-        "/auth/email-otp/request/",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            verification_token: emailOtpVerification.verification_token,
-            email: normalizedEmail,
-          }),
-        },
-        false
-      );
-
-      setEmailOtpVerification((previous) => ({
-        ...previous,
-        email: normalizedEmail,
-        masked_email: data.masked_email || previous.masked_email || normalizedEmail,
-        resend_after_seconds: data.resend_after_seconds || 0,
-        expires_in_seconds: data.expires_in_seconds || 0,
-        otp_requested: true,
-      }));
-      setFeedback(data.detail || "Verification code sent to your email.");
-    } catch (requestError) {
       setError(requestError.message);
     } finally {
       setLoading(false);
@@ -1700,10 +1528,6 @@ function App() {
     feedback,
     error,
     loading,
-    emailOtpVerification,
-    setEmailOtpVerification,
-    emailOtpCode,
-    setEmailOtpCode,
     loginForm,
     setLoginForm,
     registerForm,
@@ -1761,9 +1585,6 @@ function App() {
     selectPortfolioService,
     requireLogin,
     beginGoogleLogin,
-    verifyEmailOtp,
-    resendEmailOtp,
-    requestEmailOtp,
     logout,
     setFeedback,
     setError,
@@ -1790,7 +1611,6 @@ function App() {
     "/portfolio": <PortfolioPage app={app} />,
     "/login": <LoginPage app={app} />,
     "/register": <RegisterPage app={app} />,
-    "/verify-email-otp": <EmailOtpVerificationPage app={app} />,
     "/dashboard": <DashboardPage app={app} />,
     "/profile": <ProfilePage app={app} />,
     "/subscription": <SubscriptionPage app={app} />,
