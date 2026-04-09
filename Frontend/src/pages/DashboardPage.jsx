@@ -117,7 +117,7 @@ function DashboardPage({ app }) {
                                   continueToPackageTime(pkg.id);
                                 }}
                               >
-                                Continue
+                                Subscribe
                               </button>
                             </div>
 

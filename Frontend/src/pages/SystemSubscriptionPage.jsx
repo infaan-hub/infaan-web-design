@@ -130,27 +130,47 @@ function SystemSubscriptionPage({ app }) {
         </div>
 
         {subscriptionSystems.length ? (
-          <div className="service-visual-grid">
+          <div className="system-showcase-grid">
             {subscriptionSystems.map((system) => (
-              <article
-                key={system.id}
-                className="visual-card visual-card-action system-subscription-card"
-                onClick={() => selectSystem(system.id)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    selectSystem(system.id);
-                  }
-                }}
-              >
-                <div className="visual-image system-subscription-image" style={{ backgroundImage: `url(${system.cover_image})` }} />
-                <div className="visual-copy system-subscription-copy">
-                  <span className="system-subscription-pill">{system.service_name || "System subscription"}</span>
-                  <h3>{system.name}</h3>
-                  <p>{system.summary}</p>
-                  <strong className="system-subscription-link">Open previews and subscribe</strong>
+              <article key={system.id} className="system-showcase-card">
+                <div className="system-showcase-media" style={{ backgroundImage: `url(${system.cover_image})` }}>
+                  <div className="system-showcase-overlay" />
+                  <div className="system-showcase-content">
+                    <span className="system-showcase-pill">{system.service_name || "System subscription"}</span>
+                    <div className="system-showcase-copy">
+                      <h3>{system.name}</h3>
+                      <p>{system.summary || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}</p>
+                    </div>
+                    {system.display_price !== null && system.display_price !== undefined && system.display_price !== "" ? (
+                      <strong className="system-showcase-price">
+                        {formatPrice(system.display_price, system.display_price_currency || "TZS")}
+                      </strong>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="system-showcase-actions">
+                  <button type="button" className="system-showcase-button" onClick={() => beginSystemSubscription(system.id)}>
+                    Subscribe
+                  </button>
+                  <button
+                    type="button"
+                    className="system-showcase-button"
+                    onClick={() => selectSystem(system.id)}
+                  >
+                    View Features
+                  </button>
+                  <button
+                    type="button"
+                    className="system-showcase-button"
+                    onClick={() => {
+                      if (!system.system_url) return;
+                      window.open(system.system_url, "_blank", "noopener,noreferrer");
+                    }}
+                    disabled={!system.system_url}
+                  >
+                    Open
+                  </button>
                 </div>
               </article>
             ))}
