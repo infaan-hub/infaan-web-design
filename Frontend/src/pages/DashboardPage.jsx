@@ -43,58 +43,6 @@ function DashboardPage({ app }) {
 
   return (
     <main className="main-content">
-      {subscriptions.length ? (
-        <section className="section-card">
-          <div className="section-headline">
-            <div>
-              <p className="micro-label">subscription status</p>
-              <h2>Current subscription status</h2>
-            </div>
-          </div>
-
-          <div className="subscription-detail-grid">
-            {subscriptions.map((subscription) => {
-              const status = subscription.service_access?.status || subscription.status || "cancelled";
-              return (
-                <article key={subscription.id} className="subscription-card">
-                  <div className="package-status-inline">
-                    <span className={`status-dot status-dot-${getStatusTone(status)}`} />
-                    <small>{status.replace("_", " ")}</small>
-                  </div>
-                  <strong>{subscription.package_details?.title || "-"}</strong>
-                  <p>{subscription.package_details?.service || "-"}</p>
-                  <p>{subscription.end_date ? `Ends ${subscription.end_date}` : "No end date yet"}</p>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-
-      <section className="section-block">
-        <div className="section-headline">
-          <div>
-            <p className="micro-label">portfolio</p>
-            <h2>Portfolio</h2>
-          </div>
-        </div>
-
-        <div className="package-grid">
-          {visiblePortfolioItems.map((item) => (
-            <article key={item.id} className="portfolio-home-card">
-              <div
-                className="portfolio-home-image"
-                style={{
-                  backgroundImage: `url(${item.image_data})`,
-                }}
-              >
-                <span className="portfolio-image-badge">{item.name}</span>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
       <section className="section-block">
         <div className="section-headline">
           <div>
@@ -267,6 +215,58 @@ function DashboardPage({ app }) {
           </div>
         )}
       </section>
+
+      <section className="section-block">
+        <div className="section-headline">
+          <div>
+            <p className="micro-label">portfolio</p>
+            <h2>Portfolio</h2>
+          </div>
+        </div>
+
+        <div className="package-grid">
+          {visiblePortfolioItems.map((item) => (
+            <article key={item.id} className="portfolio-home-card">
+              <div
+                className="portfolio-home-image"
+                style={{
+                  backgroundImage: `url(${item.image_data})`,
+                }}
+              >
+                <span className="portfolio-image-badge">{item.name}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {subscriptions.length ? (
+        <section className="section-card">
+          <div className="section-headline">
+            <div>
+              <p className="micro-label">subscription status</p>
+              <h2>Current subscription status</h2>
+            </div>
+          </div>
+
+          <div className="subscription-detail-grid">
+            {subscriptions.map((subscription) => {
+              const status = subscription.service_access?.status || subscription.status || "cancelled";
+              return (
+                <article key={subscription.id} className="subscription-card">
+                  <div className="package-status-inline">
+                    <span className={`status-dot status-dot-${getStatusTone(status)}`} />
+                    <small>{status.replace("_", " ")}</small>
+                  </div>
+                  <strong>{subscription.package_details?.title || "-"}</strong>
+                  <p>{subscription.package_details?.service || "-"}</p>
+                  <p>{subscription.end_date ? `Ends ${subscription.end_date}` : "No end date yet"}</p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
       <AboutUsSection />
     </main>
