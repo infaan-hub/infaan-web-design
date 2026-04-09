@@ -48,26 +48,42 @@ function SystemSubscriptionPage({ app }) {
           </div>
 
           <div className="system-detail-shell">
-            <div className="service-catalog-block">
-              <div
-                className="service-catalog-cover system-cover-large"
-                style={{ backgroundImage: `url(${selectedSystem.cover_image})` }}
-              />
-              <div className="service-catalog-copy">
-                <p className="micro-label">{selectedSystem.service_name || "system subscription"}</p>
-                <h3>{selectedSystem.name}</h3>
-                <p>{selectedSystem.summary}</p>
-                <p>{selectedSystem.details}</p>
-                {selectedSystem.display_price !== null && selectedSystem.display_price !== undefined && selectedSystem.display_price !== "" ? (
-                  <p>{formatPrice(selectedSystem.display_price, selectedSystem.display_price_currency || "TZS")}</p>
-                ) : null}
-                {selectedSystem.system_url ? (
-                  <a className="outline-button system-url-button" href={selectedSystem.system_url} target="_blank" rel="noreferrer">
-                    Open system URL
-                  </a>
-                ) : null}
+            <article className="system-showcase-card">
+              <div className="system-showcase-media system-cover-large" style={{ backgroundImage: `url(${selectedSystem.cover_image})` }}>
+                <div className="system-showcase-overlay" />
+                <div className="system-showcase-content">
+                  <span className="system-showcase-pill">{selectedSystem.service_name || "System subscription"}</span>
+                  <div className="system-showcase-copy">
+                    <h3>{selectedSystem.name}</h3>
+                    <p>{selectedSystem.summary || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}</p>
+                  </div>
+                  {selectedSystem.display_price !== null && selectedSystem.display_price !== undefined && selectedSystem.display_price !== "" ? (
+                    <strong className="system-showcase-price">
+                      {formatPrice(selectedSystem.display_price, selectedSystem.display_price_currency || "TZS")}
+                    </strong>
+                  ) : null}
+                </div>
               </div>
-            </div>
+              <div className="system-showcase-actions">
+                <button type="button" className="system-showcase-button" onClick={() => beginSystemSubscription(selectedSystem.id)}>
+                  Subscribe
+                </button>
+                <button type="button" className="system-showcase-button" onClick={() => navigate("/system-subscription-time")}>
+                  View Time Options
+                </button>
+                <button
+                  type="button"
+                  className="system-showcase-button"
+                  onClick={() => {
+                    if (!selectedSystem.system_url) return;
+                    window.open(selectedSystem.system_url, "_blank", "noopener,noreferrer");
+                  }}
+                  disabled={!selectedSystem.system_url}
+                >
+                  Open
+                </button>
+              </div>
+            </article>
 
             <div className="system-gallery-grid">
               {(selectedSystem.gallery_images || []).map((image, index) => (
