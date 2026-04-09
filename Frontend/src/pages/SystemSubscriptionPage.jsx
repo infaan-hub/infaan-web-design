@@ -7,10 +7,12 @@ function SystemSubscriptionPage({ app }) {
     formatPrice,
     selectSystem,
     beginSystemSubscription,
+    getSystemPlanPreview,
     navigate,
   } = app;
 
   const systemSubscriptions = subscriptions.filter((subscription) => subscription.system_details);
+  const selectedYearlyPlan = selectedSystem ? getSystemPlanPreview(selectedSystem, "yearly") : null;
 
   return (
     <main className="main-content">
@@ -110,7 +112,7 @@ function SystemSubscriptionPage({ app }) {
             </div>
             <div className="credential-card">
               <span className="micro-label">yearly billing</span>
-              <strong>12x monthly system price</strong>
+              <strong>{selectedYearlyPlan ? formatPrice(selectedYearlyPlan.amount, selectedYearlyPlan.currency) : "Available on next step"}</strong>
             </div>
             <div className="credential-card">
               <span className="micro-label">billing flow</span>

@@ -11,7 +11,7 @@ function SystemSubscriptionTimePage({ app }) {
         <div className="pricing-heading">
           <p className="micro-label">system subscription time</p>
           <h2>Choose monthly or yearly access</h2>
-          <span>Yearly billing is calculated as 12 times the monthly system price.</span>
+          <span>Select the plan with the exact billing amount you want to use.</span>
         </div>
 
         {!selectedSystem ? (

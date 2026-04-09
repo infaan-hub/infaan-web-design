@@ -659,9 +659,8 @@ function App() {
   function getSystemPlanPreview(systemObject, billingPeriod) {
     const basePackage = getSystemBasePackage(systemObject);
     const basePrice = getSystemBasePrice(systemObject, billingPeriod);
-    const monthlyAmount = getSystemMonthlyAmount(systemObject);
-    const currency = systemObject?.display_price_currency || basePrice?.currency || "TZS";
-    const amount = billingPeriod === "yearly" ? monthlyAmount * 12 : monthlyAmount;
+    const currency = basePrice?.currency || systemObject?.display_price_currency || "TZS";
+    const amount = Number(basePrice?.amount || 0);
     if (!basePackage || !basePrice || !amount) return null;
     return {
       id: basePrice.id,
@@ -674,7 +673,7 @@ function App() {
       title: `${systemObject.name} subscription`,
       description:
         billingPeriod === "yearly"
-          ? "Yearly system subscription billed as 12 monthly cycles."
+          ? "Yearly system subscription access."
           : "Monthly system subscription access.",
     };
   }
