@@ -1,3 +1,5 @@
+import { getPaymentGateway, normalizePaymentMethod } from "../lib/paymentGateways";
+
 function normalizePhoneNumber(phoneNumber) {
   return (phoneNumber || "").replace(/[^\d]/g, "");
 }
@@ -23,11 +25,9 @@ function BookedServicePage({ app }) {
 
   const whatsappUrl = `https://wa.me/${normalizePhoneNumber(selectedBooking.contact_phone)}`;
   const paymentMethodLabel =
-    selectedBooking.payment_method === "mixx"
-      ? "Mixx Manual"
-      : selectedBooking.payment_method === "whatsapp"
-        ? "WhatsApp Booking"
-        : selectedBooking.payment_method || "Not provided";
+    selectedBooking.payment_method === "whatsapp"
+      ? "WhatsApp Booking"
+      : getPaymentGateway(normalizePaymentMethod(selectedBooking.payment_method)).label || "Not provided";
 
   return (
     <main className="main-content">

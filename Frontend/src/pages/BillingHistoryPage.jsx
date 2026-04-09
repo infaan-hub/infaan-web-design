@@ -1,3 +1,5 @@
+import { getPaymentGateway, normalizePaymentMethod } from "../lib/paymentGateways";
+
 function BillingHistoryPage({ app }) {
   const { subscriptions, formatPrice, navigate } = app;
   const completedItems = [...subscriptions]
@@ -22,6 +24,7 @@ function BillingHistoryPage({ app }) {
                 <p>{item.package_details?.service || "-"}</p>
                 <p>{item.business_name || "-"}</p>
                 <p>{item.contact_phone || "-"}</p>
+                <p>{getPaymentGateway(normalizePaymentMethod(item.payment_method)).label}</p>
                 <p>
                   {item.package_details?.billing_period || "-"} ·{" "}
                   {formatPrice(item.payment_amount || item.package_details?.amount || 0, item.payment_currency || item.package_details?.currency || "TZS")}

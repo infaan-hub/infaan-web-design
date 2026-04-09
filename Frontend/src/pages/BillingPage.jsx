@@ -1,3 +1,5 @@
+import { PAYMENT_GATEWAY_LIST, getPaymentGateway, normalizePaymentMethod } from "../lib/paymentGateways";
+
 function BillingPage({ app }) {
   const {
     paymentForm,
@@ -20,6 +22,9 @@ function BillingPage({ app }) {
   };
   const serviceFee = selectedPrice?.billing_period === "per_task" ? serviceFeeByCurrency[activeCurrency] || 0 : 0;
   const total = subtotal + serviceFee;
+  const activeGateway = getPaymentGateway(paymentForm.method);
+  const activeMethod = normalizePaymentMethod(paymentForm.method);
+  const securityCodeLabel = activeMethod === "amex" ? "CID" : "CVV";
 
   return (
     <main className="main-content">
@@ -132,33 +137,27 @@ function BillingPage({ app }) {
 
             <div className="billing-form-fields">
               <div className="payment-method-grid">
-                <button
-                  type="button"
-                  className={`payment-method-tile ${paymentForm.method === "card" ? "payment-method-active" : ""}`}
-                  onClick={() => updateField(setPaymentForm, "method", "card")}
-                >
-                  <span className="payment-radio" />
-                  <strong>Mastercard</strong>
-                </button>
-                <button
-                  type="button"
-                  className={`payment-method-tile ${paymentForm.method === "visa" ? "payment-method-active" : ""}`}
-                  onClick={() => updateField(setPaymentForm, "method", "visa")}
-                >
-                  <span className="payment-radio" />
-                  <strong>Visa</strong>
-                </button>
-                <button
-                  type="button"
-                  className={`payment-method-tile ${paymentForm.method === "mixx" ? "payment-method-active" : ""}`}
-                  onClick={() => updateField(setPaymentForm, "method", "mixx")}
-                >
-                  <span className="payment-radio" />
-                  <strong>Mixx by Yas</strong>
-                </button>
+                {PAYMENT_GATEWAY_LIST.map((gateway) => (
+                  <button
+                    key={gateway.key}
+                    type="button"
+                    className={`payment-method-tile ${activeMethod === gateway.key ? "payment-method-active" : ""}`}
+                    onClick={() => updateField(setPaymentForm, "method", gateway.key)}
+                  >
+                    <img className="payment-method-logo" src={gateway.image} alt={`${gateway.label} logo`} loading="lazy" />
+                    <div className="payment-method-meta">
+                      <span className="payment-radio" />
+                      <strong>{gateway.label}</strong>
+                    </div>
+                  </button>
+                ))}
               </div>
 
-              {paymentForm.method === "mixx" ? (
+              <div className="payment-helper-box">
+                Selected gateway: <strong>{activeGateway.label}</strong>
+              </div>
+
+              {activeGateway.type === "mobile" ? (
                 <label className="payment-field">
                   <span>Phone number</span>
                   <input
@@ -169,6 +168,30 @@ function BillingPage({ app }) {
                     placeholder="Phone number to send money"
                   />
                 </label>
+              ) : activeGateway.type === "paypal" ? (
+                <>
+                  <label className="payment-field">
+                    <span>PayPal account email</span>
+                    <input
+                      id="paypal_email"
+                      name="paypal_email"
+                      type="email"
+                      value={paymentForm.paypal_email}
+                      onChange={(event) => updateField(setPaymentForm, "paypal_email", event.target.value)}
+                      placeholder="paypal@email.com"
+                    />
+                  </label>
+                  <label className="payment-field">
+                    <span>Account holder</span>
+                    <input
+                      id="paypal_account_name"
+                      name="paypal_account_name"
+                      value={paymentForm.card_name}
+                      onChange={(event) => updateField(setPaymentForm, "card_name", event.target.value)}
+                      placeholder="Account holder full name"
+                    />
+                  </label>
+                </>
               ) : (
                 <>
                   <div className="payment-field-grid payment-field-grid-wide">
@@ -205,13 +228,13 @@ function BillingPage({ app }) {
                       />
                     </label>
                     <label className="payment-field">
-                      <span>CVV</span>
+                      <span>{securityCodeLabel}</span>
                       <input
                         id="cvv"
                         name="cvv"
                         value={paymentForm.cvv}
                         onChange={(event) => updateField(setPaymentForm, "cvv", event.target.value)}
-                        placeholder="CVV"
+                        placeholder={securityCodeLabel}
                       />
                     </label>
                   </div>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AppLayout from "./components/AppLayout";
+import { getPaymentGateway, normalizePaymentMethod } from "./lib/paymentGateways";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminRegisterPage from "./pages/AdminRegisterPage";
@@ -78,12 +79,13 @@ const emptyPackage = {
   is_active: true,
 };
 const emptyPayment = {
-  method: "card",
+  method: "mastercard",
   card_name: "",
   card_number: "",
   expiry_date: "",
   cvv: "",
   phone_number: "",
+  paypal_email: "",
 };
 const emptyPortfolio = {
   name: "",
@@ -819,25 +821,29 @@ function App() {
       return false;
     }
 
-    if (paymentForm.method === "mixx" && !paymentForm.phone_number) {
+    const selectedGateway = getPaymentGateway(paymentForm.method);
+    const normalizedMethod = normalizePaymentMethod(paymentForm.method);
+
+    if (selectedGateway.type === "mobile" && !paymentForm.phone_number) {
       setError("Enter the Mixx by Yas phone number to continue.");
       return false;
     }
 
-    if (["card", "visa"].includes(paymentForm.method)) {
+    if (selectedGateway.type === "card") {
       if (!paymentForm.card_name || !paymentForm.card_number || !paymentForm.expiry_date || !paymentForm.cvv) {
         setError("Complete all card payment fields to continue.");
         return false;
       }
     }
 
-    if (paymentForm.method === "paypal") {
-      setError("Please choose Mastercard, Visa, or Mixx by Yas.");
+    if (selectedGateway.type === "paypal" && !paymentForm.paypal_email) {
+      setError("Enter the PayPal email address to continue.");
       return false;
     }
 
     setPendingPayment({
       ...paymentForm,
+      method: normalizedMethod,
       subtotal: activePrice?.amount || 0,
       currency: activePrice?.currency || "TZS",
       billing_period: activePrice?.billing_period || "",
@@ -1263,11 +1269,14 @@ function App() {
         return null;
       }
 
-      const activePaymentMethod = pendingPayment?.method || paymentForm.method;
+      const activePaymentMethod = normalizePaymentMethod(pendingPayment?.method || paymentForm.method);
+      const activeGateway = getPaymentGateway(activePaymentMethod);
       const paymentContact =
-        activePaymentMethod === "mixx"
+        activeGateway.type === "mobile"
           ? pendingPayment?.phone_number || paymentForm.phone_number
-          : pendingPayment?.card_name || paymentForm.card_name || "Gateway checkout";
+          : activeGateway.type === "paypal"
+            ? pendingPayment?.paypal_email || paymentForm.paypal_email
+            : pendingPayment?.card_number || paymentForm.card_number || pendingPayment?.card_name || paymentForm.card_name || "Gateway checkout";
       const checkoutPath = selectedSystem ? "/system-subscriptions/checkout/" : "/package-subscriptions/checkout/";
       const bookingPayload = {
         business_name: normalizedBusinessName,

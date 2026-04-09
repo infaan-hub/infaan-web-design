@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+import { getPaymentGateway, maskPaymentValue, normalizePaymentMethod } from "../lib/paymentGateways";
 
 function buildReceiptNumber(booking) {
   if (!booking) return "000000000000";
@@ -77,7 +78,7 @@ function ReceiptBarcode({ value }) {
   );
 }
 
-function downloadReceiptImage({ receiptNumber, amountText, dateText, customerName, packageName }) {
+function downloadReceiptImage({ receiptNumber, amountText, dateText, customerName, packageName, paymentMethodLabel, paymentContactMasked }) {
   const canvas = document.createElement("canvas");
   canvas.width = 900;
   canvas.height = 1600;
@@ -145,26 +146,19 @@ function downloadReceiptImage({ receiptNumber, amountText, dateText, customerNam
   context.fillText(amountText, 560, 592);
   context.fillText(dateText, 210, 698);
 
-  context.beginPath();
-  context.fillStyle = "#ff4b3e";
-  context.arc(235, 808, 16, 0, Math.PI * 2);
-  context.fill();
-  context.beginPath();
-  context.fillStyle = "#f8b627";
-  context.arc(253, 808, 16, 0, Math.PI * 2);
-  context.fill();
-
   context.fillStyle = "#1b2130";
   context.font = "700 28px Plus Jakarta Sans";
-  context.fillText(customerName, 292, 800);
+  context.fillText(paymentMethodLabel, 210, 800);
   context.fillStyle = "#4d566a";
   context.font = "24px Plus Jakarta Sans";
-  context.fillText(packageName, 292, 838);
+  context.fillText(paymentContactMasked, 210, 838);
+  context.fillText(customerName, 210, 876);
+  context.fillText(packageName, 210, 914);
 
   context.strokeStyle = "#eceff5";
   context.beginPath();
-  context.moveTo(180, 930);
-  context.lineTo(720, 930);
+  context.moveTo(180, 960);
+  context.lineTo(720, 960);
   context.stroke();
 
   const barcodeAreaWidth = 360;
@@ -177,16 +171,16 @@ function downloadReceiptImage({ receiptNumber, amountText, dateText, customerNam
   bars.forEach((bar) => {
     const scaledWidth = Math.max(1, bar.width * 3 * barcodeScale);
     const scaledHeight = bar.height * barcodeScale;
-    context.fillRect(x, 980 - scaledHeight, scaledWidth, scaledHeight);
+    context.fillRect(x, 1010 - scaledHeight, scaledWidth, scaledHeight);
     x += scaledWidth + barcodeGap * barcodeScale;
   });
 
   context.fillStyle = "#2d3448";
   context.font = "22px Plus Jakarta Sans";
   context.textAlign = "center";
-  context.fillText(receiptNumber, 450, 1045);
+  context.fillText(receiptNumber, 450, 1075);
 
-  const scallopY = 1218;
+  const scallopY = 1248;
   for (let index = 0; index < 7; index += 1) {
     context.beginPath();
     context.fillStyle = "#f3f4fb";
@@ -201,7 +195,7 @@ function downloadReceiptImage({ receiptNumber, amountText, dateText, customerNam
 }
 
 function BookingPage({ app }) {
-  const { selectedPackage, selectedPrice, selectedSystem, submitBooking, bookingSent, loading, lastBooking, currentUser, formatPrice, pendingPayment, navigate } =
+  const { selectedPackage, selectedPrice, selectedSystem, submitBooking, bookingSent, loading, lastBooking, currentUser, formatPrice, pendingPayment, paymentForm, navigate } =
     app;
   const autoSubmitRef = useRef(false);
   const autoDownloadRef = useRef("");
@@ -210,6 +204,16 @@ function BookingPage({ app }) {
   const issuedAt = receiptBooking?.created_at ? new Date(receiptBooking.created_at) : new Date();
   const receiptNumber = receiptBooking ? buildReceiptNumber(receiptBooking) : buildPendingReceiptNumber(selectedPrice);
   const customerName = currentUser?.first_name || currentUser?.username || "Customer";
+  const paymentMethod = normalizePaymentMethod(receiptBooking?.payment_method || pendingPayment?.method);
+  const paymentGateway = getPaymentGateway(paymentMethod);
+  const paymentMethodLabel = paymentGateway.label;
+  const paymentContactMasked = maskPaymentValue(paymentMethod, {
+    ...paymentForm,
+    ...pendingPayment,
+    card_number: receiptBooking?.payment_contact || pendingPayment?.card_number || paymentForm?.card_number || "",
+    phone_number: receiptBooking?.payment_contact || pendingPayment?.phone_number || paymentForm?.phone_number || "",
+    paypal_email: receiptBooking?.payment_contact || pendingPayment?.paypal_email || paymentForm?.paypal_email || "",
+  });
   const packageName =
     receiptBooking?.system_details?.name ||
     pendingPayment?.system_name ||
@@ -250,8 +254,10 @@ function BookingPage({ app }) {
       dateText,
       customerName,
       packageName,
+      paymentMethodLabel,
+      paymentContactMasked,
     });
-  }, [receiptBooking, receiptNumber, amountText, dateText, customerName, packageName]);
+  }, [receiptBooking, receiptNumber, amountText, dateText, customerName, packageName, paymentMethodLabel, paymentContactMasked]);
 
   return (
     <main className="main-content">
@@ -289,11 +295,12 @@ function BookingPage({ app }) {
 
               <div className="ticket-payment-card receipt-user-card">
                 <div className="ticket-payment-logo">
-                  <span className="dot-red" />
-                  <span className="dot-gold" />
+                  <img src={paymentGateway.image} alt={`${paymentMethodLabel} logo`} className="ticket-payment-logo-image" />
                 </div>
                 <div>
-                  <strong>{customerName}</strong>
+                  <strong>{paymentMethodLabel}</strong>
+                  <span>{paymentContactMasked}</span>
+                  <span>{customerName}</span>
                   <span>{packageName}</span>
                 </div>
               </div>
@@ -355,6 +362,8 @@ function BookingPage({ app }) {
                       dateText,
                       customerName,
                       packageName,
+                      paymentMethodLabel,
+                      paymentContactMasked,
                     })
                   }
                 >

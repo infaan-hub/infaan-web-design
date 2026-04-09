@@ -1,3 +1,5 @@
+import paymentGatewaysImage from "../assets/Free Payment Method & Credit Card Icon Set.jpg";
+
 const WEBSITE_URL = "https://infaanwebdesign.vercel.app";
 const QR_CODE_SRC = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(WEBSITE_URL)}`;
 
@@ -50,6 +52,15 @@ function AboutUsSection() {
             The system is designed to help both customers and admin manage packages, portfolios, bookings, billing,
             and completed service history in a clean and reliable workspace.
           </p>
+          <div className="about-payment-strip" aria-label="Supported payment gateways">
+            <span className="micro-label">payment gateways</span>
+            <img
+              className="about-payment-strip-image"
+              src={paymentGatewaysImage}
+              alt="PayPal, Visa, Mastercard, and American Express payment gateways"
+              loading="lazy"
+            />
+          </div>
         </div>
 
         <div className="about-contact-grid">

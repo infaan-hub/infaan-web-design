@@ -869,6 +869,25 @@ body[data-theme="dark"] .home-hero {
   line-height: 1.7;
 }
 
+.about-payment-strip {
+  display: grid;
+  gap: 10px;
+  margin-top: 6px;
+  width: fit-content;
+}
+
+.about-payment-strip-image {
+  display: block;
+  width: min(100%, 360px);
+  max-width: 100%;
+  height: auto;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--paper-strong);
+  box-shadow: 0 12px 26px rgba(17, 36, 46, 0.08);
+  object-fit: contain;
+}
+
 .about-contact-grid {
   display: grid;
   gap: 14px;
@@ -2352,13 +2371,13 @@ body[data-theme="dark"] .home-hero {
 
 .payment-method-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
 }
 
 .payment-method-tile {
   display: grid;
-  justify-items: center;
+  align-content: start;
   gap: 10px;
   padding: 14px 10px;
   border: 1px solid #e8e8e8;
@@ -2366,8 +2385,26 @@ body[data-theme="dark"] .home-hero {
   background: #fff;
 }
 
+.payment-method-logo {
+  display: block;
+  width: 100%;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.payment-method-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
 .payment-method-tile strong {
   font-size: 0.86rem;
+  text-align: center;
 }
 
 .payment-method-active {
@@ -3107,20 +3144,13 @@ body[data-theme="dark"] .home-hero {
   align-items: center;
 }
 
-.dot-red,
-.dot-gold {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-}
-
-.dot-red {
-  background: #ff4338;
-}
-
-.dot-gold {
-  margin-left: -4px;
-  background: #f8b627;
+.ticket-payment-logo-image {
+  width: 84px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid rgba(16, 34, 43, 0.08);
 }
 
 .ticket-barcode {
