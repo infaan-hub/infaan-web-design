@@ -1,4 +1,5 @@
 import { formatServiceCategoryLabel, getOrderedServices, getServiceImage } from "../lib/serviceCatalog";
+import AboutUsSection from "../components/AboutUsSection";
 
 function getStatusTone(status) {
   if (status === "active" || status === "grace_period") return "active";
@@ -266,6 +267,8 @@ function DashboardPage({ app }) {
           </div>
         )}
       </section>
+
+      <AboutUsSection />
     </main>
   );
 }
