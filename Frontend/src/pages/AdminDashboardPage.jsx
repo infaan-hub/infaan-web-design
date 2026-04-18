@@ -97,13 +97,22 @@ function AdminDashboardPage({ app }) {
   }
 
   function getSystemPricePreview(system) {
-    return (system.packages || [])
-      .flatMap((pkg) =>
-        (pkg.prices || []).map((price) => ({
-          key: `${pkg.id}-${price.id}`,
-          label: `${pkg.title} ${price.billing_period} ${formatPrice(price.amount, price.currency)}`,
-        }))
-      )
+    const nestedPreview = (system.packages || []).flatMap((pkg) =>
+      (pkg.prices || []).map((price) => ({
+        key: `${pkg.id}-${price.id}`,
+        label: `${pkg.title} ${price.billing_period} ${formatPrice(price.amount, price.currency)}`,
+      }))
+    );
+
+    if (nestedPreview.length) {
+      return nestedPreview.slice(0, 6);
+    }
+
+    return (system.price_preview || [])
+      .map((price, index) => ({
+        key: `${price.package_id || "package"}-${price.billing_period}-${index}`,
+        label: `${price.package_title} ${price.billing_period} ${formatPrice(price.amount, price.currency)}`,
+      }))
       .slice(0, 6);
   }
 

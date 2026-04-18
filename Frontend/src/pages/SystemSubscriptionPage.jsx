@@ -22,7 +22,7 @@ function SystemSubscriptionPage({ app }) {
           <h2>Browse systems, inspect previews, and subscribe with normal billing flow.</h2>
           <p>
             Each system card opens into a detailed view with one front image, five system preview images, a dedicated
-            monthly or yearly subscription step, billing, receipt, and subscription access control.
+            yearly subscription step, billing, receipt, and subscription access control.
           </p>
         </div>
         <div className="package-browser-summary">
@@ -57,7 +57,7 @@ function SystemSubscriptionPage({ app }) {
                   <span className="system-showcase-pill">{selectedSystem.service_name || "System subscription"}</span>
                   <div className="system-showcase-copy">
                     <h3>{selectedSystem.name}</h3>
-                    <p>{selectedSystem.summary || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}</p>
+                    <p>{selectedSystem.summary || "Subscribe to use this system with a yearly plan and access ends after the hired time."}</p>
                   </div>
                   {selectedSystem.display_price !== null && selectedSystem.display_price !== undefined && selectedSystem.display_price !== "" ? (
                     <strong className="system-showcase-price">
@@ -108,7 +108,7 @@ function SystemSubscriptionPage({ app }) {
           <div className="subscription-detail-grid">
             <div className="credential-card">
               <span className="micro-label">available plans</span>
-              <strong>Monthly and yearly</strong>
+              <strong>Yearly only</strong>
             </div>
             <div className="credential-card">
               <span className="micro-label">yearly billing</span>
@@ -157,7 +157,7 @@ function SystemSubscriptionPage({ app }) {
                     <span className="system-showcase-pill">{system.service_name || "System subscription"}</span>
                     <div className="system-showcase-copy">
                       <h3>{system.name}</h3>
-                      <p>{system.summary || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}</p>
+                      <p>{system.summary || "Subscribe to use this system with a yearly plan and access ends after the hired time."}</p>
                     </div>
                     {system.display_price !== null && system.display_price !== undefined && system.display_price !== "" ? (
                       <strong className="system-showcase-price">

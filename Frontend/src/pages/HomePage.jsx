@@ -128,7 +128,7 @@ function HomePage({ app }) {
           <div className="system-showcase-grid">
             {subscriptionSystems.map((system) => {
               const preferredPackage =
-                system.packages?.find((pkg) => (pkg.prices || []).some((price) => ["monthly", "yearly"].includes(price.billing_period))) ||
+                system.packages?.find((pkg) => (pkg.prices || []).some((price) => price.billing_period === "yearly")) ||
                 system.packages?.find((pkg) => pkg.tier !== "extra") ||
                 system.packages?.[0];
               const preferredPrice =
@@ -136,7 +136,7 @@ function HomePage({ app }) {
                   ? { amount: system.display_price, currency: system.display_price_currency || "TZS" }
                   : null) ||
                 preferredPackage?.prices?.find((price) => price.is_default) ||
-                preferredPackage?.prices?.find((price) => price.billing_period === "monthly") ||
+                preferredPackage?.prices?.find((price) => price.billing_period === "yearly") ||
                 preferredPackage?.prices?.[0];
 
               return (
@@ -147,7 +147,7 @@ function HomePage({ app }) {
                       <span className="system-showcase-pill">{system.service_name || "System subscription"}</span>
                       <div className="system-showcase-copy">
                         <h3>{system.name}</h3>
-                        <p>{system.summary || "Subscribe to use this system weekly, monthly, or yearly and access ends after the hired time."}</p>
+                        <p>{system.summary || "Subscribe to use this system with a yearly plan and access ends after the hired time."}</p>
                       </div>
                       {preferredPrice ? <strong className="system-showcase-price">{formatPrice(preferredPrice.amount, preferredPrice.currency)}</strong> : null}
                     </div>

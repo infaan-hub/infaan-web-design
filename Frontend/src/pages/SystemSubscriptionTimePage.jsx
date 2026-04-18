@@ -1,17 +1,16 @@
 function SystemSubscriptionTimePage({ app }) {
   const { selectedSystem, navigate, formatPrice, getSystemPlanPreview, selectSystemSubscriptionPlan } = app;
 
-  const monthlyPlan = selectedSystem ? getSystemPlanPreview(selectedSystem, "monthly") : null;
   const yearlyPlan = selectedSystem ? getSystemPlanPreview(selectedSystem, "yearly") : null;
-  const plans = [monthlyPlan, yearlyPlan].filter(Boolean);
+  const plans = [yearlyPlan].filter(Boolean);
 
   return (
     <main className="main-content">
       <section className="section-card">
         <div className="pricing-heading">
           <p className="micro-label">system subscription time</p>
-          <h2>Choose monthly or yearly access</h2>
-          <span>Select the plan with the exact billing amount you want to use.</span>
+          <h2>Choose yearly access</h2>
+          <span>Select the yearly billing plan for this system.</span>
         </div>
 
         {!selectedSystem ? (
@@ -26,7 +25,7 @@ function SystemSubscriptionTimePage({ app }) {
             <div className="pricing-heading">
               <p className="micro-label">selected system</p>
               <h2>{selectedSystem.name}</h2>
-              <span>{selectedSystem.summary || "Choose the best billing duration for this system subscription."}</span>
+              <span>{selectedSystem.summary || "Choose the yearly billing plan for this system subscription."}</span>
             </div>
 
             <div className="package-grid">

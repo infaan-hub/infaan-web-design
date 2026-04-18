@@ -632,24 +632,41 @@ function App() {
     setSystemSubscriptionPlan(null);
   }
 
+  function getPackagesForSystem(systemObject) {
+    if (!systemObject?.service) return [];
+    const nestedPackages = ensureArray(systemObject.packages || []).filter((pkg) => pkg?.is_active !== false);
+    if (nestedPackages.length) {
+      return nestedPackages.map((pkg) => ({
+        ...pkg,
+        prices: ensureArray(pkg.prices || []).filter(Boolean),
+      }));
+    }
+
+    return packages
+      .filter((pkg) => String(pkg.service) === String(systemObject.service) && pkg.is_active)
+      .map((pkg) => ({
+        ...pkg,
+        prices: prices.filter((price) => String(price.package) === String(pkg.id)),
+      }));
+  }
+
   function getSystemBasePackage(systemObject) {
-    if (!systemObject?.packages?.length) return null;
+    const availablePackages = getPackagesForSystem(systemObject);
+    if (!availablePackages.length) return null;
     return (
-      systemObject.packages.find((pkg) =>
-        (pkg.prices || []).some((price) => ["monthly", "yearly"].includes(price.billing_period))
+      availablePackages.find((pkg) =>
+        (pkg.prices || []).some((price) => price.billing_period === "yearly")
       ) ||
-      systemObject.packages.find((pkg) => pkg.tier !== "extra") ||
-      systemObject.packages[0]
+      availablePackages.find((pkg) => pkg.tier !== "extra") ||
+      availablePackages[0]
     );
   }
 
   function getSystemBasePrice(systemObject, billingPeriod) {
     const basePackage = getSystemBasePackage(systemObject);
     if (!basePackage?.prices?.length) return null;
-    return (
-      basePackage.prices.find((price) => price.billing_period === billingPeriod) ||
-      (billingPeriod === "monthly" ? getPreferredPrice(basePackage) : null)
-    );
+    if (billingPeriod !== "yearly") return null;
+    return basePackage.prices.find((price) => price.billing_period === "yearly") || null;
   }
 
   function getSystemMonthlyAmount(systemObject) {
@@ -661,6 +678,7 @@ function App() {
   }
 
   function getSystemPlanPreview(systemObject, billingPeriod) {
+    if (billingPeriod !== "yearly") return null;
     const basePackage = getSystemBasePackage(systemObject);
     const basePrice = getSystemBasePrice(systemObject, billingPeriod);
     const currency = basePrice?.currency || systemObject?.display_price_currency || "TZS";
@@ -675,10 +693,7 @@ function App() {
       amount,
       currency,
       title: `${systemObject.name} subscription`,
-      description:
-        billingPeriod === "yearly"
-          ? "Yearly system subscription access."
-          : "Monthly system subscription access.",
+      description: "Yearly system subscription access.",
     };
   }
 
@@ -782,7 +797,7 @@ function App() {
       return true;
     }
     if (!selectedPriceId && !resolvedSelectedPrice) {
-      setError(selectedSystem ? "Select monthly or yearly system subscription time first." : "Select weekly, monthly, or yearly package time first.");
+      setError(selectedSystem ? "Select yearly system subscription first." : "Select weekly, monthly, or yearly package time first.");
       return false;
     }
     if (!selectedPriceId && resolvedSelectedPrice?.id) {

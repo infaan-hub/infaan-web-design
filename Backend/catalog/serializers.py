@@ -534,6 +534,8 @@ class SystemSubscriptionCheckoutSerializer(BaseCheckoutSerializer):
             raise serializers.ValidationError({"subscription_system": "This system is not currently active."})
         if subscription_system.service_id != package_price.package.service_id:
             raise serializers.ValidationError({"subscription_system": "Selected system must match the package service."})
+        if package_price.billing_period != PackagePrice.BillingPeriod.YEARLY:
+            raise serializers.ValidationError({"package_price": "System subscriptions use yearly pricing only."})
         return attrs
 
 
