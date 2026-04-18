@@ -580,7 +580,11 @@ function App() {
   );
 
   const selectedPackage = packages.find((pkg) => String(pkg.id) === String(selectedPackageId) && pkg.is_active);
-  const selectedPrice = prices.find((price) => String(price.id) === String(selectedPriceId));
+  const selectedPrice = prices.find(
+    (price) =>
+      String(price.id) === String(selectedPriceId) &&
+      (!selectedPackage?.id || String(price.package) === String(selectedPackage.id))
+  );
   const selectedService = services.find((service) => service.id === selectedPackage?.service) || null;
   const selectedSystem = subscriptionSystems.find((system) => String(system.id) === String(selectedSystemId)) || null;
   const selectedBooking = subscriptions.find((booking) => String(booking.id) === String(selectedBookingId)) || null;
@@ -800,7 +804,7 @@ function App() {
       navigate(selectedSystem ? "/system-subscription-time" : "/package-time");
       return false;
     }
-    const activePrice = selectedPrice || resolvedSelectedPrice;
+    const activePrice = resolvedSelectedPrice;
     if (!selectedPriceId && activePrice?.id) {
       setSelectedPriceId(String(activePrice.id));
     }
@@ -1239,8 +1243,8 @@ function App() {
       navigate("/package-time");
       return;
     }
-    const activePrice = selectedPrice || resolvedSelectedPrice;
-    const activePriceId = selectedPriceId || String(activePrice?.id || "");
+    const activePrice = resolvedSelectedPrice;
+    const activePriceId = String(activePrice?.id || "");
     if (!activePriceId) {
       setError("Package price is missing. Please choose the package again.");
       navigate("/package");
