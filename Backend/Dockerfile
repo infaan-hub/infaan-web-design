@@ -22,4 +22,6 @@ RUN DJANGO_SECRET_KEY=build-only-secret \
     DATABASE_URL=sqlite:////tmp/build.sqlite3 \
     python manage.py collectstatic --noinput
 
-CMD ["sh", "-c", "python manage.py migrate && if [ \"${SEED_INFAAN_DATA:-false}\" = \"true\" ]; then python manage.py seed_infaan_data; fi && gunicorn infaan_backend.wsgi:application --bind 0.0.0.0:${PORT}"]
+EXPOSE 8080
+
+CMD ["sh", "-c", "python manage.py migrate --noinput && if [ \"${SEED_INFAAN_DATA:-false}\" = \"true\" ]; then python manage.py seed_infaan_data; fi && gunicorn infaan_backend.wsgi:application --bind 0.0.0.0:${PORT:-8080}"]

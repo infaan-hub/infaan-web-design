@@ -38,8 +38,9 @@ if not DEBUG and SECRET_KEY == "django-insecure-infaan-web-and-design-local-key"
 
 ALLOWED_HOSTS = env_list(
     "ALLOWED_HOSTS",
-    "127.0.0.1,localhost,infaan-web-design.fly.dev,infaanwebdesign.vercel.app",
+    "127.0.0.1,localhost,.code.run,infaanwebdesign.vercel.app",
 ) or ["*"]
+APP_PUBLIC_URL = env_value("APP_PUBLIC_URL").rstrip("/")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -102,7 +103,7 @@ except ValueError as exc:
     raise RuntimeError(
         "DATABASE_URL must be a full database URL, for example "
         "postgresql://user:password@host:5432/dbname?sslmode=require. "
-        "In Fly secrets, use name DATABASE_URL and put only the URL in the value field."
+        "In Northflank variables, use name DATABASE_URL and put only the URL in the value field."
     ) from exc
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -127,16 +128,16 @@ AUTH_USER_MODEL = "accounts.CustomUser"
 CORS_ALLOW_ALL_ORIGINS = env_bool("CORS_ALLOW_ALL_ORIGINS", False)
 CORS_ALLOWED_ORIGINS = env_list(
     "CORS_ALLOWED_ORIGINS",
-    "https://infaanwebdesign.vercel.app,https://infaan-web-design.fly.dev,http://127.0.0.1:5173,http://localhost:5173",
+    "https://infaanwebdesign.vercel.app,http://127.0.0.1:5173,http://localhost:5173",
 )
 CORS_ALLOWED_ORIGIN_REGEXES = env_list(
     "CORS_ALLOWED_ORIGIN_REGEXES",
-    r"https://.*\.vercel\.app",
+    r"https://.*\.vercel\.app,https://.*\.code\.run",
 )
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = env_list(
     "CSRF_TRUSTED_ORIGINS",
-    "https://infaanwebdesign.vercel.app,https://infaan-web-design.fly.dev",
+    "https://infaanwebdesign.vercel.app,https://*.code.run",
 )
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -172,5 +173,5 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 SYSTEM_SUBSCRIPTION_API_URL = (
-    os.getenv("SYSTEM_SUBSCRIPTION_API_URL", "https://infaan-web-design.fly.dev/api") or ""
+    os.getenv("SYSTEM_SUBSCRIPTION_API_URL", f"{APP_PUBLIC_URL}/api" if APP_PUBLIC_URL else "") or ""
 ).rstrip("/")

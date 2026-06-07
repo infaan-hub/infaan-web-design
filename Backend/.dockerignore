@@ -1,9 +1,10 @@
 .env
 .env.*
-myvenv/
-db.sqlite3
-staticfiles/
-__pycache__/
-*.pyc
+*.sqlite3
 *.log
-.git/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+staticfiles/
+runserver.out.log
+runserver.err.log
