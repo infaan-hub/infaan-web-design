@@ -19,8 +19,23 @@ def env_list(name, default=""):
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-infaan-web-and-design-local-key")
+def env_value(name, default=""):
+    value = os.getenv(name, default).strip().strip("\"'")
+    prefix = f"{name}="
+    if value.startswith(prefix):
+        value = value[len(prefix) :].strip().strip("\"'")
+    return value
+
+
 DEBUG = env_bool("DJANGO_DEBUG", True)
+SECRET_KEY = (
+    env_value("DJANGO_SECRET_KEY")
+    or env_value("SECRET_KEY")
+    or "django-insecure-infaan-web-and-design-local-key"
+)
+if not DEBUG and SECRET_KEY == "django-insecure-infaan-web-and-design-local-key":
+    raise RuntimeError("DJANGO_SECRET_KEY is not set.")
+
 ALLOWED_HOSTS = env_list(
     "ALLOWED_HOSTS",
     "127.0.0.1,localhost,infaan-web-design.fly.dev,infaanwebdesign.vercel.app",
@@ -72,16 +87,23 @@ TEMPLATES = [
 WSGI_APPLICATION = "infaan_backend.wsgi.application"
 ASGI_APPLICATION = "infaan_backend.asgi.application"
 
-database_url = os.getenv("DATABASE_URL")
+database_url = env_value("DATABASE_URL")
 if not database_url:
     raise RuntimeError("DATABASE_URL is not set.")
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default=database_url,
-        conn_max_age=600,
-    )
-}
+try:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=database_url,
+            conn_max_age=600,
+        )
+    }
+except ValueError as exc:
+    raise RuntimeError(
+        "DATABASE_URL must be a full database URL, for example "
+        "postgresql://user:password@host:5432/dbname?sslmode=require. "
+        "In Fly secrets, use name DATABASE_URL and put only the URL in the value field."
+    ) from exc
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -105,7 +127,7 @@ AUTH_USER_MODEL = "accounts.CustomUser"
 CORS_ALLOW_ALL_ORIGINS = env_bool("CORS_ALLOW_ALL_ORIGINS", False)
 CORS_ALLOWED_ORIGINS = env_list(
     "CORS_ALLOWED_ORIGINS",
-    "https://infaanwebdesign.vercel.app,http://127.0.0.1:5173,http://localhost:5173",
+    "https://infaanwebdesign.vercel.app,https://infaan-web-design.fly.dev,http://127.0.0.1:5173,http://localhost:5173",
 )
 CORS_ALLOWED_ORIGIN_REGEXES = env_list(
     "CORS_ALLOWED_ORIGIN_REGEXES",
@@ -116,6 +138,11 @@ CSRF_TRUSTED_ORIGINS = env_list(
     "CSRF_TRUSTED_ORIGINS",
     "https://infaanwebdesign.vercel.app,https://infaan-web-design.fly.dev",
 )
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", not DEBUG)
+SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", not DEBUG)
+SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", False)
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
