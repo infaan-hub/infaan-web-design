@@ -2,12 +2,14 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-import dj_database_url
 from dotenv import load_dotenv
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
+try:
+    load_dotenv(BASE_DIR / ".env")
+except OSError:
+    pass
 
 
 def env_bool(name, default=False):
@@ -38,9 +40,9 @@ if not DEBUG and SECRET_KEY == "django-insecure-infaan-web-and-design-local-key"
 
 ALLOWED_HOSTS = env_list(
     "ALLOWED_HOSTS",
-    "127.0.0.1,localhost,.code.run,infaanwebdesign.vercel.app",
+    "127.0.0.1,localhost",
 ) or ["*"]
-APP_PUBLIC_URL = env_value("APP_PUBLIC_URL").rstrip("/")
+APP_PUBLIC_URL = env_value("APP_PUBLIC_URL", "http://127.0.0.1:8000").rstrip("/")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -57,7 +59,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "infaan_backend.middleware.ApiCorsFallbackMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -88,23 +89,12 @@ TEMPLATES = [
 WSGI_APPLICATION = "infaan_backend.wsgi.application"
 ASGI_APPLICATION = "infaan_backend.asgi.application"
 
-database_url = env_value("DATABASE_URL")
-if not database_url:
-    raise RuntimeError("DATABASE_URL is not set.")
-
-try:
-    DATABASES = {
-        "default": dj_database_url.config(
-            default=database_url,
-            conn_max_age=600,
-        )
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
-except ValueError as exc:
-    raise RuntimeError(
-        "DATABASE_URL must be a full database URL, for example "
-        "postgresql://user:password@host:5432/dbname?sslmode=require. "
-        "In Northflank variables, use name DATABASE_URL and put only the URL in the value field."
-    ) from exc
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -120,7 +110,6 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "accounts.CustomUser"
@@ -128,21 +117,17 @@ AUTH_USER_MODEL = "accounts.CustomUser"
 CORS_ALLOW_ALL_ORIGINS = env_bool("CORS_ALLOW_ALL_ORIGINS", False)
 CORS_ALLOWED_ORIGINS = env_list(
     "CORS_ALLOWED_ORIGINS",
-    "https://infaanwebdesign.vercel.app,http://127.0.0.1:5173,http://localhost:5173",
+    "http://127.0.0.1:5173,http://localhost:5173",
 )
-CORS_ALLOWED_ORIGIN_REGEXES = env_list(
-    "CORS_ALLOWED_ORIGIN_REGEXES",
-    r"https://.*\.vercel\.app,https://.*\.code\.run",
-)
+CORS_ALLOWED_ORIGIN_REGEXES = env_list("CORS_ALLOWED_ORIGIN_REGEXES", "")
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = env_list(
     "CSRF_TRUSTED_ORIGINS",
-    "https://infaanwebdesign.vercel.app,https://*.code.run",
+    "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:8000,http://localhost:8000",
 )
 
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", not DEBUG)
-SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", not DEBUG)
+CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", False)
+SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", False)
 SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", False)
 
 REST_FRAMEWORK = {
@@ -163,15 +148,13 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
-GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", False)
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 SYSTEM_SUBSCRIPTION_API_URL = (
-    os.getenv("SYSTEM_SUBSCRIPTION_API_URL", f"{APP_PUBLIC_URL}/api" if APP_PUBLIC_URL else "") or ""
+    os.getenv("SYSTEM_SUBSCRIPTION_API_URL", "http://127.0.0.1:8000/api") or ""
 ).rstrip("/")

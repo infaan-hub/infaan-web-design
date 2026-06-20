@@ -26,7 +26,6 @@ import SystemSubscriptionPage from "./pages/SystemSubscriptionPage";
 import SystemSubscriptionTimePage from "./pages/SystemSubscriptionTimePage";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 const CUSTOMER_PROTECTED_PATHS = ["/dashboard", "/profile", "/subscription", "/package", "/package-time", "/system-subscription-time", "/billing", "/booking", "/billing-history"];
 const ADMIN_PROTECTED_PATHS = ["/admin-dashboard", "/admin/users", "/admin-subscription", "/system-control", "/bookings-services", "/booked-service", "/booking-history"];
 
@@ -913,42 +912,6 @@ function App() {
     }
   }
 
-  async function submitGoogleAuth(code) {
-    setLoading(true);
-    setError("");
-    setFeedback("");
-
-    try {
-      const data = await apiRequest(
-        "/auth/google/",
-        {
-          method: "POST",
-          headers: {
-            "X-Requested-With": "XmlHttpRequest",
-          },
-          body: JSON.stringify({
-            code,
-            redirect_uri: window.location.origin,
-          }),
-        },
-        false
-      );
-      setToken(data.access);
-      setRefreshToken(data.refresh);
-      setCurrentUser(data.user);
-      setStoredJson("infaan_user", data.user);
-      setFeedback("Authentication successful.");
-      const nextPath = data.user.role === "admin" ? "/admin-dashboard" : postLoginPath || "/dashboard";
-      setPostLoginPath("");
-      navigate(nextPath);
-    } catch (requestError) {
-      clearAuthState();
-      setError(requestError.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function submitAdminUser() {
     setLoading(true);
     setError("");
@@ -1351,32 +1314,6 @@ function App() {
     }
   }
 
-  function beginGoogleLogin() {
-    if (!GOOGLE_CLIENT_ID) {
-      setError("Google OAuth needs a VITE_GOOGLE_CLIENT_ID to go live.");
-      return;
-    }
-    if (!window.google?.accounts?.oauth2) {
-      setError("Google Sign-In is still loading. Please try again.");
-      return;
-    }
-
-    const codeClient = window.google.accounts.oauth2.initCodeClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: "openid email profile",
-      ux_mode: "popup",
-      callback: async (response) => {
-        if (response.error) {
-          setError(response.error);
-          return;
-        }
-        await submitGoogleAuth(response.code);
-      },
-    });
-
-    codeClient.requestCode();
-  }
-
   function logout() {
     clearAuthState();
     setSelectedPackageId("");
@@ -1609,7 +1546,6 @@ function App() {
     updateSubscription,
     selectPortfolioService,
     requireLogin,
-    beginGoogleLogin,
     logout,
     setFeedback,
     setError,

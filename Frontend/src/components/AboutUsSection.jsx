@@ -1,7 +1,6 @@
 import paymentGatewaysImage from "../assets/Free Payment Method & Credit Card Icon Set.jpg";
 
-const WEBSITE_URL = "https://infaanwebdesign.vercel.app";
-const QR_CODE_SRC = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(WEBSITE_URL)}`;
+const WEBSITE_URL = "http://127.0.0.1:5173";
 
 function WhatsAppIcon() {
   return (
@@ -64,25 +63,17 @@ function AboutUsSection() {
         </div>
 
         <div className="about-contact-grid">
-          <a
-            className="about-qr-card"
-            href={WEBSITE_URL}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Open Infaan Web & Design website"
-          >
-            <img className="about-qr-image" src={QR_CODE_SRC} alt="QR code for Infaan Web & Design website" loading="lazy" />
+          <a className="about-qr-card" href={WEBSITE_URL} aria-label="Open local Infaan Web & Design website">
+            <img className="about-qr-image" src={paymentGatewaysImage} alt="Infaan Web & Design local website" loading="lazy" />
             <span className="about-qr-copy">
-              <strong>Scan to visit our website</strong>
+              <strong>Open local website</strong>
               <small>{WEBSITE_URL}</small>
             </span>
           </a>
 
           <a
             className="premium-contact-button contact-whatsapp"
-            href="https://wa.me/255711252758"
-            target="_blank"
-            rel="noreferrer"
+            href="tel:+255711252758"
           >
             <span className="premium-contact-icon">
               <WhatsAppIcon />
@@ -95,9 +86,7 @@ function AboutUsSection() {
 
           <a
             className="premium-contact-button contact-instagram"
-            href="https://instagram.com/_.infaan_"
-            target="_blank"
-            rel="noreferrer"
+            href="#instagram-contact"
           >
             <span className="premium-contact-icon">
               <InstagramIcon />

@@ -1,8 +1,6 @@
 import { formatServiceCategoryLabel, getOrderedServices, getServiceImage } from "../lib/serviceCatalog";
 import AboutUsSection from "../components/AboutUsSection";
-
-const heroImage =
-  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80";
+import heroImage from "../assets/WhatsApp Image 2025-09-21 at 01.56.52_720d7821.jpg";
 
 const packageTierOrder = {
   silver: 0,

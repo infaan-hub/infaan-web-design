@@ -1,5 +1,4 @@
-const adminRegisterVisualImage =
-  "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80";
+import adminRegisterVisualImage from "../assets/Beds - French Furniture Orlando.jpg";
 
 function AdminRegisterPage({ app }) {
   const { adminRegisterForm, setAdminRegisterForm, updateField, submitAuth, loading } = app;
