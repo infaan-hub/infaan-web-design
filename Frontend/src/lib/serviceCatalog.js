@@ -1,16 +1,18 @@
-import websiteImage from "../assets/WhatsApp Image 2025-09-21 at 01.56.52_720d7821.jpg";
-import systemImage from "../assets/Beds - French Furniture Orlando.jpg";
-import designImage from "../assets/BEST SELLERS.jpg";
-import paymentImage from "../assets/Free Payment Method & Credit Card Icon Set.jpg";
-
 export const serviceImages = {
-  website: websiteImage,
-  system_subscription: systemImage,
-  system_developing: systemImage,
-  system_development: systemImage,
-  maintenance: paymentImage,
-  digital_ads: paymentImage,
-  logo_poster: designImage,
+  website:
+    "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80",
+  system_subscription:
+    "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80",
+  system_developing:
+    "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80",
+  system_development:
+    "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80",
+  maintenance:
+    "https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=1200&q=80",
+  digital_ads:
+    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
+  logo_poster:
+    "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
 };
 
 export const homeServiceOrder = [

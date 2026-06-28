@@ -1,4 +1,5 @@
-import registerVisualImage from "../assets/BEST SELLERS.jpg";
+const registerVisualImage =
+  "https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80";
 
 function RegisterPage({ app }) {
   const { registerForm, setRegisterForm, updateField, submitAuth, loading, navigate } = app;

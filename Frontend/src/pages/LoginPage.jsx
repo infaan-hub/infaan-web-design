@@ -1,7 +1,8 @@
-import authVisualImage from "../assets/WhatsApp Image 2025-09-21 at 01.56.52_720d7821.jpg";
+const authVisualImage =
+  "https://images.unsplash.com/photo-1496171367470-9ed9a91ea931?auto=format&fit=crop&w=1200&q=80";
 
 function LoginPage({ app }) {
-  const { loginForm, setLoginForm, updateField, submitAuth, loading, navigate } = app;
+  const { loginForm, setLoginForm, updateField, submitAuth, beginGoogleLogin, loading, navigate } = app;
 
   return (
     <main className="auth-page">
@@ -22,6 +23,12 @@ function LoginPage({ app }) {
               <button type="button" className="auth-link-button">Forgot Password?</button>
             </div>
             <button type="submit" className="auth-submit-button" disabled={loading}>Login</button>
+
+            <div className="auth-socials">
+              <button type="button" className="social-icon-button google-button" onClick={beginGoogleLogin} aria-label="Login with Google">
+                <span className="google-g">G</span>
+              </button>
+            </div>
 
             <p className="auth-switch-copy">
               Don&apos;t have an account? <button type="button" className="auth-inline-link" onClick={() => navigate("/register")}>Sign up</button>

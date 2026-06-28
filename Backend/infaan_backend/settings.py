@@ -2,14 +2,12 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+import dj_database_url
 from dotenv import load_dotenv
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-try:
-    load_dotenv(BASE_DIR / ".env")
-except OSError:
-    pass
+load_dotenv(BASE_DIR / ".env")
 
 
 def env_bool(name, default=False):
@@ -21,28 +19,12 @@ def env_list(name, default=""):
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
-def env_value(name, default=""):
-    value = os.getenv(name, default).strip().strip("\"'")
-    prefix = f"{name}="
-    if value.startswith(prefix):
-        value = value[len(prefix) :].strip().strip("\"'")
-    return value
-
-
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-infaan-web-and-design-local-key")
 DEBUG = env_bool("DJANGO_DEBUG", True)
-SECRET_KEY = (
-    env_value("DJANGO_SECRET_KEY")
-    or env_value("SECRET_KEY")
-    or "django-insecure-infaan-web-and-design-local-key"
-)
-if not DEBUG and SECRET_KEY == "django-insecure-infaan-web-and-design-local-key":
-    raise RuntimeError("DJANGO_SECRET_KEY is not set.")
-
 ALLOWED_HOSTS = env_list(
     "ALLOWED_HOSTS",
-    "127.0.0.1,localhost",
+    "127.0.0.1,localhost,infaan-web-design.onrender.com,infaanwebdesign.vercel.app,*",
 ) or ["*"]
-APP_PUBLIC_URL = env_value("APP_PUBLIC_URL", "http://127.0.0.1:8000").rstrip("/")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -59,6 +41,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "infaan_backend.middleware.ApiCorsFallbackMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -89,11 +72,15 @@ TEMPLATES = [
 WSGI_APPLICATION = "infaan_backend.wsgi.application"
 ASGI_APPLICATION = "infaan_backend.asgi.application"
 
+database_url = os.getenv("DATABASE_URL")
+if not database_url:
+    raise RuntimeError("DATABASE_URL is not set.")
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(
+        default=database_url,
+        conn_max_age=600,
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -110,6 +97,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "accounts.CustomUser"
@@ -117,18 +105,17 @@ AUTH_USER_MODEL = "accounts.CustomUser"
 CORS_ALLOW_ALL_ORIGINS = env_bool("CORS_ALLOW_ALL_ORIGINS", False)
 CORS_ALLOWED_ORIGINS = env_list(
     "CORS_ALLOWED_ORIGINS",
-    "http://127.0.0.1:5173,http://localhost:5173",
+    "https://infaanwebdesign.vercel.app,http://127.0.0.1:5173,http://localhost:5173",
 )
-CORS_ALLOWED_ORIGIN_REGEXES = env_list("CORS_ALLOWED_ORIGIN_REGEXES", "")
+CORS_ALLOWED_ORIGIN_REGEXES = env_list(
+    "CORS_ALLOWED_ORIGIN_REGEXES",
+    r"https://.*\.vercel\.app",
+)
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = env_list(
     "CSRF_TRUSTED_ORIGINS",
-    "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:8000,http://localhost:8000",
+    "https://infaanwebdesign.vercel.app,https://infaan-web-design.onrender.com",
 )
-
-CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", False)
-SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", False)
-SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", False)
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -148,13 +135,15 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
-EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
+GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", False)
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 SYSTEM_SUBSCRIPTION_API_URL = (
-    os.getenv("SYSTEM_SUBSCRIPTION_API_URL", "http://127.0.0.1:8000/api") or ""
+    os.getenv("SYSTEM_SUBSCRIPTION_API_URL", "https://infaan-web-design.onrender.com/api") or ""
 ).rstrip("/")

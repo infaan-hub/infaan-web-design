@@ -1,5 +1,9 @@
 import { getPaymentGateway, normalizePaymentMethod } from "../lib/paymentGateways";
 
+function normalizePhoneNumber(phoneNumber) {
+  return (phoneNumber || "").replace(/[^\d]/g, "");
+}
+
 function BookedServicePage({ app }) {
   const { selectedBooking, navigate, formatPrice, setBookingPaymentStatus, markBookingDone, loading } = app;
 
@@ -19,7 +23,7 @@ function BookedServicePage({ app }) {
     );
   }
 
-  const phoneUrl = `tel:${String(selectedBooking.contact_phone || "").replace(/[^\d+]/g, "")}`;
+  const whatsappUrl = `https://wa.me/${normalizePhoneNumber(selectedBooking.contact_phone)}`;
   const paymentMethodLabel =
     selectedBooking.payment_method === "whatsapp"
       ? "WhatsApp Booking"
@@ -110,8 +114,8 @@ function BookedServicePage({ app }) {
             </div>
 
             <div className="hero-actions">
-              <a className="solid-button booking-link-button" href={phoneUrl}>
-                Call Customer
+              <a className="solid-button booking-link-button" href={whatsappUrl} target="_blank" rel="noreferrer">
+                Chat on WhatsApp
               </a>
               <button
                 type="button"
