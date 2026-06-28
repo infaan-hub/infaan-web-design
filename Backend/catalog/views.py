@@ -1,4 +1,4 @@
-from django.db import DatabaseError, OperationalError, ProgrammingError, transaction
+from django.db import DatabaseError, OperationalError, ProgrammingError, connection, transaction
 from django.db.models.deletion import ProtectedError
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
@@ -621,3 +621,11 @@ class HeartbeatView(APIView):
         else:
             service.save(update_fields=["last_heartbeat_at", "updated_at"])
         return Response(_build_subscription_control_response(service, detail="Heartbeat received."))
+
+
+class KeepAliveView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        connection.ensure_connection()
+        return Response({"status": "ok"})

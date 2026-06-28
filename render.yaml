@@ -25,7 +25,7 @@ services:
       - key: SYSTEM_SUBSCRIPTION_API_URL
         value: "https://infaan-web-design.onrender.com/api"
       - key: DATABASE_URL
-        value: "postgresql://infaanwebdesign_user:VxClXqMttFCCQ4i1EwR70klTfLRAtVNQ@dpg-d79ajpadbo4c73a8k4a0-a/infaanwebdesign"
+        value: "postgresql://neondb_owner:npg_TMw3yxSmu7Xd@ep-bold-smoke-aqo9izqn-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
       - key: SEED_INFAAN_DATA
         value: "true"
 

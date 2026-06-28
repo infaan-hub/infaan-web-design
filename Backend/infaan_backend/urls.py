@@ -31,6 +31,7 @@ from catalog.views import (
     TenantServiceViewSet,
     TenantViewSet,
     LicenseValidateView,
+    KeepAliveView,
 )
 
 router = DefaultRouter()
@@ -63,5 +64,6 @@ urlpatterns = [
     path("api/features/", FeatureAccessView.as_view(), name="feature-access"),
     path("api/admin-access/", AdminAccessView.as_view(), name="admin-access"),
     path("api/heartbeat/", HeartbeatView.as_view(), name="heartbeat"),
+    path("api/keepalive/", KeepAliveView.as_view(), name="keepalive"),
     path("api/", include(router.urls)),
 ]
