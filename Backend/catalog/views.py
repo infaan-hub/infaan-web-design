@@ -1,4 +1,4 @@
-from django.db import DatabaseError, OperationalError, ProgrammingError, connection, transaction
+from django.db import DatabaseError, OperationalError, ProgrammingError, transaction
 from django.db.models.deletion import ProtectedError
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
@@ -627,5 +627,4 @@ class KeepAliveView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        connection.ensure_connection()
         return Response({"status": "ok"})

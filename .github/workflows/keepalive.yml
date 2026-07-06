@@ -11,5 +11,5 @@ jobs:
     steps:
       - name: Ping backend and frontend
         run: |
-          curl --fail --silent --show-error --max-time 30 https://infaan-web-design.onrender.com/api/keepalive/
-          curl --fail --silent --show-error --max-time 30 https://infaanwebdesign.vercel.app/
+          curl --fail --silent --show-error --connect-timeout 10 --max-time 90 --retry 3 --retry-all-errors --retry-delay 5 https://infaan-web-design.onrender.com/api/keepalive/
+          curl --fail --silent --show-error --connect-timeout 10 --max-time 90 --retry 3 --retry-all-errors --retry-delay 5 https://infaanwebdesign.vercel.app/
