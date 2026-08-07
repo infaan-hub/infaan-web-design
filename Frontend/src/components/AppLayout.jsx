@@ -1,39 +1,69 @@
+import { useEffect } from "react";
+import {
+  Home,
+  Package,
+  Server,
+  Briefcase,
+  LayoutDashboard,
+  BellRing,
+  Clock,
+  Receipt,
+  CalendarCheck,
+  History,
+  Users,
+  Settings,
+  ShoppingCart,
+  FileText,
+  LogIn,
+  UserPlus,
+  Menu,
+} from "lucide-react";
+
+const iconMap = {
+  Home, Package, Server, Briefcase, LayoutDashboard, BellRing, Clock, Receipt,
+  CalendarCheck, History, Users, Settings, ShoppingCart, FileText, LogIn, UserPlus,
+};
+
+function NavIcon({ name }) {
+  const Icon = iconMap[name];
+  return Icon ? <Icon className="w-[18px] h-[18px]" /> : null;
+}
+
 function buildSidebarGroups(app) {
   const { currentUser, path, selectedPackage, selectedPrice, pendingPayment, bookingSent, subscriptions } = app;
   const hasCompletedBilling = (subscriptions || []).some((item) => item.status === "completed");
   const hasSubscriptions = (subscriptions || []).length > 0;
 
   const publicMenu = [
-    { href: "/home", label: "Home", sign: "\u2302", hint: "services" },
-    { href: "/package", label: "Packages", sign: "\u25A3", hint: "plans" },
-    { href: "/system-subscription", label: "System Subscription", sign: "\u25A9", hint: "hire" },
-    { href: "/potfolio", label: "Portfolio", sign: "\u25A7", hint: "gallery" },
+    { href: "/home", label: "Home", icon: "Home", hint: "services" },
+    { href: "/package", label: "Packages", icon: "Package", hint: "plans" },
+    { href: "/system-subscription", label: "System Subscription", icon: "Server", hint: "hire" },
+    { href: "/potfolio", label: "Portfolio", icon: "Briefcase", hint: "gallery" },
   ];
 
   const customerFlow = [
-    { href: "/dashboard", label: "Dashboard", sign: "\u25C8", hint: "overview" },
-    { href: "/subscription", label: "Subscription", sign: "\u25CE", hint: hasSubscriptions ? "active" : "status" },
-    { href: "/package", label: "Package", sign: "\u25A3", hint: selectedPackage ? "selected" : "choose" },
-    { href: "/package-time", label: "Package Time", sign: "\u25F7", hint: selectedPrice ? "selected" : "duration" },
-    { href: "/billing", label: "Billing", sign: "\u25B3", hint: pendingPayment ? "ready" : "payment" },
-    { href: "/booking", label: "Booking", sign: "\u2713", hint: bookingSent ? "sent" : "confirm" },
-    { href: "/billing-history", label: "Billing History", sign: "\u27F2", hint: hasCompletedBilling ? "records" : "history" },
+    { href: "/dashboard", label: "Dashboard", icon: "LayoutDashboard", hint: "overview" },
+    { href: "/subscription", label: "Subscription", icon: "BellRing", hint: hasSubscriptions ? "active" : "status" },
+    { href: "/package", label: "Package", icon: "Package", hint: selectedPackage ? "selected" : "choose" },
+    { href: "/package-time", label: "Package Time", icon: "Clock", hint: selectedPrice ? "selected" : "duration" },
+    { href: "/billing", label: "Billing", icon: "Receipt", hint: pendingPayment ? "ready" : "payment" },
+    { href: "/booking", label: "Booking", icon: "CalendarCheck", hint: bookingSent ? "sent" : "confirm" },
+    { href: "/billing-history", label: "Billing History", icon: "History", hint: hasCompletedBilling ? "records" : "history" },
   ];
 
   const adminMenu = [
-    { href: "/admin-dashboard", label: "Admin Dashboard", sign: "\u25C8", hint: "manage" },
-    { href: "/admin/users", label: "Users", sign: "\u263A", hint: "accounts" },
-    { href: "/admin-subscription", label: "Subscriptions", sign: "\u25CE", hint: "plans" },
-    { href: "/system-control", label: "System Control", sign: "\u2699", hint: "tenant" },
-    { href: "/bookings-services", label: "Bookings", sign: "\u25A4", hint: "orders" },
-    { href: "/booked-service", label: "Booked Service", sign: "\u25C9", hint: "detail" },
-    { href: "/booking-history", label: "History", sign: "\u27F2", hint: "done" },
+    { href: "/admin-dashboard", label: "Admin Dashboard", icon: "LayoutDashboard", hint: "manage" },
+    { href: "/admin/users", label: "Users", icon: "Users", hint: "accounts" },
+    { href: "/admin-subscription", label: "Subscriptions", icon: "BellRing", hint: "plans" },
+    { href: "/system-control", label: "System Control", icon: "Settings", hint: "tenant" },
+    { href: "/bookings-services", label: "Bookings", icon: "ShoppingCart", hint: "orders" },
+    { href: "/booked-service", label: "Booked Service", icon: "FileText", hint: "detail" },
+    { href: "/booking-history", label: "History", icon: "History", hint: "done" },
   ];
 
   const guestAccess = [
-    { href: "/login", label: "Customer Login", sign: "\u21AA", hint: "signin" },
-    { href: "/register", label: "Customer Register", sign: "\u271A", hint: "signup" },
-    { href: "/admin/login", label: "Admin Login", sign: "\u2699", hint: "admin" },
+    { href: "/login", label: "Customer Login", icon: "LogIn", hint: "signin" },
+    { href: "/register", label: "Customer Register", icon: "UserPlus", hint: "signup" },
   ];
 
   if (currentUser?.role === "admin") {
@@ -137,7 +167,7 @@ function AppLayout({ app, children }) {
                     className={`nav-link ${path === item.href ? "nav-link-active" : ""}`}
                     onClick={() => handleNavigation(item.href)}
                   >
-                    <span className="nav-sign">{item.sign}</span>
+                    <span className="nav-sign"><NavIcon name={item.icon} /></span>
                     <span className="nav-label-wrap">
                       <strong>{item.label}</strong>
                       <small>{item.hint}</small>
@@ -187,9 +217,7 @@ function AppLayout({ app, children }) {
         <header className="thin-header">
           <div className="header-left">
             <button type="button" className="menu-toggle" onClick={() => setSidebarOpen((value) => !value)}>
-              <span />
-              <span />
-              <span />
+              <Menu className="w-5 h-5" />
             </button>
             <h1>Infaan Web & Design</h1>
           </div>

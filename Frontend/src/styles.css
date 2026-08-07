@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --bg: #6ea2b3;
   --paper: rgba(243, 250, 253, 0.84);
@@ -11,19 +15,28 @@
 }
 
 body[data-theme="dark"] {
-  --bg: #000000;
-  --paper: rgba(8, 31, 58, 0.9);
-  --paper-strong: #082645;
-  --ink: #edf6fa;
-  --muted: #9ab4cb;
-  --line: rgba(255, 255, 255, 0.1);
-  --brand: #f2fbff;
-  --accent: #12365c;
-  --shadow: 0 24px 50px rgba(0, 0, 0, 0.34);
+  --bg: #25272C;
+  --paper: rgba(37, 39, 44, 0.92);
+  --paper-strong: #25272C;
+  --ink: #B8F7E4;
+  --muted: #6fa899;
+  --line: rgba(184, 247, 228, 0.12);
+  --brand: #B8F7E4;
+  --accent: #1a3d32;
+  --shadow: 0 24px 50px rgba(0, 0, 0, 0.5);
 }
 
 * {
   box-sizing: border-box;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 html {
@@ -35,6 +48,7 @@ body {
   min-width: 320px;
   color: var(--ink);
   font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 600;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.34), transparent 48%),
     radial-gradient(circle at top right, rgba(223, 243, 251, 0.46), transparent 28%),
@@ -42,7 +56,7 @@ body {
 }
 
 body[data-theme="dark"] {
-  background: #000000;
+  background: #25272C;
 }
 
 ::selection {
@@ -50,10 +64,10 @@ body[data-theme="dark"] {
   color: #08141a;
 }
 
-body[data-theme="dark"] ::selection {
-  background: rgba(110, 162, 179, 0.32);
-  color: #f2fbff;
-}
+  body[data-theme="dark"] ::selection {
+    background: rgba(184, 247, 228, 0.32);
+    color: #25272C;
+  }
 
 button,
 input,
@@ -120,9 +134,9 @@ button {
 
 body[data-theme="dark"] .sidebar {
   background:
-    linear-gradient(180deg, rgba(33, 36, 42, 0.8), rgba(24, 26, 31, 0.74)),
-    rgba(18, 19, 22, 0.7);
-  border-right-color: rgba(255, 255, 255, 0.08);
+    linear-gradient(180deg, rgba(37, 39, 44, 0.9), rgba(37, 39, 44, 0.8)),
+    rgba(37, 39, 44, 0.85);
+  border-right-color: rgba(184, 247, 228, 0.08);
 }
 
 .sidebar-brand,
@@ -387,18 +401,18 @@ body[data-theme="dark"] .sidebar {
 }
 
 body[data-theme="dark"] .theme-switch-track {
-  background: linear-gradient(180deg, #30343c 0%, #23262d 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(55, 58, 65, 0.9) 0%, #25272C 100%);
+  box-shadow: inset 0 1px 0 rgba(184, 247, 228, 0.08);
 }
 
 body[data-theme="dark"] .theme-switch-label {
-  color: #d7dde8;
+  color: #B8F7E4;
 }
 
 body[data-theme="dark"] .theme-switch-thumb {
-  background: linear-gradient(180deg, #474c56 0%, #343941 100%);
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+  background: linear-gradient(180deg, rgba(70, 73, 80, 0.9) 0%, rgba(45, 48, 54, 0.9) 100%);
+  border-color: rgba(184, 247, 228, 0.08);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
 }
 
 .page {
@@ -436,7 +450,7 @@ body[data-theme="dark"] .success-ticket,
 body[data-theme="dark"] .sidebar-group-card,
 body[data-theme="dark"] .sidebar-footer,
 body[data-theme="dark"] .sidebar-brand {
-  background-color: rgba(31, 34, 40, 0.88);
+  background-color: rgba(37, 39, 44, 0.92);
 }
 
 body[data-theme="dark"] .nav-sign,
@@ -444,15 +458,15 @@ body[data-theme="dark"] .sidebar-icon-button,
 body[data-theme="dark"] .menu-toggle,
 body[data-theme="dark"] .payment-method-tile,
 body[data-theme="dark"] .ticket-payment-card {
-  background: linear-gradient(180deg, #30343c 0%, #23262d 100%);
-  border-color: rgba(255, 255, 255, 0.08);
-  color: #d7dde8;
+  background: linear-gradient(180deg, rgba(55, 58, 65, 0.9) 0%, rgba(37, 39, 44, 0.9) 100%);
+  border-color: rgba(184, 247, 228, 0.08);
+  color: #B8F7E4;
 }
 
 body[data-theme="dark"] input,
 body[data-theme="dark"] select,
 body[data-theme="dark"] textarea {
-  background: rgba(24, 26, 30, 0.96);
+  background: rgba(37, 39, 44, 0.96);
   color: var(--ink);
 }
 
@@ -469,37 +483,37 @@ body[data-theme="dark"] .auth-link-button,
 body[data-theme="dark"] .auth-inline-link,
 body[data-theme="dark"] .auth-switch-copy,
 body[data-theme="dark"] .social-icon-button {
-  color: #d7dde8;
+  color: #B8F7E4;
 }
 
 body[data-theme="dark"] .nav-link-active {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.08);
-  color: #f1f3f7;
+  background: rgba(184, 247, 228, 0.1);
+  border-color: rgba(184, 247, 228, 0.12);
+  color: #B8F7E4;
 }
 
 body[data-theme="dark"] .pricing-plan-card {
-  background: linear-gradient(180deg, rgba(34, 37, 44, 0.96), rgba(27, 29, 35, 0.94));
-  border-color: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(37, 39, 44, 0.96), rgba(37, 39, 44, 0.94));
+  border-color: rgba(184, 247, 228, 0.08);
 }
 
 body[data-theme="dark"] .pricing-card-silver {
-  background: linear-gradient(180deg, rgba(110, 122, 136, 0.28), rgba(34, 37, 44, 0.96));
+  background: linear-gradient(180deg, rgba(110, 122, 136, 0.28), rgba(37, 39, 44, 0.96));
   border-color: rgba(190, 202, 214, 0.18);
 }
 
 body[data-theme="dark"] .pricing-card-gold {
-  background: linear-gradient(180deg, rgba(191, 148, 39, 0.3), rgba(34, 37, 44, 0.96));
+  background: linear-gradient(180deg, rgba(191, 148, 39, 0.3), rgba(37, 39, 44, 0.96));
   border-color: rgba(233, 200, 108, 0.2);
 }
 
 body[data-theme="dark"] .pricing-card-premium {
-  background: linear-gradient(180deg, rgba(170, 56, 56, 0.34), rgba(34, 37, 44, 0.96));
+  background: linear-gradient(180deg, rgba(170, 56, 56, 0.34), rgba(37, 39, 44, 0.96));
   border-color: rgba(239, 131, 131, 0.2);
 }
 
 body[data-theme="dark"] .pricing-card-extra {
-  background: linear-gradient(180deg, rgba(122, 160, 105, 0.3), rgba(34, 37, 44, 0.96));
+  background: linear-gradient(180deg, rgba(122, 160, 105, 0.3), rgba(37, 39, 44, 0.96));
   border-color: rgba(184, 220, 154, 0.2);
 }
 
@@ -510,8 +524,8 @@ body[data-theme="dark"] .payment-helper-box,
 body[data-theme="dark"] .payment-total-box,
 body[data-theme="dark"] .payment-total-final,
 body[data-theme="dark"] .auth-shell {
-  background: rgba(25, 28, 34, 0.94);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(37, 39, 44, 0.94);
+  border-color: rgba(184, 247, 228, 0.08);
 }
 
 body[data-theme="dark"] .pricing-tone-silver {
@@ -531,33 +545,33 @@ body[data-theme="dark"] .pricing-tone-extra {
 }
 
 body[data-theme="dark"] .pricing-mini-pill {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f1f3f7;
+  background: rgba(184, 247, 228, 0.1);
+  color: #B8F7E4;
 }
 
 body[data-theme="dark"] .pricing-plan-top h4,
 body[data-theme="dark"] .pricing-amount strong {
-  color: #ffffff;
+  color: #B8F7E4;
 }
 
 body[data-theme="dark"] .pricing-amount span {
-  color: #e8eef8;
+  color: #B8F7E4;
 }
 
 body[data-theme="dark"] .price-chip {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(184, 247, 228, 0.1);
+  color: #B8F7E4;
+  border-color: rgba(184, 247, 228, 0.15);
 }
 
 body[data-theme="dark"] .payment-step span {
-  background: rgba(35, 38, 45, 0.96);
-  border-color: rgba(255, 255, 255, 0.08);
-  color: #d7dde8;
+  background: rgba(37, 39, 44, 0.96);
+  border-color: rgba(184, 247, 228, 0.08);
+  color: #B8F7E4;
 }
 
 body[data-theme="dark"] .payment-total-row {
-  border-bottom-color: rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(184, 247, 228, 0.08);
 }
 
 body[data-theme="dark"] .notice-success {
@@ -569,7 +583,7 @@ body[data-theme="dark"] .notice-error {
 }
 
 body[data-theme="dark"] .ticket-dash {
-  border-top-color: rgba(255, 255, 255, 0.22);
+  border-top-color: rgba(184, 247, 228, 0.22);
 }
 
 body[data-theme="dark"] .ticket-barcode span {
@@ -581,11 +595,11 @@ body[data-theme="dark"] .receipt-barcode-svg rect {
 }
 
 body[data-theme="dark"] .receipt-barcode-text {
-  color: #d7dde8;
+  color: #B8F7E4;
 }
 
 body[data-theme="dark"] .credential-card {
-  background: rgba(31, 34, 40, 0.88);
+  background: rgba(37, 39, 44, 0.88);
 }
 
 body[data-theme="dark"] .package-browser-hero,
@@ -594,12 +608,12 @@ body[data-theme="dark"] .package-feature-panel,
 body[data-theme="dark"] .price-strip-card,
 body[data-theme="dark"] .portfolio-home-card,
 body[data-theme="dark"] .about-system-card {
-  background: rgba(31, 34, 40, 0.88);
+  background: rgba(37, 39, 44, 0.88);
 }
 
 body[data-theme="dark"] .home-hero {
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 32px 70px rgba(0, 0, 0, 0.28);
+  border-color: rgba(184, 247, 228, 0.08);
+  box-shadow: 0 32px 70px rgba(0, 0, 0, 0.5);
 }
 
 .thin-header h1,
@@ -621,19 +635,20 @@ body[data-theme="dark"] .home-hero {
 
 .menu-toggle {
   display: inline-grid;
-  gap: 4px;
+  place-items: center;
   width: 42px;
   height: 42px;
-  padding: 10px;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: 50%;
-  background: white;
+  background: var(--paper-strong);
+  color: var(--ink);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.menu-toggle span {
-  height: 2px;
-  border-radius: 999px;
-  background: var(--brand);
+.menu-toggle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
 }
 
 .header-button,
@@ -1470,7 +1485,7 @@ body[data-theme="dark"] .home-hero {
 
 .home-hero {
   position: relative;
-  min-height: 620px;
+  min-height: 760px;
   overflow: hidden;
   border-radius: 38px;
   border: 1px solid rgba(255, 255, 255, 0.24);
@@ -1514,10 +1529,10 @@ body[data-theme="dark"] .home-hero {
 
 .home-hero-copy {
   display: grid;
-  gap: 18px;
+  gap: 22px;
   align-content: end;
-  min-height: 620px;
-  max-width: 460px;
+  min-height: 760px;
+  max-width: 800px;
   padding: 52px 52px 56px;
   color: #f7fbff;
 }
@@ -1530,6 +1545,7 @@ body[data-theme="dark"] .home-hero {
   font-size: 0.76rem;
   letter-spacing: 0.08em;
   color: rgba(247, 251, 255, 0.92);
+  font-weight: 700;
 }
 
 .home-hero-pill::before {
@@ -1548,12 +1564,39 @@ body[data-theme="dark"] .home-hero {
   line-height: 0.96;
 }
 
+.home-hero-heading {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(3.6rem, 9vw, 7.5rem);
+  line-height: 0.88;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  max-width: 900px;
+}
+
+.home-hero-word {
+  display: inline-block;
+}
+
 .home-hero-copy p {
   max-width: 340px;
   margin: 0;
   color: rgba(247, 251, 255, 0.78);
   font-size: 1rem;
   line-height: 1.6;
+}
+
+.home-hero-paragraph {
+  max-width: 340px;
+  margin: 0;
+  color: rgba(247, 251, 255, 0.78);
+  font-size: 1rem;
+  line-height: 1.6;
+  font-weight: 700;
 }
 
 .home-hero-button {
@@ -1585,11 +1628,13 @@ body[data-theme="dark"] .home-hero {
   font-family: "Space Grotesk", sans-serif;
   font-size: 1.5rem;
   line-height: 1.05;
+  font-weight: 800;
 }
 
 .home-hero-fact span {
   color: rgba(247, 251, 255, 0.76);
   line-height: 1.5;
+  font-weight: 600;
 }
 
 .hero-copy h2 {
@@ -3282,7 +3327,7 @@ body[data-theme="dark"] input:focus,
 body[data-theme="dark"] select:focus,
 body[data-theme="dark"] textarea:focus,
 body[data-theme="dark"] button:focus-visible {
-  outline: 2px solid rgba(223, 243, 251, 0.38);
+  outline: 2px solid rgba(184, 247, 228, 0.38);
 }
 
 input::placeholder,
@@ -3292,7 +3337,7 @@ textarea::placeholder {
 
 body[data-theme="dark"] input::placeholder,
 body[data-theme="dark"] textarea::placeholder {
-  color: #88a5b2;
+  color: #6fa899;
 }
 
 input:disabled,
@@ -3552,23 +3597,19 @@ button:disabled {
   }
 
   .home-hero-copy {
-    min-height: 540px;
+    min-height: 520px;
     max-width: none;
     padding: 24px 22px 24px;
   }
 
   .home-hero-copy h2,
-  .home-hero-copy p {
+  .home-hero-copy p,
+  .home-hero-heading {
     max-width: none;
   }
 
   .home-hero-facts {
-    position: relative;
-    top: auto;
-    right: auto;
-    width: 100%;
-    padding: 0 22px 24px;
-    transform: none;
+    display: none;
   }
 
   .payment-field-grid,
@@ -3589,5 +3630,20 @@ button:disabled {
 
   .admin-catalog-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1081px) {
+  .home-hero {
+    min-height: 640px;
+  }
+
+  .home-hero-copy {
+    min-height: 640px;
+    padding: 40px 52px 48px;
+  }
+
+  .home-hero-heading {
+    font-size: clamp(2.8rem, 6vw, 5.5rem);
   }
 }
