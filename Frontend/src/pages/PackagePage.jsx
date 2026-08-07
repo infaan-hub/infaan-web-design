@@ -6,27 +6,6 @@ function PackagePage({ app }) {
 
   return (
     <main className="main-content">
-      <section className="package-browser-hero">
-        <div className="package-browser-copy">
-          <p className="micro-label">package browser</p>
-          <h2>Choose the right Infaan service package for your business.</h2>
-          <p>
-            Browse each service category, compare the available Silver, Gold, Premium, and Extra plans, then continue
-            into package time and billing.
-          </p>
-        </div>
-        <div className="package-browser-summary">
-          <div className="summary-card">
-            <span>{visibleServices.length}</span>
-            <p>Service groups</p>
-          </div>
-          <div className="summary-card">
-            <span>{visibleServices.reduce((total, service) => total + service.packages.length, 0)}</span>
-            <p>Available packages</p>
-          </div>
-        </div>
-      </section>
-
       {selectedPackage ? (
         <section className="section-card package-detail-shell">
           <div className="package-detail-media">

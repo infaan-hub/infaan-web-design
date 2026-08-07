@@ -3558,18 +3558,6 @@ button:disabled {
 }
 
 @media (max-width: 1080px) {
-  .package-browser-hero,
-  .package-detail-shell,
-  .about-system-card,
-  .service-catalog-head,
-  .dashboard-under-service-grid,
-  .service-visual-grid,
-  .home-hero,
-  .hero-banner,
-  .form-layout {
-    grid-template-columns: 1fr;
-  }
-
   .shell,
   .shell-sidebar-closed {
     grid-template-columns: 1fr;
@@ -3582,37 +3570,78 @@ button:disabled {
     border-radius: 0 24px 24px 0;
   }
 
-  .payment-method-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
+  .package-detail-shell,
+  .about-system-card,
+  .service-catalog-head,
+  .dashboard-under-service-grid,
+  .home-hero,
+  .hero-banner,
+  .form-layout,
   .auth-shell {
     grid-template-columns: 1fr;
   }
 
   .auth-visual-side {
     order: -1;
+    min-height: 260px;
   }
 
   .auth-form-side {
     order: 1;
   }
 
-  .auth-visual-side {
-    min-height: 260px;
+  .admin-catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .system-showcase-actions {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  }
+
+  .payment-method-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .otp-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-price-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-price-row strong {
+    grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 720px) {
   .page {
-    padding: 14px;
+    padding: 12px;
+  }
+
+  .thin-header {
+    top: 8px;
+    padding: 8px 12px;
+  }
+
+  .thin-header h1 {
+    font-size: 1.05rem;
   }
 
   .thin-header,
   .package-service-head,
-  .section-headline {
+  .section-headline,
+  .booking-admin-topline,
+  .subscription-detail-head {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .booking-status-group {
+    justify-content: flex-start;
   }
 
   .hero-banner,
@@ -3620,30 +3649,33 @@ button:disabled {
   .service-catalog-block,
   .package-service-card,
   .section-card,
-  .home-hero {
+  .home-hero,
+  .package-detail-shell,
+  .about-system-card {
     padding: 18px;
   }
 
-  .system-showcase-grid {
+  .service-visual-grid,
+  .system-showcase-grid,
+  .admin-catalog-grid,
+  .admin-grid,
+  .payment-method-grid,
+  .payment-field-grid,
+  .payment-steps,
+  .otp-shell,
+  .otp-meta-strip,
+  .receipt-meta-grid,
+  .receipt-control-grid,
+  .package-price-strip,
+  .selected-credentials,
+  .booking-info-grid,
+  .subscription-detail-grid,
+  .admin-price-row {
     grid-template-columns: 1fr;
   }
 
-  .system-showcase-copy {
-    max-width: none;
-  }
-
-  .system-showcase-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-catalog-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-catalog-grid .admin-portfolio-card,
-  .admin-catalog-grid .system-admin-card {
-    width: min(100%, 320px);
-    margin-inline: auto;
+  .admin-price-row strong {
+    grid-column: 1 / -1;
   }
 
   .visual-card,
@@ -3654,35 +3686,34 @@ button:disabled {
   .subscription-card,
   .portfolio-home-card,
   .portfolio-product-card,
-  .service-catalog-block,
-  .package-service-card,
   .success-ticket,
   .billing-summary-card,
-  .billing-form-card {
-    width: min(100%, 320px);
-    margin-inline: auto;
+  .billing-form-card,
+  .service-catalog-block,
+  .package-service-card {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
   }
 
-  .package-detail-shell,
-  .service-package-track,
-  .package-grid,
-  .admin-grid,
-  .subscription-stack,
-  .package-stack,
-  .main-content,
-  .package-catalog,
-  .service-visual-grid,
-  .portfolio-grid,
-  .booking-review-grid,
-  .dashboard-task-grid,
-  .selected-credentials,
-  .package-price-strip,
-  .booking-info-grid {
-    justify-items: center;
+  .package-card-image {
+    min-height: 160px;
   }
 
-  .hero-copy h2 {
-    font-size: 2.4rem;
+  .package-card-image-large {
+    min-height: 240px;
+  }
+
+  .visual-image {
+    min-height: 210px;
+  }
+
+  .service-catalog-cover {
+    min-height: 190px;
+  }
+
+  .system-cover-large {
+    min-height: 240px;
   }
 
   .home-hero {
@@ -3708,18 +3739,135 @@ button:disabled {
     max-width: none;
   }
 
+  .home-hero-heading {
+    font-size: clamp(2rem, 9vw, 3.4rem);
+  }
+
   .home-hero-facts {
     display: none;
   }
 
-  .payment-field-grid,
-  .payment-method-grid,
-  .admin-price-row {
+  .hero-actions {
+    display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .hero-actions .solid-button,
+  .hero-actions .outline-button,
+  .hero-actions .header-button {
+    width: 100%;
+  }
+
+  .about-qr-card,
+  .premium-contact-button,
+  .ticket-payment-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .system-showcase-copy {
+    max-width: none;
+  }
+
+  .portfolio-product-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .otp-illustration-card {
+    display: none;
+  }
+
+  .otp-input-row {
+    gap: 8px;
+  }
+
+  .otp-digit-input {
+    height: 58px;
+    font-size: 1.5rem;
+    padding: 0;
+  }
+
+  .payment-step small {
+    font-size: 0.6rem;
   }
 
   .auth-form-side {
     padding: 24px;
+  }
+
+  .auth-shell {
+    border-radius: 24px;
+  }
+
+  .system-showcase-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 8px;
+  }
+
+  .section-block {
+    gap: 14px;
+  }
+
+  .home-hero {
+    border-radius: 28px;
+  }
+
+  .home-hero-copy {
+    padding: 20px 16px 20px;
+  }
+
+  .home-hero-heading {
+    font-size: clamp(1.7rem, 10vw, 2.6rem);
+  }
+
+  .home-hero-pill {
+    font-size: 0.72rem;
+  }
+
+  .payment-steps {
+    gap: 10px;
+  }
+
+  .summary-card {
+    min-width: 0;
+    padding: 14px;
+  }
+
+  .package-detail-badges {
+    flex-wrap: wrap;
+  }
+
+  .auth-visual-side {
+    min-height: 200px;
+  }
+
+  .sidebar {
+    width: min(280px, calc(100vw - 24px));
+  }
+
+  .otp-input-row {
+    gap: 6px;
+  }
+
+  .otp-digit-input {
+    height: 48px;
+    font-size: 1.2rem;
+    border-radius: 14px;
+  }
+
+  .otp-meta-strip div {
+    padding: 12px;
+  }
+
+  .google-glass-button {
+    font-size: 0.85rem;
+    gap: 9px;
   }
 }
 
