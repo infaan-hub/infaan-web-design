@@ -16,12 +16,16 @@ import {
   FileText,
   LogIn,
   UserPlus,
+  ShieldCheck,
+  Sun,
+  Moon,
   Menu,
 } from "lucide-react";
 
 const iconMap = {
   Home, Package, Server, Briefcase, LayoutDashboard, BellRing, Clock, Receipt,
   CalendarCheck, History, Users, Settings, ShoppingCart, FileText, LogIn, UserPlus,
+  ShieldCheck,
 };
 
 function NavIcon({ name }) {
@@ -64,6 +68,7 @@ function buildSidebarGroups(app) {
   const guestAccess = [
     { href: "/login", label: "Customer Login", icon: "LogIn", hint: "signin" },
     { href: "/register", label: "Customer Register", icon: "UserPlus", hint: "signup" },
+    { href: "/admin/login", label: "Admin Login", icon: "ShieldCheck", hint: "admin" },
   ];
 
   if (currentUser?.role === "admin") {
@@ -204,8 +209,8 @@ function AppLayout({ app, children }) {
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
             >
               <span className="theme-switch-track">
-                <span className="theme-switch-label">☼</span>
-                <span className="theme-switch-label">◐</span>
+                <Sun className="theme-switch-label w-[13px] h-[13px]" />
+                <Moon className="theme-switch-label w-[13px] h-[13px]" />
                 <span className="theme-switch-thumb" />
               </span>
             </button>
