@@ -287,6 +287,15 @@ function App() {
     }
   }, [refreshToken]);
 
+  useEffect(() => {
+    if (path === "/billing" && currentUser?.email) {
+      setSubscriptionForm((previous) => ({
+        ...previous,
+        contact_email: previous.contact_email || currentUser.email,
+      }));
+    }
+  }, [path, currentUser, setSubscriptionForm]);
+
   function navigate(nextPath, replace = false) {
     const method = replace ? "replaceState" : "pushState";
     window.history[method]({}, "", nextPath);
