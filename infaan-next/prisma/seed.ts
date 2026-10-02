@@ -322,7 +322,7 @@ async function main() {
       data: {
         username: "admin",
         email: "admin@infaan.com",
-        password: await hashPassword("Admin12345!"),
+        password: await hashPassword("admin@504"),
         isSuperuser: true,
         isStaff: true,
         isActive: true,
