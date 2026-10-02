@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { modelNotFound } from "@/lib/drf";
-import { drfString, drfBool, drfUrl } from "@/lib/zod-drf";
-import { drfDateTime } from "@/lib/format";
-import { drfDecimal, decimalOut } from "@/lib/decimal";
+import { modelNotFound } from "@/lib/errors";
+import { fieldString, fieldBool, fieldUrl } from "@/lib/fields";
+import { fieldDateTime } from "@/lib/format";
+import { fieldDecimal, decimalOut } from "@/lib/decimal";
 import { FieldErrors, parseObject, validatePk } from "./catalog";
 import { serializePackage } from "./packages";
 
@@ -12,17 +12,17 @@ const SYSTEM_CATEGORY_MSG =
 const GALLERY_MSG = "Provide exactly 5 gallery images for the system view.";
 
 const systemCreateSchema = z.object({
-  name: drfString({ maxLength: 150 }),
-  summary: drfString({ maxLength: 255 }),
-  details: drfString({ blank: true }).optional(),
-  system_url: drfUrl({ optional: true }),
-  admin_url: drfUrl({ optional: true }),
-  display_price: drfDecimal({ maxDigits: 10, decimalPlaces: 2, optional: true, nullable: true }),
-  display_price_currency: drfString({ maxLength: 10 })
+  name: fieldString({ maxLength: 150 }),
+  summary: fieldString({ maxLength: 255 }),
+  details: fieldString({ blank: true }).optional(),
+  system_url: fieldUrl({ optional: true }),
+  admin_url: fieldUrl({ optional: true }),
+  display_price: fieldDecimal({ maxDigits: 10, decimalPlaces: 2, optional: true, nullable: true }),
+  display_price_currency: fieldString({ maxLength: 10 })
     .transform((value) => value.toUpperCase())
     .optional(),
-  cover_image: drfString(),
-  is_active: drfBool({ optional: true }),
+  cover_image: fieldString(),
+  is_active: fieldBool({ optional: true }),
 });
 const systemPatchSchema = systemCreateSchema.partial();
 
@@ -39,10 +39,10 @@ const systemInclude = {
 
 /**
  * SubscriptionSystemSerializer.validate_gallery_images: runs only when the
- * key is present. Iterates like Python (`for x in value`): arrays as items,
+ * key is present. Iterates like `for x in value`: arrays as items,
  * strings as characters, objects as keys; falsey values become [].
  * Exactly 5 truthy entries required; the FILTERED list is stored.
- * Truthy non-iterables raise a TypeError in Django -> 500.
+ * Truthy non-iterables raise a TypeError -> 500.
  */
 function validateGallery(
   errors: FieldErrors,
@@ -99,8 +99,8 @@ export function serializeSystem(system: any) {
     cover_image: system.coverImage,
     gallery_images: system.galleryImages ?? [],
     is_active: system.isActive,
-    created_at: drfDateTime(system.createdAt),
-    updated_at: drfDateTime(system.updatedAt),
+    created_at: fieldDateTime(system.createdAt),
+    updated_at: fieldDateTime(system.updatedAt),
     packages: packages.map(serializePackage),
     price_preview: pricePreview,
   };
@@ -205,7 +205,7 @@ export async function updateSystem(
 
 export async function deleteSystem(id: number) {
   const system = await findSystemOr404(id, true);
-  // Django: subscriptions.subscription_system = NULL, then delete
+  // subscriptions.subscription_system = NULL first, then delete
   // (system orders cascade; Prisma does the same per relation rules).
   await prisma.subscriptionSystem.delete({ where: { id: system.id } });
 }

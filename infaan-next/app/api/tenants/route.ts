@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/auth";
 import { paginate } from "@/lib/pagination";
 import { serializeTenant, listTenants } from "@/lib/serializers/tenants";
 
-// catalog.TenantViewSet (ReadOnly) - IsAuthenticated + IsAdminUserRole.
+// Tenants (read-only) - IsAuthenticated + IsAdminUserRole.
 export const { GET, POST, PUT, PATCH, DELETE } = route(
   {
     GET: async (req: NextRequest) => {

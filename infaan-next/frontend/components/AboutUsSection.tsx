@@ -56,7 +56,7 @@ function AboutUsSection() {
             <span className="micro-label">payment gateways</span>
             <img
               className="about-payment-strip-image"
-              src={paymentGatewaysImage}
+              src={paymentGatewaysImage.src}
               alt="PayPal, Visa, Mastercard, and American Express payment gateways"
               loading="lazy"
             />

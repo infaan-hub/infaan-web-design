@@ -264,7 +264,7 @@ describe("subscription systems", () => {
     expect(ok.body.created_at).toMatch(/\+03:00$/);
   });
 
-  it("POST: non-list gallery uses Python iteration (string chars count)", async () => {
+  it("POST: non-list gallery iterates like a sequence (string chars count)", async () => {
     const service = await makeService({ category: "system_subscription" });
     const admin = await createAdmin();
     const res = await callJson(sysCreate, "/api/subscription-systems/", {

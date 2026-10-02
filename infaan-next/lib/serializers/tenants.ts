@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { modelNotFound } from "@/lib/drf";
-import { drfString, drfChoice, drfBool, drfUrl } from "@/lib/zod-drf";
-import { drfDateTime, drfDate } from "@/lib/format";
+import { modelNotFound } from "@/lib/errors";
+import { fieldString, fieldChoice, fieldBool, fieldUrl } from "@/lib/fields";
+import { fieldDateTime, fieldDate } from "@/lib/format";
 import { FieldErrors, parseObject, validatePk } from "./catalog";
 import { buildServiceConnectionDetails, ensureSubscriptionControlRecords } from "./control-records";
 import { canAccessService } from "@/lib/subscriptions";
@@ -31,7 +31,7 @@ function serializeFeatureAccess(rows: any[]) {
   }));
 }
 
-/** TenantServiceSerializer: subscription_* keys ABSENT when subscription null (SkipField). */
+/** Tenant service: subscription_* keys ABSENT when subscription null (field skipped). */
 export function serializeTenantService(ts: any) {
   const connection = buildServiceConnectionDetails(ts);
   const sub = ts.subscription;
@@ -65,14 +65,14 @@ export function serializeTenantService(ts: any) {
     heartbeat_url: connection.heartbeat_url,
     connection_status: ts.connectionStatus,
     is_enabled: ts.isEnabled,
-    last_heartbeat_at: drfDateTime(ts.lastHeartbeatAt),
-    connected_at: drfDateTime(ts.connectedAt),
+    last_heartbeat_at: fieldDateTime(ts.lastHeartbeatAt),
+    connected_at: fieldDateTime(ts.connectedAt),
   };
   if (sub) {
-    // DRF source traversal over a null relation skips the field entirely.
+    // Source traversal over a null relation skips the field entirely.
     out.subscription_status = sub.status;
     out.subscription_payment_status = sub.paymentStatus;
-    out.subscription_end_date = drfDate(sub.endDate);
+    out.subscription_end_date = fieldDate(sub.endDate);
   }
   out.computed_active = computedActive;
   out.feature_access = serializeFeatureAccess(ts.featureAccess ?? []);
@@ -101,13 +101,13 @@ export function serializeTenant(tenant: any) {
 // ---------------------------------------------------------------------------
 
 const tenantServiceCreateSchema = z.object({
-  name: drfString({ maxLength: 150 }),
-  service_type: drfChoice(SERVICE_TYPES).optional(),
-  domain: drfString({ maxLength: 255, blank: true }).optional(),
-  public_url: drfUrl({ optional: true }),
-  admin_url: drfUrl({ optional: true }),
-  connection_status: drfChoice(CONNECTION_STATUSES).optional(),
-  is_enabled: drfBool({ optional: true }),
+  name: fieldString({ maxLength: 150 }),
+  service_type: fieldChoice(SERVICE_TYPES).optional(),
+  domain: fieldString({ maxLength: 255, blank: true }).optional(),
+  public_url: fieldUrl({ optional: true }),
+  admin_url: fieldUrl({ optional: true }),
+  connection_status: fieldChoice(CONNECTION_STATUSES).optional(),
+  is_enabled: fieldBool({ optional: true }),
 });
 const tenantServicePatchSchema = tenantServiceCreateSchema.partial();
 
@@ -118,9 +118,9 @@ const TENANT_SERVICE_PUT_DEFAULTS: Record<string, unknown> = {
 };
 
 const tenantServiceAdminCreateSchema = z.object({
-  user_identifier: drfString({ maxLength: 150 }),
-  role: drfString({ maxLength: 60 }).optional(),
-  is_active: drfBool({ optional: true }),
+  user_identifier: fieldString({ maxLength: 150 }),
+  role: fieldString({ maxLength: 60 }).optional(),
+  is_active: fieldBool({ optional: true }),
 });
 const tenantServiceAdminPatchSchema = tenantServiceAdminCreateSchema.partial();
 
@@ -188,7 +188,7 @@ export async function findTenantOr404(id: number) {
   return tenant;
 }
 
-/** TenantServiceViewSet.get_queryset: provisions control records first. */
+/** Tenant services list: provisions control records first. */
 async function runEnsureSideEffect() {
   const subs = await prisma.subscription.findMany({
     where: { NOT: { subscriptionSystemId: null }, paymentStatus: "paid" },
@@ -240,7 +240,7 @@ export async function createTenantService(body: Record<string, unknown>) {
     tenantId: tenantId!,
     subscriptionId: subscriptionId ?? null,
     subscriptionSystemId: subscriptionSystemId ?? null,
-    // Read-only credential fields: Django model defaults land as "".
+    // Read-only credential fields: model defaults land as "".
     licenseKey: "",
     apiKey: "",
     apiSecret: "",
@@ -310,7 +310,7 @@ export async function deleteTenantService(id: number) {
 
 // ---------------------------------------------------------------------------
 // TenantServiceAdmin - create omits tenant/service FKs (not in serializer
-// fields), which Django turns into a 500 IntegrityError; Prisma mirrors this
+// fields), which surface as a 500 IntegrityError; Prisma mirrors this
 // with a missing-required-argument error.
 // ---------------------------------------------------------------------------
 

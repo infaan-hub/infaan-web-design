@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { invalidPage } from "./drf";
+import { invalidPage } from "./errors";
 
 export const PAGE_SIZE = 20;
 
@@ -11,7 +11,7 @@ export type Paginated = {
 };
 
 /**
- * DRF PageNumberPagination (PAGE_SIZE=20) with the standard
+ * Page-number pagination (PAGE_SIZE=20) with the standard
  * {count, next, previous, results} shape and absolute next/prev URLs.
  * Invalid page ("abc", "0", beyond last) -> 404 {"detail": "Invalid page."}.
  */

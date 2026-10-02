@@ -5,7 +5,7 @@ import { isAdmin, requireAdminOrReadOnly } from "@/lib/auth";
 import { paginate } from "@/lib/pagination";
 import { serializePrice, listPrices, createPrice } from "@/lib/serializers/catalog";
 
-// catalog.PackagePriceViewSet - IsAdminOrReadOnly.
+// Prices - admin-write/read.
 export const { GET, POST, PUT, PATCH, DELETE } = route(
   {
     GET: async (req: NextRequest) => {

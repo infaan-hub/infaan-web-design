@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Mirrors django-cors-headers behavior for /api/* (settings: CORS_ALLOWED_ORIGINS,
+// CORS handling for /api/* (CORS_ALLOWED_ORIGINS,
 // CORS_ALLOW_CREDENTIALS=True, default methods/headers).
 
 const ALLOW_METHODS = "GET, POST, PUT, PATCH, DELETE, OPTIONS";

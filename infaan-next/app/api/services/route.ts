@@ -5,7 +5,7 @@ import { isAdmin, requireAdminOrReadOnly } from "@/lib/auth";
 import { paginate } from "@/lib/pagination";
 import { serializeService, listServices, createService } from "@/lib/serializers/catalog";
 
-// catalog.ServiceViewSet - IsAdminOrReadOnly, ordered by name.
+// Services - admin-write/read, ordered by name.
 export const { GET, POST, PUT, PATCH, DELETE } = route(
   {
     GET: async (req: NextRequest) => {

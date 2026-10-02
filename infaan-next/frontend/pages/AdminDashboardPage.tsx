@@ -667,7 +667,7 @@ function AdminDashboardPage({ app }) {
 
         <div className="subscription-stack">
           {[...subscriptions]
-            .sort((left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0))
+            .sort((left, right) => new Date(right.created_at || 0).getTime() - new Date(left.created_at || 0).getTime())
             .slice(0, 6)
             .map((booking) => (
               <div key={booking.id} className="subscription-card">

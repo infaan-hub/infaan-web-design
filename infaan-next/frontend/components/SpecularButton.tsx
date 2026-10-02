@@ -87,7 +87,7 @@ const SpecularButton = ({
 }) => {
   const btnRef = useRef(null);
   const fxRef = useRef(null);
-  const propsRef = useRef({});
+  const propsRef = useRef<any>({});
 
   propsRef.current = { radius, lineColor, baseColor, intensity, shineSize, shineFade, thickness, speed, followMouse, proximity, autoAnimate };
 
@@ -214,7 +214,7 @@ const SpecularButton = ({
   return (
     <button
       ref={btnRef}
-      type={type}
+      type={type as 'button' | 'submit' | 'reset'}
       disabled={disabled}
       onClick={onClick}
       className={`specular-button specular-button--${size}${className ? ` ${className}` : ''}`}
@@ -224,7 +224,7 @@ const SpecularButton = ({
         '--sb-tint-opacity': tintOpacity,
         '--sb-blur': `${blur}px`,
         '--sb-text-color': textColor
-      }}
+      } as React.CSSProperties}
     >
       <span ref={fxRef} className="specular-button__fx" aria-hidden="true" />
       <span className="specular-button__label">{children}</span>

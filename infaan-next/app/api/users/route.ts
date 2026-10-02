@@ -7,7 +7,7 @@ import { searchParam } from "@/lib/http";
 import { serializeUser } from "@/lib/serializers/users";
 import { listUsers, createAdminUserRecord } from "@/lib/serializers/admin-users";
 
-// accounts.UserViewSet - IsAuthenticated + IsAdminUserRole, ordered by id.
+// Users - IsAuthenticated + IsAdminUserRole, ordered by id.
 export const { GET, POST, PUT, PATCH, DELETE } = route(
   {
     GET: async (req: NextRequest) => {

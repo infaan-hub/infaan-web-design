@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { callJson, createUser, tokenFor, djangoPbkdf2 } from "./helpers";
+import { callJson, createUser, tokenFor, legacyPbkdf2 } from "./helpers";
 import { prisma } from "@/lib/prisma";
 import { POST as register } from "@/app/api/auth/register/route";
 import { POST as adminRegister } from "@/app/api/auth/admin/register/route";
@@ -44,7 +44,7 @@ describe("POST /api/auth/register/", () => {
     expect(row!.password.startsWith("$2")).toBe(true);
   });
 
-  it("requires password with DRF min length message", async () => {
+  it("requires password with min length message", async () => {
     const base = { username: "bob", email: "bob@example.com" };
     const missing = await callJson(register, "/api/auth/register/", {
       method: "POST",
@@ -61,7 +61,7 @@ describe("POST /api/auth/register/", () => {
     expect(short.body).toEqual({ password: ["This field must have at least 8 characters."] });
   });
 
-  it("rejects blank username and invalid email with DRF wording", async () => {
+  it("rejects blank username and invalid email with canonical wording", async () => {
     const blank = await callJson(register, "/api/auth/register/", {
       method: "POST",
       body: { username: "  ", email: "c@example.com", password: "supersecret" },
@@ -112,7 +112,7 @@ describe("POST /api/auth/login/", () => {
     expect(byEmail.body.user.username).toBe("dave");
   });
 
-  it("returns DRF non_field_errors for bad credentials (incl. inactive users)", async () => {
+  it("returns non_field_errors for bad credentials (incl. inactive users)", async () => {
     await createUser({ username: "erin", password: "password123" });
     const bad = await callJson(login, "/api/auth/login/", {
       method: "POST",
@@ -150,12 +150,12 @@ describe("POST /api/auth/login/", () => {
     expect(missingPass.body).toEqual({ password: ["This field is required."] });
   });
 
-  it("accepts legacy Django pbkdf2 passwords and rehashes to bcrypt", async () => {
+  it("accepts legacy pbkdf2 passwords and rehashes to bcrypt", async () => {
     await prisma.user.create({
       data: {
         username: "legacy",
         email: "legacy@example.com",
-        password: djangoPbkdf2("legacy-pass-1"),
+        password: legacyPbkdf2("legacy-pass-1"),
         role: "customer",
         isActive: true,
         isStaff: false,
@@ -200,7 +200,7 @@ describe("POST /api/auth/refresh/", () => {
 });
 
 describe("GET /api/auth/me/", () => {
-  it("requires authentication with DRF wording", async () => {
+  it("requires authentication with canonical wording", async () => {
     const res = await callJson(me, "/api/auth/me/");
     expect(res.status).toBe(401);
     expect(res.body).toEqual({ detail: "Authentication credentials were not provided." });
@@ -293,7 +293,7 @@ describe("POST /api/auth/google/", () => {
 });
 
 describe("methodNotAllowed", () => {
-  it("returns DRF 405 for unsupported methods", async () => {
+  it("returns 405 for unsupported methods", async () => {
     const res = await callJson(loginGet, "/api/auth/login/", { method: "GET" });
     expect(res.status).toBe(405);
     expect(res.body).toEqual({ detail: 'Method "GET" not allowed.' });

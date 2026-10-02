@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { DrfError, notFound } from "@/lib/drf";
-import { parse } from "@/lib/zod-drf";
+import { ApiError, notFound } from "@/lib/errors";
+import { parse } from "@/lib/fields";
 import { hashPassword } from "@/lib/password";
 import { adminUserSchema, checkUnique } from "./users";
 
@@ -73,7 +73,7 @@ export async function updateAdminUserRecord(id: number, body: unknown, partial: 
     if (data.role !== undefined) updates.role = data.role;
     if (data.is_active !== undefined) updates.isActive = data.is_active;
   }
-  // Django CustomUser.save() always recomputes is_staff.
+  // save() always recomputes is_staff from role/superuser.
   updates.isStaff = role === "admin";
 
   const user = await prisma.user.update({ where: { id }, data: updates });

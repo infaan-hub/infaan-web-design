@@ -1,7 +1,7 @@
 function ProfilePage({ app }) {
   const { currentUser, subscriptions, navigate, formatPrice } = app;
   const latestSubscription = [...subscriptions].sort(
-    (left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0)
+    (left, right) => new Date(right.created_at || 0).getTime() - new Date(left.created_at || 0).getTime()
   )[0] || null;
 
   return (

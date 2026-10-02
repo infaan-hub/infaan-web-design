@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Infaan web app - Next.js full-stack (migrated from Django + React)",
+  "engines": {
+    "node": "22"
+  },
+  "description": "Infaan web app - Next.js full-stack",
   "scripts": {
     "predev": "node scripts/predev.mjs",
     "dev": "next dev",
@@ -14,8 +17,7 @@
     "test:watch": "vitest",
     "db:generate": "prisma generate",
     "db:push": "prisma db push --skip-generate",
-    "db:seed": "tsx prisma/seed.ts",
-    "db:migrate-django": "tsx scripts/migrate-django-db.ts"
+    "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
@@ -41,12 +43,9 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "@types/pg": "^8.23.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.5.4",
-    "better-sqlite3": "^13.0.3",
-    "pg": "^8.23.1",
     "postcss": "^8.5.20",
     "prisma": "6.19.3",
     "tailwindcss": "^3.4.19",

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { DrfError } from "@/lib/drf";
-import { parse, drfString, drfOptString, drfChoice, drfBool, zodToDrf } from "@/lib/zod-drf";
+import { ApiError } from "@/lib/errors";
+import { parse, fieldString, fieldOptString, fieldChoice, fieldBool, zodToApiError } from "@/lib/fields";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { signAccessToken, signRefreshToken } from "@/lib/jwt";
 import { z } from "zod";
@@ -23,7 +23,7 @@ export function serializeUser(user: any) {
   };
 }
 
-/** DRF CharField(min_length=8, write_only): blank -> blank msg; else min length. */
+/** Char field (min_length=8, write_only): blank -> blank msg; else min length. */
 function passwordField() {
   return z
     .string()
@@ -35,7 +35,7 @@ function passwordField() {
     });
 }
 
-/** DRF EmailField: blank -> blank msg, then max_length, then email format (single error). */
+/** Email field: blank -> blank msg, then max_length, then email format (single error). */
 function emailField() {
   return z
     .string()
@@ -56,23 +56,23 @@ function emailField() {
 }
 
 const registerSchema = z.object({
-  username: drfString({ maxLength: 150 }),
-  first_name: drfOptString({ maxLength: 150, blank: true }),
-  last_name: drfOptString({ maxLength: 150, blank: true }),
+  username: fieldString({ maxLength: 150 }),
+  first_name: fieldOptString({ maxLength: 150, blank: true }),
+  last_name: fieldOptString({ maxLength: 150, blank: true }),
   email: emailField(),
-  phone_number: drfOptString({ maxLength: 30, blank: true }),
+  phone_number: fieldOptString({ maxLength: 30, blank: true }),
   password: passwordField(),
 });
 
 export const adminUserSchema = z.object({
-  username: drfString({ maxLength: 150 }),
-  first_name: drfOptString({ maxLength: 150, blank: true }),
-  last_name: drfOptString({ maxLength: 150, blank: true }),
+  username: fieldString({ maxLength: 150 }),
+  first_name: fieldOptString({ maxLength: 150, blank: true }),
+  last_name: fieldOptString({ maxLength: 150, blank: true }),
   email: emailField(),
-  phone_number: drfOptString({ maxLength: 30, blank: true }),
+  phone_number: fieldOptString({ maxLength: 30, blank: true }),
   password: passwordField().optional(),
-  role: drfChoice(["admin", "customer"]).optional(),
-  is_active: drfBool({ optional: true }),
+  role: fieldChoice(["admin", "customer"]).optional(),
+  is_active: fieldBool({ optional: true }),
 });
 
 const loginSchema = z.object({
@@ -90,7 +90,7 @@ export async function checkUnique(username: string, email: string, excludeId?: n
     where: { email, ...(excludeId ? { id: { not: excludeId } } : {}) },
   });
   if (byEmail) errors.email = ["This field must be unique."];
-  if (Object.keys(errors).length) throw new DrfError(400, errors);
+  if (Object.keys(errors).length) throw new ApiError(400, errors);
 }
 
 export async function buildAuthResponse(user: any) {
@@ -132,7 +132,7 @@ export async function registerAdminUser(body: unknown, forceRole: string | null 
       role,
       isActive: data.is_active ?? true,
       isSuperuser: false,
-      // Django CustomUser.save(): is_staff = is_superuser or role == admin
+      // save(): is_staff = is_superuser or role == admin
       isStaff: role === "admin",
       password: await hashPassword(data.password ?? "ChangeMe123!"),
     },
@@ -156,8 +156,8 @@ export async function loginUser(body: unknown) {
     if (raw.password === undefined) errors.password = ["This field is required."];
     else if (raw.password === null) errors.password = ["This field may not be null."];
     else if (String(raw.password).trim() === "") errors.password = ["This field may not be blank."];
-    if (!Object.keys(errors).length) throw zodToDrf(parsed.error);
-    throw new DrfError(400, errors);
+    if (!Object.keys(errors).length) throw zodToApiError(parsed.error);
+    throw new ApiError(400, errors);
   }
   const { username, password } = parsed.data;
   let loginName = username;
@@ -166,11 +166,11 @@ export async function loginUser(body: unknown) {
     if (byEmail) loginName = byEmail.username;
   }
   const user = await prisma.user.findUnique({ where: { username: loginName } });
-  const invalid = new DrfError(400, { non_field_errors: ["Invalid username or password."] });
+  const invalid = new ApiError(400, { non_field_errors: ["Invalid username or password."] });
   if (!user) throw invalid;
   const { valid, needsRehash } = await verifyPassword(password, user.password);
   if (!valid) throw invalid;
-  if (!user.isActive) throw invalid; // Django ModelBackend refuses inactive users -> same message
+  if (!user.isActive) throw invalid; // inactive users are refused with the same message
   if (needsRehash) {
     await prisma.user.update({ where: { id: user.id }, data: { password: await hashPassword(password) } });
   }

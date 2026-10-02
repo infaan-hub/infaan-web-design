@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { route } from "@/lib/route";
 import { readBody } from "@/lib/http";
-import { DrfError } from "@/lib/drf";
+import { ApiError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 import { buildAuthResponse, findUserByEmailInsensitive } from "@/lib/serializers/users";
 import { unusablePassword } from "@/lib/password";
@@ -9,7 +9,7 @@ import { unusablePassword } from "@/lib/password";
 // accounts.views.GoogleLoginView - Google authorization code flow.
 
 function error400(detail: string) {
-  return new DrfError(400, { detail });
+  return new ApiError(400, { detail });
 }
 
 function allowedOrigins(): string[] {

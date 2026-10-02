@@ -233,7 +233,7 @@ describe("tenant services", () => {
     expect(noName.status).toBe(400);
     expect(noName.body).toEqual({ name: ["This field is required."] });
 
-    // No subscription -> subscription_* keys are absent entirely (SkipField).
+    // No subscription -> subscription_* keys are absent entirely (field skipped).
     const created = await callJson(tsCreate, "/api/tenant-services/", {
       method: "POST",
       token: await tokenFor(admin.id),

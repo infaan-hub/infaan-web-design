@@ -348,7 +348,7 @@ function App() {
     return data.access;
   }
 
-  async function apiRequest(pathname, options = {}, allowRetry = true) {
+  async function apiRequest(pathname, options: any = {}, allowRetry = true) {
     const headers = {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -477,7 +477,7 @@ function App() {
     const systemOrders = systemOrderData.results || systemOrderData || [];
     setSubscriptions(
       [...standardSubscriptions, ...packageOrders, ...systemOrders].sort(
-        (left, right) => new Date(right.created_at || 0) - new Date(left.created_at || 0)
+        (left, right) => new Date(right.created_at || 0).getTime() - new Date(left.created_at || 0).getTime()
       )
     );
   }
@@ -1026,7 +1026,7 @@ function App() {
     setLoading(true);
     setError("");
     setFeedback("");
-    const body = {
+    const body: any = {
       username: userData.username,
       first_name: userData.first_name,
       last_name: userData.last_name,
@@ -1305,7 +1305,7 @@ function App() {
             ? pendingPayment?.paypal_email || paymentForm.paypal_email
             : pendingPayment?.card_number || paymentForm.card_number || pendingPayment?.card_name || paymentForm.card_name || "Gateway checkout";
       const checkoutPath = selectedSystem ? "/system-subscriptions/checkout/" : "/package-subscriptions/checkout/";
-      const bookingPayload = {
+      const bookingPayload: any = {
         business_name: normalizedBusinessName,
         contact_email: normalizedContactEmail,
         contact_phone: normalizedContactPhone,
@@ -1365,12 +1365,12 @@ function App() {
       setError("Google OAuth needs a NEXT_PUBLIC_GOOGLE_CLIENT_ID to go live.");
       return;
     }
-    if (!window.google?.accounts?.oauth2) {
+    if (!(window as any).google?.accounts?.oauth2) {
       setError("Google Sign-In is still loading. Please try again.");
       return;
     }
 
-    const codeClient = window.google.accounts.oauth2.initCodeClient({
+    const codeClient = (window as any).google.accounts.oauth2.initCodeClient({
       client_id: GOOGLE_CLIENT_ID,
       scope: "openid email profile",
       ux_mode: "popup",

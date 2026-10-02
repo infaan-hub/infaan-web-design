@@ -15,7 +15,7 @@ export function buildFeatureCodes(features: unknown): string[] {
 }
 
 function apiBaseUrl(): string {
-  return (process.env.SYSTEM_SUBSCRIPTION_API_URL || "http://127.0.0.1:8000/api").replace(/\/+$/, "");
+  return (process.env.SYSTEM_SUBSCRIPTION_API_URL || "http://localhost:3000/api").replace(/\/+$/, "");
 }
 
 export function buildServiceConnectionDetails(ts: any) {

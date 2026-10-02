@@ -1,0 +1,17 @@
+# Decisions & Assumptions
+
+Architecture and contract decisions for the single Next.js project in `infaan-next/`.
+
+1. **One project**: `infaan-next/` contains app + API + Prisma. The React SPA is kept pixel-identical under `frontend/` (edits: `API_BASE = "/api"`; `NEXT_PUBLIC_GOOGLE_CLIENT_ID`).
+2. **SPA in Next**: `app/[[...path]]/page.tsx` renders the original App with `next/dynamic` `ssr:false` (the SPA uses `window`/`localStorage` at module state level). Keeps routing/behavior pixel-identical; `/api/**` static routes take precedence over the catch-all.
+3. **Dual Prisma schema**: dev/test use `prisma/schema.prisma` + SQLite (`prisma/dev.db`, `prisma/tests.db`); prod uses `prisma/schema.postgres.prisma` (identical models, `provider = "postgresql"`) — `npm run build:prod` generates the postgres client, pushes schema, seeds, then builds. **Run `npm run db:generate` afterwards to restore a dev client.**
+4. **Deployment**: one Vercel project serves the whole system (UI + API). Project settings: **Root Directory** = `infaan-next`, framework Next.js, build command `npm run build:prod` (from `infaan-next/vercel.json`: postgres client generate + `db push` + idempotent seed + `next build`), region `iad1` (same region as Neon). Neon `DATABASE_URL` kept (Prisma `@@map` names match the production table names, so existing data is intact). No keepalive/CI pinger needed — Vercel functions don't sleep. `JWT_ACCESS_SECRET`/`JWT_REFRESH_SECRET` are required in production (signing fails fast without them).
+5. **Tests**: Vitest calls route handlers directly with `NextRequest` (no HTTP server), one shared `tests.db`, `fileParallelism: false`, tables wiped per test. `call()` derives `{id}` from the URL.
+6. **API contract rules** (all covered by tests): pagination `20/page` + absolute `next/prev` + `Invalid page.` 404; 405 `Method "X" not allowed.` + `Allow` (incl. HEAD/OPTIONS); 401 + `WWW-Authenticate: Bearer realm="api"`; 403 detail wording; login `non_field_errors`; per-field validation runs before object-level checks (error keys prove the ordering); permission checks run before method-not-allowed **for unmapped methods only** (gate).
+7. **Deliberate error behaviors kept**: `POST /api/prices/` → 500 (read-only `package` pk + NOT NULL), `POST /api/tenant-service-admins/` → 500 (serializer omits tenant/service FKs → NOT NULL violation), soft-delete on referenced packages.
+8. **JWT/access lifetimes**: 7d access / 30d refresh, refresh returns `{access}`; passwords: new rows bcrypt (10 rounds), existing `pbkdf2_sha256$…` rows verify and rehash on login.
+9. **Time zone**: `Africa/Nairobi` (+03:00 in serialized timestamps); date-only fields accept `YYYY-MM-DD` and basic `YYYYMMDD`, reject others with the DateField message.
+10. **Seed** `npm run db:seed`: idempotent (5 services, 16 packages, 40 prices, `admin`/`Admin12345!`); also runs inside `build:prod`.
+11. **CORS** env names (`CORS_ALLOWED_ORIGINS`, `CORS_ALLOW_ALL_ORIGINS`) handled by `middleware.ts` (Next 16 labels it “Proxy”; it runs — verified `Access-Control-Allow-*` on live responses). Same-origin frontend means only the deployment origin (`https://<project>.vercel.app`) is needed.
+12. **Trailing slashes**: `skipTrailingSlashRedirect: true` → `/api/…/` URLs work; the SPA calls `/api/…/` unchanged.
+13. **First prod `db push` caution**: schema matches the production columns 1:1; if push reports drift, inspect before accepting data loss.

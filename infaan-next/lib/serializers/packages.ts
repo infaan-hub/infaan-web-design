@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { fieldError, modelNotFound } from "@/lib/drf";
-import { drfString, drfChoice, drfBool } from "@/lib/zod-drf";
-import { drfDateTime } from "@/lib/format";
+import { fieldError, modelNotFound } from "@/lib/errors";
+import { fieldString, fieldChoice, fieldBool } from "@/lib/fields";
+import { fieldDateTime } from "@/lib/format";
 import { decimalErrorMessage, decimalOut } from "@/lib/decimal";
 import {
   BILLING_PERIODS,
@@ -21,7 +21,7 @@ const LOGO_PRICES_MSG = "Provide at least one per_task price.";
 // Helpers
 // ---------------------------------------------------------------------------
 
-function pyTypeName(value: unknown): string {
+function apiTypeName(value: unknown): string {
   if (value === null) return "NoneType";
   if (Array.isArray(value)) return "list";
   switch (typeof value) {
@@ -50,7 +50,7 @@ export type NormalizedPrice = {
   is_default: boolean;
 };
 
-/** DRF per-entry field validation for a nested PackagePrice dict. */
+/** Per-entry field validation for a nested PackagePrice dict. */
 function validatePriceEntry(entry: any): {
   entry?: NormalizedPrice;
   errors?: Record<string, string[]>;
@@ -132,7 +132,7 @@ export function validatePriceList(
     return undefined;
   }
   if (!Array.isArray(raw)) {
-    errors.add("prices", `Expected a list of items but got type "${pyTypeName(raw)}".`);
+    errors.add("prices", `Expected a list of items but got type "${apiTypeName(raw)}".`);
     return undefined;
   }
   const listErrors: Record<string, unknown>[] = [];
@@ -141,7 +141,7 @@ export function validatePriceList(
   for (const item of raw) {
     if (item === null || typeof item !== "object" || Array.isArray(item)) {
       listErrors.push({
-        non_field_errors: [`Invalid data. Expected a dictionary, but got ${pyTypeName(item)}.`],
+        non_field_errors: [`Invalid data. Expected a dictionary, but got ${apiTypeName(item)}.`],
       });
       anyError = true;
       continue;
@@ -190,16 +190,16 @@ function normalizePrices(serviceCategory: string, entries: NormalizedPrice[]): N
 }
 
 const packageCreateSchema = z.object({
-  tier: drfChoice(TIERS),
-  title: drfString({ maxLength: 150 }),
-  description: drfString(),
-  // DRF JSONField (strict=False): any JSON value is accepted, null is not.
+  tier: fieldChoice(TIERS),
+  title: fieldString({ maxLength: 150 }),
+  description: fieldString(),
+  // JSON value field: any JSON value is accepted, null is not.
   features: z.unknown().superRefine((value, ctx) => {
     if (value === null)
       ctx.addIssue({ code: "custom", message: "This field may not be null." });
   }),
-  payment_notes: drfString({ maxLength: 255, blank: true }).optional(),
-  is_active: drfBool({ optional: true }),
+  payment_notes: fieldString({ maxLength: 255, blank: true }).optional(),
+  is_active: fieldBool({ optional: true }),
 });
 const packagePatchSchema = packageCreateSchema.partial();
 
@@ -217,8 +217,8 @@ export function serializePackage(pkg: any) {
     features: pkg.features ?? [],
     payment_notes: pkg.paymentNotes,
     is_active: pkg.isActive,
-    created_at: drfDateTime(pkg.createdAt),
-    updated_at: drfDateTime(pkg.updatedAt),
+    created_at: fieldDateTime(pkg.createdAt),
+    updated_at: fieldDateTime(pkg.updatedAt),
     prices: (pkg.prices ?? []).map(serializePrice),
   };
 }
@@ -250,10 +250,10 @@ export async function findPackageOr404(id: number, isAdmin: boolean, logoOnly: b
   return pkg;
 }
 
-/** ServicePackageViewSet.get_serializer_class: pick LogoPoster serializer.
+/** Pick the LogoPoster serializer.
  * `forceLogoView` = request hit the /logo-poster-packages/ routes (their
- * serializer_class is LogoPosterPackageSerializer), except when the body's
- * service pk is invalid (Django falls back to the base serializer). */
+ * payload uses that shape), except when the body's
+ * service pk is invalid (falls back to the base serializer). */
 export async function resolveLogoMode(
   body: Record<string, unknown>,
   instance?: { serviceId: number } | null,

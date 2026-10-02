@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { paginate } from "@/lib/pagination";
 import { serializeSubscription, listSubscriptions, createSubscription } from "@/lib/serializers/subscriptions";
 
-// catalog.SubscriptionViewSet - IsAuthenticated (any user; admin sees all).
+// Subscriptions - IsAuthenticated (any user; admin sees all).
 export const { GET, POST, PUT, PATCH, DELETE } = route(
   {
     GET: async (req: NextRequest) => {

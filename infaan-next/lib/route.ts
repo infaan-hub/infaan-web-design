@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DrfError, methodNotAllowed, notFound } from "./drf";
+import { ApiError, methodNotAllowed, notFound } from "./errors";
 
 export type RouteContext = { params?: Promise<Record<string, string>> | Record<string, string> };
 
 export type RouteHandler = (req: NextRequest, ctx?: RouteContext) => Promise<Response> | Response;
 
 /**
- * Django/DRF path-pk parsing: int()-convertible values (0, negative, +/-,
- * leading zeros) reach get_object_or_404 (missing row -> model 404); anything
- * else (abc, 1.5, 1e2) -> Http404 {"detail": "Not found."}.
+ * Path-pk parsing: int()-convertible values (0, negative, +/-,
+ * leading zeros) reach the object lookup (missing row -> model 404); anything
+ * else (abc, 1.5, 1e2) -> 404 {"detail": "Not found."}.
  */
 export async function pathId(ctx?: RouteContext, key = "id"): Promise<number> {
   const params: any = ctx?.params ?? {};
@@ -22,7 +22,7 @@ const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
 export type HttpMethod = (typeof METHODS)[number];
 
 /**
- * Permission gate run for methods NOT mapped by the route (DRF runs permission
+ * Permission gate runs for methods NOT mapped by the route (permission
  * checks before method-not-allowed): throws 401/403, otherwise 405.
  */
 export type RouteGate = (req: NextRequest, ctx?: RouteContext) => Promise<unknown>;
@@ -36,7 +36,7 @@ function errorWrap(fn: RouteHandler, allow: string): RouteHandler {
       res.headers.set("Allow", allow);
       return res;
     } catch (err) {
-      if (err instanceof DrfError) {
+      if (err instanceof ApiError) {
         const res = NextResponse.json(err.body, { status: err.status });
         if (err.status === 401) res.headers.set("WWW-Authenticate", 'Bearer realm="api"');
         res.headers.set("Allow", allow);
@@ -57,10 +57,10 @@ function allowHeader(methods: Partial<Record<HttpMethod, RouteHandler>>) {
 }
 
 /**
- * Builds route handler exports with DRF-compatible behavior:
+ * Builds route handler exports with consistent API behavior:
  * - unsupported methods -> permission gate (if given) then 405
  *   {"detail": "Method \"X\" not allowed."}
- * - Allow header on every response (DRF default_response_headers)
+ * - Allow header on every response (standard response headers)
  * Destructure only the handler keys (GET/POST/PUT/PATCH/DELETE) in route files.
  */
 export function route(

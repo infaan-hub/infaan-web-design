@@ -5,7 +5,7 @@ import { isAdmin, requireAdminOrReadOnly } from "@/lib/auth";
 import { paginate } from "@/lib/pagination";
 import { serializePortfolioItem, listPortfolioItems, createPortfolioItem } from "@/lib/serializers/catalog";
 
-// catalog.PortfolioItemViewSet - IsAdminOrReadOnly, ordered by name.
+// Portfolio items - admin-write/read, ordered by name.
 export const { GET, POST, PUT, PATCH, DELETE } = route(
   {
     GET: async (req: NextRequest) => {

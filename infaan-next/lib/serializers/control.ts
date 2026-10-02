@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { DrfError } from "@/lib/drf";
-import { drfDate } from "@/lib/format";
+import { ApiError } from "@/lib/errors";
+import { fieldDate } from "@/lib/format";
 import { canAccessService, getEffectiveStatus } from "@/lib/subscriptions";
 
 // catalog.views control endpoints: _resolve_managed_service +
@@ -8,21 +8,21 @@ import { canAccessService, getEffectiveStatus } from "@/lib/subscriptions";
 // AdminAccessView / HeartbeatView / KeepAliveView (all AllowAny).
 
 function apiBase(): string {
-  return (process.env.SYSTEM_SUBSCRIPTION_API_URL || "http://127.0.0.1:8000/api").replace(/\/+$/, "");
+  return (process.env.SYSTEM_SUBSCRIPTION_API_URL || "http://localhost:3000/api").replace(/\/+$/, "");
 }
 
-export type ResolveResult = { service?: any; error?: DrfError };
+export type ResolveResult = { service?: any; error?: ApiError };
 
 export async function resolveManagedService(body: any): Promise<ResolveResult> {
   const service_id = body.service_id;
   const license_key = body.license_key;
   const api_key = body.api_key;
   const api_secret = body.api_secret;
-  // Django: (body.get("domain") or "").strip().lower() - non-string -> 500.
+  // Non-string domain values -> 500 (strip/lower are string-only).
   const domain = (body.domain || "").trim().toLowerCase();
 
   if (!service_id || !license_key)
-    return { error: new DrfError(400, { detail: "service_id and license_key are required." }) };
+    return { error: new ApiError(400, { detail: "service_id and license_key are required." }) };
 
   const idArg =
     typeof service_id === "string" && /^[-+]?[0-9]+$/.test(service_id)
@@ -39,13 +39,13 @@ export async function resolveManagedService(body: any): Promise<ResolveResult> {
     },
   });
   if (!service)
-    return { error: new DrfError(404, { detail: "Managed service not found." }) };
+    return { error: new ApiError(404, { detail: "Managed service not found." }) };
   if (api_key && service.apiKey !== api_key)
-    return { error: new DrfError(403, { detail: "Invalid API key." }) };
+    return { error: new ApiError(403, { detail: "Invalid API key." }) };
   if (api_secret && service.apiSecret !== api_secret)
-    return { error: new DrfError(403, { detail: "Invalid API secret." }) };
+    return { error: new ApiError(403, { detail: "Invalid API secret." }) };
   if (domain && service.domain && service.domain.toLowerCase() !== domain)
-    return { error: new DrfError(403, { detail: "Domain does not match the registered service." }) };
+    return { error: new ApiError(403, { detail: "Domain does not match the registered service." }) };
   return { service };
 }
 
@@ -73,7 +73,7 @@ export function buildControlResponse(service: any, detail?: string | null) {
   return {
     allowed,
     status: getEffectiveStatus(record),
-    end_date: drfDate(record.endDate),
+    end_date: fieldDate(record.endDate),
     detail:
       detail === undefined || detail === null
         ? allowed

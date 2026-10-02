@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { DrfError, modelNotFound } from "@/lib/drf";
-import { drfString, drfChoice, drfBool, zodToFields } from "@/lib/zod-drf";
-import { drfDateTime } from "@/lib/format";
-import { decimalOut, drfDecimal } from "@/lib/decimal";
+import { ApiError, modelNotFound } from "@/lib/errors";
+import { fieldString, fieldChoice, fieldBool, zodToFields } from "@/lib/fields";
+import { fieldDateTime } from "@/lib/format";
+import { decimalOut, fieldDecimal } from "@/lib/decimal";
 
 export const SERVICE_CATEGORIES = [
   "logo_poster",
@@ -16,7 +16,7 @@ export const TIERS = ["silver", "gold", "premium", "extra"] as const;
 export const BILLING_PERIODS = ["weekly", "monthly", "yearly", "per_task"] as const;
 
 // ---------------------------------------------------------------------------
-// Field-error accumulation (DRF collects all field errors before object-level
+// Field-error accumulation (all field errors are collected before object-level
 // validate(); each field contributes at most its own messages).
 // ---------------------------------------------------------------------------
 
@@ -47,13 +47,13 @@ export class FieldErrors {
   }
 
   throwIfAny() {
-    if (!this.isEmpty) throw new DrfError(400, this.fields);
+    if (!this.isEmpty) throw new ApiError(400, this.fields);
   }
 }
 
 /**
- * Parse each field of an Zod object schema independently, mirroring DRF's
- * per-field loop: a field error does not stop other fields from validating,
+ * Parse each field of a Zod object schema independently, following the
+ * field loop: a field error does not stop other fields from validating,
  * and invalid fields are simply absent from `data`.
  * Issues are parsed against the FIELD schema (path is empty), so they are
  * attributed to that field key rather than non_field_errors.
@@ -82,7 +82,7 @@ export function parseObject(
 }
 
 // ---------------------------------------------------------------------------
-// Primary-key fields (DRF PrimaryKeyRelatedField)
+// Primary-key fields (relation pk references)
 // ---------------------------------------------------------------------------
 
 function pkShown(value: unknown): string {
@@ -105,7 +105,7 @@ export type PkOptions = {
 };
 
 /**
- * Validate a PrimaryKeyRelatedField: required/null handling, then existence
+ * Validate a primary-key relation field: required/null handling, then existence
  * (Invalid pk ...). Returns the numeric id, null (explicit null), or
  * undefined (absent/skipped/failed). `onRow` runs only when the row exists
  * (e.g. category checks) and may push errors.
@@ -139,7 +139,7 @@ export async function validatePk(
 }
 
 // ---------------------------------------------------------------------------
-// Service (catalog.ServiceViewSet)
+// Service
 // ---------------------------------------------------------------------------
 
 export function serializeService(service: any) {
@@ -150,17 +150,17 @@ export function serializeService(service: any) {
     short_description: service.shortDescription,
     details: service.details,
     is_active: service.isActive,
-    created_at: drfDateTime(service.createdAt),
-    updated_at: drfDateTime(service.updatedAt),
+    created_at: fieldDateTime(service.createdAt),
+    updated_at: fieldDateTime(service.updatedAt),
   };
 }
 
 export const serviceCreateSchema = z.object({
-  name: drfString({ maxLength: 120 }),
-  category: drfChoice(SERVICE_CATEGORIES),
-  short_description: drfString({ maxLength: 255 }),
-  details: drfString(),
-  is_active: drfBool({ optional: true }),
+  name: fieldString({ maxLength: 120 }),
+  category: fieldChoice(SERVICE_CATEGORIES),
+  short_description: fieldString({ maxLength: 255 }),
+  details: fieldString(),
+  is_active: fieldBool({ optional: true }),
 });
 
 export const servicePatchSchema = serviceCreateSchema.partial();
@@ -235,13 +235,13 @@ export async function updateService(
 
 export async function deleteService(id: number) {
   const service = await findServiceOr404(id, true);
-  // Django CASCADE: packages -> prices; a price referenced by subscriptions
+  // Cascading delete: packages -> prices; a price referenced by subscriptions
   // is PROTECTED and the delete surfaces as a 500 (errorWrap).
   await prisma.service.delete({ where: { id: service.id } });
 }
 
 // ---------------------------------------------------------------------------
-// PackagePrice (catalog.PackagePriceViewSet - `package` is read-only)
+// PackagePrice (`package` field is read-only)
 // ---------------------------------------------------------------------------
 
 export function serializePrice(price: any) {
@@ -252,18 +252,18 @@ export function serializePrice(price: any) {
     amount: decimalOut(price.amount),
     currency: price.currency,
     is_default: price.isDefault,
-    created_at: drfDateTime(price.createdAt),
-    updated_at: drfDateTime(price.updatedAt),
+    created_at: fieldDateTime(price.createdAt),
+    updated_at: fieldDateTime(price.updatedAt),
   };
 }
 
 export const priceCreateSchema = z.object({
-  billing_period: drfChoice(BILLING_PERIODS),
-  amount: drfDecimal({ maxDigits: 10, decimalPlaces: 2 }),
-  currency: drfString({ maxLength: 10 })
+  billing_period: fieldChoice(BILLING_PERIODS),
+  amount: fieldDecimal({ maxDigits: 10, decimalPlaces: 2 }),
+  currency: fieldString({ maxLength: 10 })
     .transform((value) => value.toUpperCase())
     .optional(),
-  is_default: drfBool({ optional: true }),
+  is_default: fieldBool({ optional: true }),
 });
 
 export const pricePatchSchema = priceCreateSchema.partial();
@@ -298,8 +298,8 @@ export async function findPriceOr404(id: number, isAdmin: boolean) {
 export async function createPrice(body: Record<string, unknown>) {
   const { data, errors } = parseObject(priceCreateSchema, body);
   errors.throwIfAny();
-  // DRF `package` is read-only -> insert without package -> NOT NULL violation
-  // in Django (500); Prisma rejects the missing required argument (also 500).
+  // `package` is read-only -> insert without package -> NOT NULL violation
+  // (500); Prisma rejects the missing required argument (also 500).
   const price = await prisma.packagePrice.create({
     data: {
       billingPeriod: data.billing_period,
@@ -329,12 +329,12 @@ export async function updatePrice(id: number, body: Record<string, unknown>, par
 
 export async function deletePrice(id: number) {
   const price = await findPriceOr404(id, true);
-  // Django PROTECT: referenced price delete -> ProtectedError -> 500.
+  // Protect: referenced price delete -> constraint violation -> 500.
   await prisma.packagePrice.delete({ where: { id: price.id } });
 }
 
 // ---------------------------------------------------------------------------
-// PortfolioItem (catalog.PortfolioItemViewSet)
+// PortfolioItem
 // ---------------------------------------------------------------------------
 
 export async function listPortfolioItems(isAdmin: boolean) {
@@ -362,11 +362,11 @@ export function serializePortfolioItem(item: any) {
     is_active: item.isActive,
     service: item.serviceId,
     package: item.packageId,
-    created_at: drfDateTime(item.createdAt),
-    updated_at: drfDateTime(item.updatedAt),
+    created_at: fieldDateTime(item.createdAt),
+    updated_at: fieldDateTime(item.updatedAt),
   };
-  // DRF source="service.name" / "package.title" is skipped entirely when the
-  // relation is null (SkipField) -> key absent from the response.
+  // source="service.name" / "package.title" is skipped entirely when the
+  // relation is null (field skipped) -> key absent from the response.
   if (item.serviceId !== null && item.serviceId !== undefined && item.service)
     out.service_name = item.service.name;
   if (item.packageId !== null && item.packageId !== undefined && item.servicePackage)
@@ -375,9 +375,9 @@ export function serializePortfolioItem(item: any) {
 }
 
 const portfolioSchema = z.object({
-  name: drfString({ maxLength: 150 }),
-  image_data: drfString(),
-  is_active: drfBool({ optional: true }),
+  name: fieldString({ maxLength: 150 }),
+  image_data: fieldString(),
+  is_active: fieldBool({ optional: true }),
 });
 const portfolioPatchSchema = portfolioSchema.partial();
 

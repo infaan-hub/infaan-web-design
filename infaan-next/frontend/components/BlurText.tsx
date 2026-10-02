@@ -74,7 +74,7 @@ const BlurText = ({
       {elements.map((segment, index) => {
         const animateKeyframes = buildKeyframes(fromSnapshot, toSnapshots);
 
-        const spanTransition = {
+        const spanTransition: any = {
           duration: totalDuration,
           times,
           delay: (index * delay) / 1000

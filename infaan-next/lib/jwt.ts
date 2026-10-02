@@ -1,13 +1,16 @@
 import { SignJWT, jwtVerify } from "jose";
-import { invalidToken } from "./drf";
+import { invalidToken } from "./errors";
 
-// JWT payload mirrors rest_framework_simplejwt: token_type, exp, iat, jti, user_id.
+// JWT payload: token_type, exp, iat, jti, user_id.
 
 function secret(name: string, fallback: string): Uint8Array {
-  // simplejwt signs access and refresh tokens with the same key (SIGNING_KEY =
-  // SECRET_KEY), which lets us distinguish "wrong token type" from tampered tokens.
-  const primary = process.env.JWT_ACCESS_SECRET || process.env[name] || fallback;
-  return new TextEncoder().encode(primary);
+  // Access and refresh tokens are signed with the same key, which lets us
+  // distinguish "wrong token type" from tampered tokens.
+  const provided = process.env.JWT_ACCESS_SECRET || process.env[name];
+  if (!provided && process.env.NODE_ENV === "production") {
+    throw new Error(`${name} must be set in production`);
+  }
+  return new TextEncoder().encode(provided || fallback);
 }
 
 function lifetimeSeconds(name: string, fallbackSeconds: number): number {

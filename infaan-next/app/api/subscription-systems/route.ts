@@ -5,7 +5,7 @@ import { isAdmin, requireAdminOrReadOnly } from "@/lib/auth";
 import { paginate } from "@/lib/pagination";
 import { serializeSystem, listSystems, createSystem } from "@/lib/serializers/systems";
 
-// catalog.SubscriptionSystemViewSet - IsAdminOrReadOnly.
+// Subscription systems - admin-write/read.
 export const { GET, POST, PUT, PATCH, DELETE } = route(
   {
     GET: async (req: NextRequest) => {

@@ -2,7 +2,7 @@ function BookingHistoryPage({ app }) {
   const { subscriptions, formatPrice, openBooking } = app;
   const historyBookings = [...subscriptions]
     .filter((booking) => booking.status === "completed")
-    .sort((left, right) => new Date(right.updated_at || 0) - new Date(left.updated_at || 0));
+    .sort((left, right) => new Date(right.updated_at || 0).getTime() - new Date(left.updated_at || 0).getTime());
 
   return (
     <main className="main-content">

@@ -4,7 +4,7 @@
 // Date fields are stored as UTC-midnight Dates and compared as "YYYY-MM-DD"
 // strings (lexicographic == chronological), with today = Africa/Nairobi.
 
-import { drfDate, todayDateString } from "@/lib/format";
+import { fieldDate, todayDateString } from "@/lib/format";
 
 export const SUBSCRIPTION_STATUSES = [
   "pending",
@@ -64,14 +64,14 @@ export function assignServiceWindow(
 export function getEffectiveStatus(record: StatusRecord, todayStr?: string): string {
   if (["cancelled", "suspended", "completed"].includes(record.status)) return record.status;
 
-  const endStr = record.endDate ? drfDate(record.endDate) : null;
+  const endStr = record.endDate ? fieldDate(record.endDate) : null;
   if (!endStr) return record.paymentStatus === "paid" ? "active" : "pending";
   if (record.paymentStatus !== "paid") return "pending";
 
   const today = todayStr ?? todayDateString();
   if (today <= endStr) return "active";
 
-  const graceEnd = drfDate(addDays(record.endDate!, record.gracePeriodDays))!;
+  const graceEnd = fieldDate(addDays(record.endDate!, record.gracePeriodDays))!;
   if (today <= graceEnd) return "grace_period";
   return "expired";
 }

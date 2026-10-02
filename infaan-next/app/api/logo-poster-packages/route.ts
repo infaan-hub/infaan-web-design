@@ -5,7 +5,7 @@ import { isAdmin, requireAdminOrReadOnly } from "@/lib/auth";
 import { paginate } from "@/lib/pagination";
 import { serializePackage, listPackages, createPackage } from "@/lib/serializers/packages";
 
-// catalog.LogoPosterPackageViewSet - queryset restricted to logo_poster services.
+// Logo-poster packages - queryset restricted to logo_poster services.
 export const { GET, POST, PUT, PATCH, DELETE } = route(
   {
     GET: async (req: NextRequest) => {

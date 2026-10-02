@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { paginate } from "@/lib/pagination";
 import { serializePackageOrder, listOrders, createOrder } from "@/lib/serializers/subscriptions";
 
-// catalog.PackageSubscriptionOrderViewSet - IsAuthenticated.
+// Package subscription orders - IsAuthenticated.
 export const { GET, POST, PUT, PATCH, DELETE } = route(
   {
     GET: async (req: NextRequest) => {

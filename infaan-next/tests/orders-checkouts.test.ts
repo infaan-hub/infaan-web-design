@@ -234,7 +234,7 @@ describe("system subscription orders", () => {
       'Invalid pk "424242" - object does not exist.',
     ]);
 
-    // Plain ModelSerializer: inactive/mismatch/yearly checks do NOT run here.
+    // Plain serializer: inactive/mismatch/yearly checks do NOT run here.
     const ok = await callJson(sysOrderCreate, "/api/system-subscription-orders/", {
       method: "POST",
       token: await tokenFor(user.id),

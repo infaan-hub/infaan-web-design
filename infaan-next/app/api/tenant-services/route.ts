@@ -9,7 +9,7 @@ import {
   createTenantService,
 } from "@/lib/serializers/tenants";
 
-// catalog.TenantServiceViewSet - IsAuthenticated + IsAdminUserRole.
+// Tenant services - IsAuthenticated + IsAdminUserRole.
 export const { GET, POST, PUT, PATCH, DELETE } = route(
   {
     GET: async (req: NextRequest) => {

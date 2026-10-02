@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "./prisma";
 import { verifyToken } from "./jwt";
-import { DrfError, unauthorized, userInactive, permissionDenied } from "./drf";
+import { ApiError, unauthorized, userInactive, permissionDenied } from "./errors";
 
 export type AuthUser = {
   id: number;
@@ -32,13 +32,13 @@ function bearerToken(req: NextRequest): string | null {
   return parts[1];
 }
 
-/** DRF JWTAuthentication: returns null when no (valid scheme) credentials present. */
+/** Returns null when no (valid scheme) credentials are present. */
 export async function authenticate(req: NextRequest): Promise<AuthUser | null> {
   const token = bearerToken(req);
   if (!token) return null;
   const payload = await verifyToken(token, "access");
   const user = await prisma.user.findUnique({ where: { id: payload.user_id } });
-  if (!user) throw new DrfError(401, { detail: "User not found" });
+  if (!user) throw new ApiError(401, { detail: "User not found" });
   if (!user.isActive) throw userInactive();
   return toAuthUser(user);
 }

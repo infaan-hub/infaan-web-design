@@ -68,7 +68,7 @@ describe("catalog permissions (IsAdminOrReadOnly)", () => {
     expect(asAdmin.body.count).toBe(2);
   });
 
-  it("writes: 401 anonymous, 403 customer (with DRF detail + WWW-Authenticate)", async () => {
+  it("writes: 401 anonymous, 403 customer (with detail + WWW-Authenticate)", async () => {
     const anon = await callJson(serviceCreate, "/api/services/", {
       method: "POST",
       body: { name: "x", category: "website", short_description: "s", details: "d" },
@@ -112,7 +112,7 @@ describe("catalog permissions (IsAdminOrReadOnly)", () => {
 });
 
 describe("services CRUD", () => {
-  it("POST as admin creates with DRF shape and +03:00 timestamps", async () => {
+  it("POST as admin creates with API shape and +03:00 timestamps", async () => {
     const admin = await createAdmin();
     const res = await callJson(serviceCreate, "/api/services/", {
       method: "POST",
@@ -344,7 +344,7 @@ describe("prices", () => {
     expect(notANumber.body).toEqual({ amount: ["A valid number is required."] });
   });
 
-  it("DELETE: unreferenced -> 204; referenced by a subscription -> 500 (Django PROTECT)", async () => {
+  it("DELETE: unreferenced -> 204; referenced by a subscription -> 500 (protect)", async () => {
     const service = await makeService();
     const pkg = await makePackage(service.id);
     const price = await makePrice(pkg.id);

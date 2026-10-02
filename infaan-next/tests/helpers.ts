@@ -100,8 +100,8 @@ export async function tokenFor(userId: number): Promise<string> {
   return signAccessToken(userId);
 }
 
-/** Create a Django-style pbkdf2_sha256 password hash for legacy-password tests. */
-export function djangoPbkdf2(password: string, iterations = 260000, salt = "abcdefghij"): string {
+/** Create a legacy pbkdf2_sha256 password hash for password-compat tests. */
+export function legacyPbkdf2(password: string, iterations = 260000, salt = "abcdefghij"): string {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { pbkdf2Sync } = require("node:crypto");
   const hash = pbkdf2Sync(password, salt, iterations, 32, "sha256").toString("base64");

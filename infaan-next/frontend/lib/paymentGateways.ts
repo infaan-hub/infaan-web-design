@@ -8,7 +8,7 @@ export const PAYMENT_GATEWAYS = {
   mastercard: {
     key: "mastercard",
     label: "Mastercard",
-    image: mastercardImage,
+    image: mastercardImage.src,
     type: "card",
     contactField: "card_number",
     contactLabel: "Card number",
@@ -17,7 +17,7 @@ export const PAYMENT_GATEWAYS = {
   visa: {
     key: "visa",
     label: "Visa",
-    image: visaImage,
+    image: visaImage.src,
     type: "card",
     contactField: "card_number",
     contactLabel: "Card number",
@@ -26,7 +26,7 @@ export const PAYMENT_GATEWAYS = {
   amex: {
     key: "amex",
     label: "American Express",
-    image: americanExpressImage,
+    image: americanExpressImage.src,
     type: "card",
     contactField: "card_number",
     contactLabel: "Card number",
@@ -35,7 +35,7 @@ export const PAYMENT_GATEWAYS = {
   paypal: {
     key: "paypal",
     label: "PayPal",
-    image: paypalImage,
+    image: paypalImage.src,
     type: "paypal",
     contactField: "paypal_email",
     contactLabel: "PayPal email",
@@ -44,7 +44,7 @@ export const PAYMENT_GATEWAYS = {
   mixx: {
     key: "mixx",
     label: "Mixx by Yas",
-    image: mixxImage,
+    image: mixxImage.src,
     type: "mobile",
     contactField: "phone_number",
     contactLabel: "Phone number",

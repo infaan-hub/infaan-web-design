@@ -1,7 +1,7 @@
 import { useRef, useEffect, useCallback } from "react";
 import gsap from "gsap";
 
-export default function BounceCards({ items = [], onCardClick }) {
+export default function BounceCards({ items = [], onCardClick = null }) {
   const containerRef = useRef(null);
   const cardsRef = useRef([]);
 

@@ -133,7 +133,7 @@ describe("subscriptions API", () => {
     expect(mismatch.headers.get("Allow")).toContain("POST");
   });
 
-  it("POST: collects DRF field errors (required, pk, email, int, date, choice, decimal)", async () => {
+  it("POST: collects field errors (required, pk, email, int, date, choice, decimal)", async () => {
     const user = await createUser();
     const svc = await makeService();
     const pkg = await makePackage(svc.id);

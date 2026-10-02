@@ -24,7 +24,7 @@ describe("GET /api/users/", () => {
     expect(Array.isArray(asAdmin.body.results)).toBe(true);
   });
 
-  it("paginates with DRF shape (page size 20, absolute next/prev)", async () => {
+  it("paginates with list shape (page size 20, absolute next/prev)", async () => {
     for (let i = 0; i < 22; i++) {
       await prisma.user.create({
         data: {
@@ -185,7 +185,7 @@ describe("/api/users/{id}/", () => {
     expect(res.body.role).toBe("customer");
     expect(res.body.is_active).toBe(true);
     const row = await prisma.user.findUnique({ where: { id: target.id } });
-    expect(row!.firstName).toBe("Keep"); // omitted non-default fields untouched (DRF semantics)
+    expect(row!.firstName).toBe("Keep"); // omitted non-default fields untouched (update semantics)
     expect(row!.lastName).toBe("Me");
   });
 
@@ -251,7 +251,7 @@ describe("/api/users/{id}/", () => {
     expect(gone.status).toBe(404);
   });
 
-  it("returns DRF 405 for unsupported methods", async () => {
+  it("returns 405 for unsupported methods", async () => {
     const admin = await createAdmin();
     const res = await callJson(listPut, "/api/users/", { method: "PUT", token: await tokenFor(admin.id) });
     expect(res.status).toBe(405);

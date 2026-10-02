@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * DRF DecimalField parity (rest_framework/fields.py: to_internal_value +
+ * Decimal field validation (to_internal_value +
  * validate_precision). Messages and check order: max_digits (total) ->
  * max_decimal_places -> max_whole_digits.
  */
@@ -18,10 +18,10 @@ export type DecimalStats = {
 };
 
 /**
- * digit stats exactly like DRF validate_precision() over
+ * Digit stats exactly like validate_precision() over
  * decimal.Decimal(raw).as_tuple(): sign is ignored, leading zeros are
  * stripped (all-zero coefficients collapse to a single 0), underscores are
- * accepted by Python's Decimal constructor. Returns null when the string is
+ * accepted by the decimal parser. Returns null when the string is
  * not a finite decimal number.
  */
 export function decimalStats(raw: string): DecimalStats | null {
@@ -50,7 +50,7 @@ export function decimalStats(raw: string): DecimalStats | null {
   return { total: abs, decimalPlaces: abs, wholeDigits: 0 };
 }
 
-/** Validate a plain-decimal string; returns the DRF error message or null. */
+/** Validate a plain-decimal string; returns the error message or null. */
 export function decimalErrorMessage(raw: string, opts: DecimalOptions): string | null {
   const trimmed = raw.trim();
   if (trimmed.length > 1000) return "String value too large.";
@@ -67,12 +67,12 @@ export function decimalErrorMessage(raw: string, opts: DecimalOptions): string |
 }
 
 /**
- * Decimal field with DRF semantics: missing -> "This field is required.",
+ * Decimal field semantics: missing -> "This field is required.",
  * null -> "This field may not be null." (unless nullable), blank/non-numeric
  * -> "A valid number is required.", then precision messages. Output: string
  * (null when nullable and blank/null).
  */
-export function drfDecimal(
+export function fieldDecimal(
   opts: DecimalOptions & { optional?: boolean; nullable?: boolean }
 ) {
   const core = z
@@ -107,14 +107,14 @@ export function drfDecimal(
 }
 
 /** Required nullable decimal (allow_null=True): blank "" and null -> null. */
-export function drfOptDecimal(opts: DecimalOptions) {
-  return drfDecimal({ ...opts, nullable: true });
+export function fieldOptDecimal(opts: DecimalOptions) {
+  return fieldDecimal({ ...opts, nullable: true });
 }
 
 /**
  * Serialize a decimal for output: always exactly `places` fraction digits.
- * DRF to_representation quantizes to decimal_places, and str(Decimal) of any
- * DRF-written value already has scale N (input was quantized on write).
+ * Serialization quantizes to decimal_places, and str(Decimal) of any
+ * previously-written value already has scale N (input was quantized on write).
  */
 export function decimalOut(
   value: string | number | null | undefined,

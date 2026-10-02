@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { DrfError, fieldError, modelNotFound } from "@/lib/drf";
-import { drfString, drfChoice, drfBool, drfInt, drfDateOnly, parse } from "@/lib/zod-drf";
-import { drfDateTime, drfDate, todayDateOnly } from "@/lib/format";
-import { decimalOut, drfDecimal } from "@/lib/decimal";
+import { ApiError, fieldError, modelNotFound } from "@/lib/errors";
+import { fieldString, fieldChoice, fieldBool, fieldInt, fieldDateOnly, parse } from "@/lib/fields";
+import { fieldDateTime, fieldDate, todayDateOnly } from "@/lib/format";
+import { decimalOut, fieldDecimal } from "@/lib/decimal";
 import { isAdmin, type AuthUser } from "@/lib/auth";
 import {
   PAYMENT_STATUSES,
@@ -45,28 +45,28 @@ export const packageOrderInclude = {
 // Writable-field schemas (shared by /subscriptions/ CRUD and both checkouts)
 // ---------------------------------------------------------------------------
 
-export const statusChoice = drfChoice(SUBSCRIPTION_STATUSES);
-export const paymentStatusChoice = drfChoice(PAYMENT_STATUSES);
+export const statusChoice = fieldChoice(SUBSCRIPTION_STATUSES);
+export const paymentStatusChoice = fieldChoice(PAYMENT_STATUSES);
 
 /** Checkout/payment fields common to Subscription, both orders and checkouts. */
 function paymentShape(opts: { checkoutCurrencyBlank?: boolean }) {
   return {
     payment_status: paymentStatusChoice.optional(),
-    payment_method: drfString({ maxLength: 30, blank: true }).optional(),
-    payment_contact: drfString({ maxLength: 120, blank: true }).optional(),
-    payment_amount: drfDecimal({ maxDigits: 12, decimalPlaces: 2, optional: true, nullable: true }),
+    payment_method: fieldString({ maxLength: 30, blank: true }).optional(),
+    payment_contact: fieldString({ maxLength: 120, blank: true }).optional(),
+    payment_amount: fieldDecimal({ maxDigits: 12, decimalPlaces: 2, optional: true, nullable: true }),
     payment_currency: opts.checkoutCurrencyBlank
-      ? drfString({ maxLength: 10, blank: true }).optional()
-      : drfString({ maxLength: 10 }).optional(),
-    business_name: drfString({ maxLength: 120 }),
-    contact_email: drfString({ email: true }),
-    contact_phone: drfString({ maxLength: 30 }),
-    notes: drfString({ blank: true }).optional(),
-    start_date: drfDateOnly({ optional: true, nullable: true }),
-    end_date: drfDateOnly({ optional: true, nullable: true }),
-    next_billing_date: drfDateOnly({ optional: true, nullable: true }),
-    auto_renew: drfBool({ optional: true }),
-    grace_period_days: drfInt({ min: 0, optional: true }),
+      ? fieldString({ maxLength: 10, blank: true }).optional()
+      : fieldString({ maxLength: 10 }).optional(),
+    business_name: fieldString({ maxLength: 120 }),
+    contact_email: fieldString({ email: true }),
+    contact_phone: fieldString({ maxLength: 30 }),
+    notes: fieldString({ blank: true }).optional(),
+    start_date: fieldDateOnly({ optional: true, nullable: true }),
+    end_date: fieldDateOnly({ optional: true, nullable: true }),
+    next_billing_date: fieldDateOnly({ optional: true, nullable: true }),
+    auto_renew: fieldBool({ optional: true }),
+    grace_period_days: fieldInt({ min: 0, optional: true }),
   };
 }
 
@@ -112,9 +112,9 @@ function serviceAccess(record: any) {
   return {
     status: getEffectiveStatus(record),
     can_access: canAccessService(record),
-    start_date: drfDate(record.startDate),
-    end_date: drfDate(record.endDate),
-    next_billing_date: drfDate(record.nextBillingDate),
+    start_date: fieldDate(record.startDate),
+    end_date: fieldDate(record.endDate),
+    next_billing_date: fieldDate(record.nextBillingDate),
     grace_period_days: record.gracePeriodDays,
   };
 }
@@ -156,13 +156,13 @@ export function serializeSubscription(sub: any) {
     contact_email: sub.contactEmail,
     contact_phone: sub.contactPhone,
     notes: sub.notes,
-    start_date: drfDate(sub.startDate),
-    end_date: drfDate(sub.endDate),
-    next_billing_date: drfDate(sub.nextBillingDate),
+    start_date: fieldDate(sub.startDate),
+    end_date: fieldDate(sub.endDate),
+    next_billing_date: fieldDate(sub.nextBillingDate),
     auto_renew: sub.autoRenew,
     grace_period_days: sub.gracePeriodDays,
-    created_at: drfDateTime(sub.createdAt),
-    updated_at: drfDateTime(sub.updatedAt),
+    created_at: fieldDateTime(sub.createdAt),
+    updated_at: fieldDateTime(sub.updatedAt),
     user_details: userDetails(sub.user),
     package_details: packageDetails(sub.packagePrice),
     service_access: serviceAccess(sub),
@@ -186,13 +186,13 @@ export function serializePackageOrder(order: any) {
     contact_email: order.contactEmail,
     contact_phone: order.contactPhone,
     notes: order.notes,
-    start_date: drfDate(order.startDate),
-    end_date: drfDate(order.endDate),
-    next_billing_date: drfDate(order.nextBillingDate),
+    start_date: fieldDate(order.startDate),
+    end_date: fieldDate(order.endDate),
+    next_billing_date: fieldDate(order.nextBillingDate),
     auto_renew: order.autoRenew,
     grace_period_days: order.gracePeriodDays,
-    created_at: drfDateTime(order.createdAt),
-    updated_at: drfDateTime(order.updatedAt),
+    created_at: fieldDateTime(order.createdAt),
+    updated_at: fieldDateTime(order.updatedAt),
     user_details: userDetails(order.user),
     package_details: packageDetails(order.packagePrice),
     service_access: serviceAccess(order),
@@ -218,13 +218,13 @@ export function serializeSystemOrder(order: any) {
     contact_email: order.contactEmail,
     contact_phone: order.contactPhone,
     notes: order.notes,
-    start_date: drfDate(order.startDate),
-    end_date: drfDate(order.endDate),
-    next_billing_date: drfDate(order.nextBillingDate),
+    start_date: fieldDate(order.startDate),
+    end_date: fieldDate(order.endDate),
+    next_billing_date: fieldDate(order.nextBillingDate),
     auto_renew: order.autoRenew,
     grace_period_days: order.gracePeriodDays,
-    created_at: drfDateTime(order.createdAt),
-    updated_at: drfDateTime(order.updatedAt),
+    created_at: fieldDateTime(order.createdAt),
+    updated_at: fieldDateTime(order.updatedAt),
     user_details: userDetails(order.user),
     package_details: packageDetails(order.packagePrice),
     service_access: serviceAccess(order),
@@ -283,7 +283,7 @@ const WRITE_FIELD_MAP: Record<string, string> = {
   grace_period_days: "gracePeriodDays",
 };
 
-// ModelSerializer full-replace: fields with serializer defaults reset when
+// Serializer full-replace: fields with serializer defaults reset when
 // absent on PUT; fields without defaults (dates, payment_amount) are kept.
 const PUT_DEFAULTS: Record<string, unknown> = {
   status: "pending",
@@ -312,7 +312,7 @@ function applyPutDefaults(patch: Record<string, unknown>, data: Record<string, a
 }
 
 // ---------------------------------------------------------------------------
-// Subscription CRUD (catalog.SubscriptionViewSet)
+// Subscription CRUD
 // ---------------------------------------------------------------------------
 
 export async function listSubscriptions(requester: AuthUser) {
@@ -361,7 +361,7 @@ export async function createSubscription(requester: AuthUser, body: Record<strin
 
   const paid = data.payment_status === "paid";
   const start = data.start_date ?? todayDateOnly();
-  // Django: Subscription(user, **validated) then status/window override.
+  // Construct with validated data, then status/window override.
   const record: any = {
     ...mapScalars(data),
     userId: requester.id,
@@ -479,8 +479,8 @@ export async function deleteSubscription(id: number, requester: AuthUser) {
 }
 
 // ---------------------------------------------------------------------------
-// Order CRUD (catalog.PackageSubscriptionOrderViewSet /
-// SystemSubscriptionOrderViewSet) - plain ModelSerializer semantics:
+// Order CRUD (package-subscription orders /
+// system-subscription orders) - plain serializer semantics:
 // no availability/system checks, no window side effects on write.
 // ---------------------------------------------------------------------------
 
@@ -680,7 +680,7 @@ export async function runCheckout(
 
   const paid = data.payment_status === "paid";
   const start = data.start_date ?? todayDateOnly();
-  // Django: construct with validated data, then status/window override.
+  // Construct with validated data, then status/window override.
   const record: any = {
     ...mapScalars(data),
     userId: requester.id,
