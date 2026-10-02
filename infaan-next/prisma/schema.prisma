@@ -1,0 +1,340 @@
+// Infaan - Prisma schema (SQLite, local dev & tests)
+// Table/column names match the original Django schema (@@map / @map) so data can be
+// migrated 1:1 from Backend/db.sqlite3 (scripts/migrate-django-db.ts).
+// Production uses prisma/schema.postgres.prisma (identical models, postgres provider).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// accounts.CustomUser (AbstractUser + role/phone_number; no created_at)
+// ---------------------------------------------------------------------------
+model User {
+  id           Int       @id @default(autoincrement())
+  password     String
+  lastLogin    DateTime? @map("last_login")
+  isSuperuser  Boolean   @default(false) @map("is_superuser")
+  username     String    @unique @map("username")
+  firstName    String    @default("") @map("first_name")
+  lastName     String    @default("") @map("last_name")
+  email        String    @unique @map("email")
+  isStaff      Boolean   @default(false) @map("is_staff")
+  isActive     Boolean   @default(true) @map("is_active")
+  dateJoined   DateTime  @default(now()) @map("date_joined")
+  role         String    @default("customer") @map("role")
+  phoneNumber  String    @default("") @map("phone_number")
+
+  subscriptions             Subscription[]
+  packageSubscriptionOrders PackageSubscriptionOrder[]
+  systemSubscriptionOrders  SystemSubscriptionOrder[]
+  tenants                   Tenant[]
+
+  @@map("accounts_customuser")
+}
+
+// ---------------------------------------------------------------------------
+// catalog.Service
+// ---------------------------------------------------------------------------
+model Service {
+  id               Int      @id @default(autoincrement())
+  name             String   @unique @map("name")
+  category         String   @map("category")
+  shortDescription String   @map("short_description")
+  details          String   @map("details")
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  packages            ServicePackage[]
+  portfolioItems      PortfolioItem[]
+  subscriptionSystems SubscriptionSystem[]
+
+  @@map("catalog_service")
+}
+
+// ---------------------------------------------------------------------------
+// catalog.ServicePackage
+// ---------------------------------------------------------------------------
+model ServicePackage {
+  id           Int      @id @default(autoincrement())
+  serviceId    Int      @map("service_id")
+  tier         String   @map("tier")
+  title        String   @map("title")
+  description  String   @map("description")
+  features     Json     @default("[]") @map("features")
+  paymentNotes String   @default("") @map("payment_notes")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  service         Service          @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  prices          PackagePrice[]
+  portfolioItems  PortfolioItem[]
+
+  @@unique([serviceId, tier])
+  @@map("catalog_servicepackage")
+}
+
+// ---------------------------------------------------------------------------
+// catalog.PackagePrice
+// ---------------------------------------------------------------------------
+model PackagePrice {
+  id            Int      @id @default(autoincrement())
+  packageId     Int      @map("package_id")
+  billingPeriod String   @map("billing_period")
+  amount        Decimal  @map("amount")
+  currency      String   @default("TZS") @map("currency")
+  isDefault     Boolean  @default(false) @map("is_default")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  servicePackage            ServicePackage             @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  subscriptions             Subscription[]
+  packageSubscriptionOrders PackageSubscriptionOrder[]
+  systemSubscriptionOrders  SystemSubscriptionOrder[]
+
+  @@unique([packageId, billingPeriod, currency])
+  @@map("catalog_packageprice")
+}
+
+// ---------------------------------------------------------------------------
+// catalog.PortfolioItem
+// ---------------------------------------------------------------------------
+model PortfolioItem {
+  id        Int      @id @default(autoincrement())
+  serviceId Int?     @map("service_id")
+  packageId Int?     @map("package_id")
+  name      String   @map("name")
+  imageData String   @map("image_data")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  service       Service?        @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  servicePackage ServicePackage? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+
+  @@map("catalog_portfolioitem")
+}
+
+// ---------------------------------------------------------------------------
+// catalog.SubscriptionSystem
+// ---------------------------------------------------------------------------
+model SubscriptionSystem {
+  id                   Int       @id @default(autoincrement())
+  serviceId            Int       @map("service_id")
+  name                 String    @map("name")
+  summary              String    @map("summary")
+  details              String    @default("") @map("details")
+  systemUrl            String    @default("") @map("system_url")
+  adminUrl             String    @default("") @map("admin_url")
+  displayPrice         Decimal?  @map("display_price")
+  displayPriceCurrency String    @default("TZS") @map("display_price_currency")
+  coverImage           String    @map("cover_image")
+  galleryImages        Json      @default("[]") @map("gallery_images")
+  isActive             Boolean   @default(true) @map("is_active")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  service              Service                   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  tenantServices       TenantService[]
+  subscriptions        Subscription[]
+  systemOrders         SystemSubscriptionOrder[]
+
+  @@map("catalog_subscriptionsystem")
+}
+
+// ---------------------------------------------------------------------------
+// catalog.Tenant
+// ---------------------------------------------------------------------------
+model Tenant {
+  id           Int      @id @default(autoincrement())
+  ownerId      Int      @map("owner_id")
+  businessName String   @map("business_name")
+  status       String   @default("pending") @map("status")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  owner         User                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  services      TenantService[]
+  serviceAdmins TenantServiceAdmin[]
+
+  @@map("catalog_tenant")
+}
+
+// ---------------------------------------------------------------------------
+// catalog.TenantService
+// ---------------------------------------------------------------------------
+model TenantService {
+  id                   Int       @id @default(autoincrement())
+  tenantId             Int       @map("tenant_id")
+  subscriptionId       Int?      @unique @map("subscription_id")
+  systemOrderId        Int?      @unique @map("system_order_id")
+  subscriptionSystemId Int?      @map("subscription_system_id")
+  name                 String    @map("name")
+  serviceType          String    @default("django_system") @map("service_type")
+  domain               String    @default("") @map("domain")
+  publicUrl            String    @default("") @map("public_url")
+  adminUrl             String    @default("") @map("admin_url")
+  licenseKey           String    @unique @map("license_key")
+  apiKey               String    @unique @map("api_key")
+  apiSecret            String    @map("api_secret")
+  connectionStatus     String    @default("pending") @map("connection_status")
+  isEnabled            Boolean   @default(true) @map("is_enabled")
+  lastHeartbeatAt      DateTime? @map("last_heartbeat_at")
+  connectedAt          DateTime? @map("connected_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  tenant             Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subscription       Subscription?             @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  systemOrder        SystemSubscriptionOrder?  @relation(fields: [systemOrderId], references: [id], onDelete: Cascade)
+  subscriptionSystem SubscriptionSystem?       @relation(fields: [subscriptionSystemId], references: [id], onDelete: SetNull)
+  admins             TenantServiceAdmin[]
+  featureAccess      TenantServiceFeatureAccess[]
+
+  @@map("catalog_tenantservice")
+}
+
+// ---------------------------------------------------------------------------
+// catalog.TenantServiceAdmin (service FK -> TenantService)
+// ---------------------------------------------------------------------------
+model TenantServiceAdmin {
+  id             Int      @id @default(autoincrement())
+  tenantId       Int      @map("tenant_id")
+  serviceId      Int      @map("service_id")
+  userIdentifier String   @map("user_identifier")
+  role           String   @default("admin") @map("role")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  tenant  Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  service TenantService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, userIdentifier])
+  @@map("catalog_tenantserviceadmin")
+}
+
+// ---------------------------------------------------------------------------
+// catalog.TenantServiceFeatureAccess (service FK -> TenantService)
+// ---------------------------------------------------------------------------
+model TenantServiceFeatureAccess {
+  id          Int      @id @default(autoincrement())
+  serviceId   Int      @map("service_id")
+  featureCode String   @map("feature_code")
+  enabled     Boolean  @default(true) @map("enabled")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  service TenantService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, featureCode])
+  @@map("catalog_tenantservicefeatureaccess")
+}
+
+// ---------------------------------------------------------------------------
+// catalog.Subscription
+// ---------------------------------------------------------------------------
+model Subscription {
+  id                   Int       @id @default(autoincrement())
+  userId               Int       @map("user_id")
+  packagePriceId       Int       @map("package_price_id")
+  subscriptionSystemId Int?      @map("subscription_system_id")
+  status               String    @default("pending") @map("status")
+  paymentStatus        String    @default("pending") @map("payment_status")
+  paymentMethod        String    @default("") @map("payment_method")
+  paymentContact       String    @default("") @map("payment_contact")
+  paymentAmount        Decimal?  @map("payment_amount")
+  paymentCurrency      String    @default("TZS") @map("payment_currency")
+  businessName         String    @map("business_name")
+  contactEmail         String    @map("contact_email")
+  contactPhone         String    @map("contact_phone")
+  notes                String    @default("") @map("notes")
+  startDate            DateTime? @map("start_date")
+  endDate              DateTime? @map("end_date")
+  nextBillingDate      DateTime? @map("next_billing_date")
+  autoRenew            Boolean   @default(false) @map("auto_renew")
+  gracePeriodDays      Int       @default(3) @map("grace_period_days")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packagePrice      PackagePrice        @relation(fields: [packagePriceId], references: [id], onDelete: Restrict)
+  subscriptionSystem SubscriptionSystem? @relation(fields: [subscriptionSystemId], references: [id], onDelete: SetNull)
+
+  tenantService TenantService?
+
+  @@map("catalog_subscription")
+}
+
+// ---------------------------------------------------------------------------
+// catalog.PackageSubscriptionOrder
+// ---------------------------------------------------------------------------
+model PackageSubscriptionOrder {
+  id              Int       @id @default(autoincrement())
+  userId          Int       @map("user_id")
+  packagePriceId  Int       @map("package_price_id")
+  status          String    @default("pending") @map("status")
+  paymentStatus   String    @default("pending") @map("payment_status")
+  paymentMethod   String    @default("") @map("payment_method")
+  paymentContact  String    @default("") @map("payment_contact")
+  paymentAmount   Decimal?  @map("payment_amount")
+  paymentCurrency String    @default("TZS") @map("payment_currency")
+  businessName    String    @map("business_name")
+  contactEmail    String    @map("contact_email")
+  contactPhone    String    @map("contact_phone")
+  notes           String    @default("") @map("notes")
+  startDate       DateTime? @map("start_date")
+  endDate         DateTime? @map("end_date")
+  nextBillingDate DateTime? @map("next_billing_date")
+  autoRenew       Boolean   @default(false) @map("auto_renew")
+  gracePeriodDays Int       @default(3) @map("grace_period_days")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packagePrice PackagePrice @relation(fields: [packagePriceId], references: [id], onDelete: Restrict)
+
+  @@map("catalog_packagesubscriptionorder")
+}
+
+// ---------------------------------------------------------------------------
+// catalog.SystemSubscriptionOrder
+// ---------------------------------------------------------------------------
+model SystemSubscriptionOrder {
+  id                   Int       @id @default(autoincrement())
+  userId               Int       @map("user_id")
+  packagePriceId       Int       @map("package_price_id")
+  subscriptionSystemId Int       @map("subscription_system_id")
+  status               String    @default("pending") @map("status")
+  paymentStatus        String    @default("pending") @map("payment_status")
+  paymentMethod        String    @default("") @map("payment_method")
+  paymentContact       String    @default("") @map("payment_contact")
+  paymentAmount        Decimal?  @map("payment_amount")
+  paymentCurrency      String    @default("TZS") @map("payment_currency")
+  businessName         String    @map("business_name")
+  contactEmail         String    @map("contact_email")
+  contactPhone         String    @map("contact_phone")
+  notes                String    @default("") @map("notes")
+  startDate            DateTime? @map("start_date")
+  endDate              DateTime? @map("end_date")
+  nextBillingDate      DateTime? @map("next_billing_date")
+  autoRenew            Boolean   @default(false) @map("auto_renew")
+  gracePeriodDays      Int       @default(3) @map("grace_period_days")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packagePrice      PackagePrice       @relation(fields: [packagePriceId], references: [id], onDelete: Restrict)
+  subscriptionSystem SubscriptionSystem @relation(fields: [subscriptionSystemId], references: [id], onDelete: Cascade)
+
+  tenantService TenantService?
+
+  @@map("catalog_systemsubscriptionorder")
+}

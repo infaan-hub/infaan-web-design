@@ -1,43 +1,29 @@
 services:
   - type: web
-    name: infaan-backend
-    runtime: python
-    rootDir: Backend
-    buildCommand: ./build.sh
-    startCommand: gunicorn infaan_backend.wsgi:application --bind 0.0.0.0:$PORT
+    name: infaan-web
+    runtime: node
+    rootDir: infaan-next
+    buildCommand: npm install && npm run build:prod
+    startCommand: npm start
+    healthCheckPath: /api/keepalive
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.13.11
-      - key: DJANGO_SECRET_KEY
+      - key: NODE_VERSION
+        value: 22.21.0
+      - key: JWT_ACCESS_SECRET
         generateValue: true
-      - key: DJANGO_DEBUG
-        value: "false"
-      - key: ALLOWED_HOSTS
-        value: "infaan-web-design.onrender.com,127.0.0.1,localhost"
-      - key: CORS_ALLOW_ALL_ORIGINS
-        value: "false"
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_LIFETIME
+        value: "7d"
+      - key: JWT_REFRESH_LIFETIME
+        value: "30d"
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://infaan-web-design.onrender.com
+      - key: NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        value: 139448352472-lef1vd392sa52l7rm2tnplqj13iq1h7p.apps.googleusercontent.com
       - key: CORS_ALLOWED_ORIGINS
-        value: "https://infaanwebdesign.vercel.app,http://localhost:5173"
-      - key: CORS_ALLOWED_ORIGIN_REGEXES
-        value: "https://.*\\.vercel\\.app"
-      - key: CSRF_TRUSTED_ORIGINS
-        value: "https://infaan-web-design.onrender.com,https://infaanwebdesign.vercel.app"
+        value: "https://infaan-web-design.onrender.com,http://localhost:3000,http://127.0.0.1:3000"
       - key: SYSTEM_SUBSCRIPTION_API_URL
         value: "https://infaan-web-design.onrender.com/api"
       - key: DATABASE_URL
         value: "postgresql://neondb_owner:npg_Bhgfp5GnV9XS@ep-fancy-block-atajo7jl-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-      - key: SEED_INFAAN_DATA
-        value: "true"
-
-  - type: static
-    name: infaan-frontend
-    rootDir: Frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_API_BASE_URL
-        value: https://infaan-web-design.onrender.com/api

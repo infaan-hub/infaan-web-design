@@ -1,8 +1,8 @@
-Backend/.env
-Frontend/.env
+# Environment files (never commit secrets)
 *.env
 *.env.local
 *.env.production.local
-**/__pycache__/
-*.pyc
-Frontend/dist/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db

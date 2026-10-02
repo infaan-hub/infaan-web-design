@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -o errexit
 
-cd Backend
-chmod +x build.sh
-./build.sh
+cd infaan-next
+npm install
+npm run build:prod
